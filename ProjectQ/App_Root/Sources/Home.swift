@@ -1,10 +1,7 @@
 
 import ComposableArchitecture
+import SwiftData
 import SwiftUI
-
-extension PersistenceKey where Self == PersistenceKeyDefault<InMemoryKey<String>> {
-    public static var homeSearchField: Self { PersistenceKeyDefault(.inMemory("homeSearchField"), "") }
-}
 
 @Reducer
 public struct Home {
@@ -14,23 +11,21 @@ public struct Home {
     public struct State: Equatable {
         public init() {}
         @Presents var destination: Destination.State?
-        @Shared(.entries) var entries
-        @Shared(.inputLocale) var inputLocale: Locale
-        @Shared(.homeSearchField) var searchField: String
+        @Shared(.focusedLanguage) var focusedLanguage
+        var searchField: String = ""
         var settingsMenu: SettingsMenu.State = .init()
         var entryCreator: EntryCreator.State = .init()
         var languageContextMenuIsShowing: Bool = false
-        
-        var displayed: [Entry] {
-            entries
-                .sorted(by: \.lastModified, reversed: true)
-                .filter({
-                    $0.locale == inputLocale
-                })
-                .filter({
-                    searchField.isEmpty ? true : !$0.spelling.characterMatches(from: searchField).isEmpty
-                })
+        var predicate: Predicate<Entry> {
+            #Predicate<Entry> {
+                $0.language.definition == focusedLanguage
+            }
+//            #Predicate {
+//                $0.language.definition == focusedLanguage &&
+//                searchField.isEmpty ? true : !$0.spelling.characterMatches(from: searchField).isEmpty
+//            }
         }
+        var sortDescriptors: [SortDescriptor] = [SortDescriptor.init(\Entry.modified, order: .reverse)]
     }
     
     @Reducer(state: .equatable)
@@ -45,7 +40,7 @@ public struct Home {
         case settingsMenu(SettingsMenu.Action)
         case entryCreator(EntryCreator.Action)
         case destination(PresentationAction<Destination.Action>)
-        
+                
         case searchFieldCommitted
         case searchingEnded
         case searchingStarted
@@ -61,6 +56,8 @@ public struct Home {
 
     }
     
+    @Dependency(\.modelContainer) var modelContainer
+    
     public var body: some Reducer<State, Action> {
         
         BindingReducer()
@@ -75,7 +72,9 @@ public struct Home {
         
         Reduce<State, Action> { state, action in
             switch action {
-            case .binding, .destination, .entryCreator: return .none
+            case .binding: return .none
+            case .destination: return .none
+            case .entryCreator: return .none
             case .searchFieldCommitted: return .none
             case .searchingEnded: return .none
             case .searchingStarted:
@@ -86,17 +85,17 @@ public struct Home {
                 
             case .entryTapped(let entry):
                 
-                guard let shared = state.$entries[id: entry.id] else { return .none }
-                
-                state.destination = .entryDetail(.init(entry: shared))
+                state.destination = .entryDetail(.init(entry: entry))
                 
                 return .none
                 
             case .destructiveSwipeButtonTapped(let entry):
                 
-                state.entries.remove(entry: entry)
-                
-                return .none
+                return .run { send in
+                    
+                    await modelContainer.mainContext.delete(entry)
+                    
+                }
                 
             case .editSwipeButtonTapped(_): return .none
             case .dialog(_): return .none
@@ -125,10 +124,16 @@ fileprivate extension String {
 struct HomeListView: View {
     
     @Bindable var store: StoreOf<Home>
+    @Query var entries: [Entry]
+    
+    init(store: StoreOf<Home>, query _entries: Query<Entry, [Entry]>) {
+        self.store = store
+        self._entries = _entries
+    }
     
     public var body: some View {
         List {
-            ForEach(store.displayed) { entry in
+            ForEach(entries) { entry in
                 Button {
                     store.send(.entryTapped(entry))
                 } label: {
@@ -179,14 +184,18 @@ struct HomeRootView: View {
 
     var body: some View {
         HomeListView(
-            store: store
+            store: store,
+            query: Query(
+                filter: store.predicate,
+                sort: store.sortDescriptors
+            )
         )
         .safeAreaInset(edge: .bottom) {
             if !isSearching {
                 EntryCreatorView(store: store.scope(state: \.entryCreator, action: \.entryCreator))
             }
         }
-        .navigationTitle(store.inputLocale.displayName().capitalized)
+        .navigationTitle(store.focusedLanguage.displayName.capitalized)
         .onSubmit(of: .search) {
             store.send(.searchFieldCommitted)
         }
@@ -202,7 +211,7 @@ struct HomeRootView: View {
 }
 
 public struct HomeStackView: View {
-    
+        
     public init(store: StoreOf<Home>) {
         self.store = store
     }
@@ -214,13 +223,11 @@ public struct HomeStackView: View {
             HomeRootView(store: store)
                 .searchable(text: $store.searchField)
         }
-        .environment(\.locale, store.inputLocale)
     }
 }
 
 
 #Preview { Preview }
 private var Preview: some View {
-    @Shared(.entries) var entries = .mock()
     return HomeStackView(store: .init(initialState: .init(), reducer: { Home() }))
 }

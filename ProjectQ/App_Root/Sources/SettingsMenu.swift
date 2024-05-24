@@ -1,20 +1,7 @@
 
 import ComposableArchitecture
+import SwiftData
 import SwiftUI
-
-extension PersistenceKey where Self == PersistenceKeyDefault<FileStorageKey<Locale>> {
-    public static var inputLocale: Self { PersistenceKeyDefault(.fileStorage(.documentsDirectory.appending(component: "inputLocale")), Locale.autoupdatingCurrent) }
-}
-
-extension PersistenceKey where Self == PersistenceKeyDefault<FileStorageKey<Array<Locale>>> {
-    public static var inputLocales: Self {
-        PersistenceKeyDefault(.fileStorage(.documentsDirectory.appending(component: "inputLocales.json")), {
-            @Shared(.entries) var entries
-            let existing = entries.sortedLocaleCounts.map(\.locale)
-            return existing.isEmpty ? [.autoupdatingCurrent] : existing
-        }())
-    }
-}
 
 @Reducer
 public struct SettingsMenu {
@@ -24,8 +11,8 @@ public struct SettingsMenu {
     public struct State: Equatable {
         public init() {}
         @Presents var destination: Destination.State?
-        @Shared(.inputLocales) var inputLocales
-        @Shared(.inputLocale) var inputLocale: Locale
+        @Shared(.languageSelectionList) var languageSelectionList
+        @Shared(.focusedLanguage) var focusedLanguage
     }
     
     @Reducer(state: .equatable)
@@ -38,7 +25,7 @@ public struct SettingsMenu {
         case destination(PresentationAction<Destination.Action>)
         
         case allSettingsMenuButtonTapped
-        case selectedInputLocale(Locale)
+        case selectedInputLocale(LanguageSelection)
     }
     
     public var body: some Reducer<State, Action> {
@@ -56,7 +43,7 @@ public struct SettingsMenu {
                 
             case .selectedInputLocale(let selected):
                 
-                state.inputLocale = selected
+                state.focusedLanguage = selected
                 
                 return .none
                 
@@ -80,11 +67,11 @@ struct PresentsSettingsMenuInToolbar: ViewModifier {
                             Text("All Settings")
                         }
                         
-                        ForEach(store.inputLocales) { inputLocale in
+                        ForEach(store.languageSelectionList) { availableLanguage in
                             Button(action: {
-                                store.send(.selectedInputLocale(inputLocale))
+                                store.send(.selectedInputLocale(availableLanguage))
                             }) {
-                                Label(inputLocale.displayName().capitalized, systemImage: "flag")
+                                Label(availableLanguage.displayName.capitalized, systemImage: "flag")
                             }
                         }
                         

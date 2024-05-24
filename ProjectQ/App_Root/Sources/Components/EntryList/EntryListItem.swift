@@ -12,7 +12,8 @@ public struct HomeListItemView: View {
     }
     
     var subtitle: String? {
-        entry.topTranslation?.spelling
+        .none
+//        entry.topTranslation?.spelling
     }
             
     public struct Style: EnvironmentKey {
@@ -83,9 +84,9 @@ extension EnvironmentValues {
     }
 }
 
-#Preview { Host() }
-private struct Host: View {
-    var body: some View {
-        HomeListItemView(entry: .mock(id: 0, spelling: "Example"), highlightedCharacters: ["E", "x"])
-    }
-}
+//#Preview { Host() }
+//private struct Host: View {
+//    var body: some View {
+//        HomeListItemView(entry: .mock(id: 0, spelling: "Example"), highlightedCharacters: ["E", "x"])
+//    }
+//}

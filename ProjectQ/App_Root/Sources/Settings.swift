@@ -7,49 +7,42 @@ public struct Settings {
     
     @ObservableState
     public struct State: Equatable {
-        @Shared(.inputLocales) var inputLocales: [Locale]
-        @Shared(.inputLocale) var inputLocale: Locale
-        
-        var localesAvailableForSelection: [Locale] {
-            UITextInputMode.activeInputModes.compactMap({
-                guard let primaryLanguage = $0.primaryLanguage else { return nil }
-                return Locale(identifier: primaryLanguage)
-            })
-        }
+        @Shared(.languageSelectionList) var languageSelectionList
+        @Shared(.focusedLanguage) var focusedLanguage
     }
     
     public enum Action {
-        case destructiveSwipeButtonTapped(Locale)
-        case addLanguageMenuButtonTapped(Locale)
-        case languageSelected(Locale)
+        case destructiveSwipeButtonTapped(LanguageSelection)
+        case addLanguageMenuButtonTapped(LanguageSelection)
+        case languageSelected(LanguageSelection)
         case moved(fromOffsets: IndexSet, toOffset: Int)
     }
     
     public var body: some Reducer<State, Action> {
         Reduce<State, Action> { state, action in
             switch action {
-            case .destructiveSwipeButtonTapped(let locale):
+            case .destructiveSwipeButtonTapped(let selected):
                 
-                state.inputLocales.removeAll(where: { $0.identifier == locale.identifier })
+                state.languageSelectionList.removeAll(where: { $0 == selected })
                 
                 return .none
                 
-            case .addLanguageMenuButtonTapped(let newLocale):
+            case .addLanguageMenuButtonTapped(let selected):
                 
-                state.inputLocales += [newLocale]
-                state.inputLocale = newLocale
+                state.languageSelectionList.append(selected)
+                state.focusedLanguage = selected
                 
                 return .none
 
             case .languageSelected(let selected):
                 
-                state.inputLocale = selected
+                state.focusedLanguage = selected
                 
                 return .none
                 
             case .moved(let fromOffsets, let toOffset):
                                 
-                state.inputLocales.move(fromOffsets: fromOffsets, toOffset: toOffset)
+                state.languageSelectionList.move(fromOffsets: fromOffsets, toOffset: toOffset)
                 
                 return .none
                 
@@ -65,10 +58,10 @@ struct SettingsView: View {
     var body: some View {
         List {
             Section {
-                ForEach(store.inputLocales) { inputLocale in
+                ForEach(store.languageSelectionList) { item in
                     HStack {
-                        Button(action: { store.send(.languageSelected(inputLocale)) }) {
-                            Text(inputLocale.displayName().capitalized)
+                        Button(action: { store.send(.languageSelected(item)) }) {
+                            Text(item.displayName.capitalized)
                         }
                         Spacer()
                         Image(systemName: "line.3.horizontal").foregroundStyle(.secondary)
@@ -77,7 +70,7 @@ struct SettingsView: View {
                         Button(
                             role: .destructive,
                             action: {
-                                store.send(.destructiveSwipeButtonTapped(inputLocale))
+                                store.send(.destructiveSwipeButtonTapped(item))
                             },
                             label: {
                                 Label(title: { Text("Delete") }, icon: { Image(systemName: "trash") })
@@ -93,9 +86,9 @@ struct SettingsView: View {
                     Text("Languages")
                     Spacer()
                     Menu {
-                        ForEach(store.localesAvailableForSelection) { availableLanguage in
+                        ForEach(store.languageSelectionList) { availableLanguage in
                             Button(action: { store.send(.addLanguageMenuButtonTapped(availableLanguage)) }) {
-                                Text(availableLanguage.displayName())
+                                Text(availableLanguage.displayName)
                                     .textCase(.none)
                             }
                         }

@@ -57,7 +57,7 @@ public struct FloatingTextFieldView: View {
     }
     
     @Environment(\.floatingEntryCreator) var style
-    @Environment(\.locale) var locale
+    @Environment(\.language) var language
 
     public var body: some View {
         GeometryReader { proxy in
@@ -75,11 +75,12 @@ public struct FloatingTextFieldView: View {
                                 config.isFirstResponder = !store.collapsed
                                 config.onCommit = { store.send(.delegate(.fieldCommitted)) }
                                 config.placeholder = style.placeholder
+                                config.preferredLanguage = language.bcp47
                                 config.onLanguageUnavailable = {
                                     print("Could not resolve language with identifier: \($0)")
                                 }
                             }
-                            .id(locale)
+                            .id(language)
                         case .swiftUI:
                             TextField(style.placeholder, text: $store.text)
                                 .onSubmit {

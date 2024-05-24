@@ -1,5 +1,6 @@
 
 import ComposableArchitecture
+import SwiftData
 import SwiftUI
 
 @Reducer
@@ -7,42 +8,10 @@ public struct EntryCreator {
     
     @ObservableState
     public struct State: Equatable {
-        @Shared(.entries) var entries
-        @Shared(.inputLocale) var inputLocale
-        
+        @Shared(.focusedLanguage) var focusedLanguage
         public var spelling: FloatingTextField.State = .init()
         
-        @Presents var destination: Destination.State?
-        
-        mutating func addSpellingAsNewEntryAndPush() -> EffectOf<EntryCreator> {
-            
-            @Dependency(\.uuid) var uuid
-            @Dependency(\.date.now) var now
-
-            // create the new entry and add it to the repository
-            let entry = Entry(
-                id: uuid(),
-                locale: inputLocale,
-                added: now,
-                lastModified: now,
-                spelling: spelling.text
-            )
-            let sharedEntry = $entries.add(new: entry)
-            
-            return clearAndPushDetailFor(entry: sharedEntry)
-
-        }
-        
-        /// simultaneously pushes the entry's detail page and clears the creator's state
-        mutating func clearAndPushDetailFor(entry: Shared<Entry>) -> EffectOf<EntryCreator> {
-            
-            self = .init()
-
-            destination = .entryDetail(EntryDetail.State.init(entry: entry))
-            
-            return .none
-
-        }
+        @Presents public var destination: Destination.State?
     }
     
     @Reducer(state: .equatable)
@@ -53,7 +22,7 @@ public struct EntryCreator {
 
     public enum ConfirmationDialog: Equatable {
         case cancel
-        case editExisting(Shared<Entry>)
+        case editExisting(Entry)
         case addNew
     }
 
@@ -62,9 +31,12 @@ public struct EntryCreator {
         case destination(PresentationAction<Destination.Action>)
         case spelling(FloatingTextField.Action)
         
-        case delayBeforePushShouldStartCompleted(Shared<Entry>)
+        case foundMatchForCurrentSpelling(Entry)
+        case successfullyInserted(entry: Entry)
     }
         
+    @Dependency(\.actorContext) var actorContext
+
     public var body: some Reducer<State, Action> {
         
         BindingReducer()
@@ -79,39 +51,80 @@ public struct EntryCreator {
             case .spelling(.delegate(let delegatedAction)):
                 switch delegatedAction {
                 case .fieldCommitted, .saveEntryButtonTapped:
-                    
-                    if let match = state.$entries.matching(spelling: state.spelling.text) {
-                        
-                        return state.clearAndPushDetailFor(entry: match)
-                        
-                    } else if !state.spelling.text.isEmpty {
-                        
-                        return state.addSpellingAsNewEntryAndPush()
-                        
-                    } else {
-                        
+
+                    let spelling = state.spelling.text
+
+                    guard !spelling.isEmpty else {
                         state.spelling = .init()
-                        
                         return .none
-                        
                     }
                     
+                    return .run { [state] send in
+
+                        let context = try actorContext()
+                        
+                        let matches = try await context.fetch(FetchDescriptor<Entry>(predicate: #Predicate { $0.spelling == spelling }))
+
+                        if let match = matches.first {
+
+                            await send(.foundMatchForCurrentSpelling(match))
+
+                        } else {
+
+                            let newEntry = try await context.insertNewEntry(
+                                spelling: spelling,
+                                for: state.focusedLanguage
+                            )
+
+                            await send(.successfullyInserted(entry: newEntry))
+
+                        }
+                    }
                 }
+                    
             case .spelling: return .none
             case .destination(.presented(.confirmationDialog(.addNew))):
                 
-                return state.addSpellingAsNewEntryAndPush()
+                let spelling = state.spelling.text
+
+                guard !spelling.isEmpty else {
+                    return .none
+                }
+
+                return .run { [state] send in
+                                        
+                    let context = try actorContext()
+                    
+                    let newEntry = try await context.insertNewEntry(
+                        spelling: state.spelling.text,
+                        for: state.focusedLanguage
+                    )
+
+                    await send(.successfullyInserted(entry: newEntry))
+                }
 
             case .destination(.presented(.confirmationDialog(.editExisting(let entry)))):
                 
-                return state.clearAndPushDetailFor(entry: entry)
-
-            case .destination: return .none
+                // simultaneously push the entry's detail page and clear the child state
                 
-            case .delayBeforePushShouldStartCompleted(let entry):
+                state.spelling = .init()
                 
                 state.destination = .entryDetail(EntryDetail.State.init(entry: entry))
                 
+                return .none
+
+            case .destination: return .none
+                
+            case .foundMatchForCurrentSpelling(let entry):
+                
+                state.destination = .confirmationDialog(.addOrEditExisting(entry: entry))
+                
+                return .none
+                
+            case .successfullyInserted(let entry):
+
+                state.destination = .entryDetail(EntryDetail.State.init(entry: entry))
+
                 return .none
             }
         }
@@ -120,7 +133,7 @@ public struct EntryCreator {
 }
 
 extension ConfirmationDialogState {
-    static func addOrEditExisting(entry: Shared<Entry>) -> Self where Action == EntryCreator.ConfirmationDialog {
+    static func addOrEditExisting(entry: Entry) -> Self where Action == EntryCreator.ConfirmationDialog {
         .init(
             title: {
                 .init("A word spelled \"\(entry.spelling)\" has already been added")
@@ -155,6 +168,7 @@ public struct EntryCreatorView: View {
             FloatingTextFieldView(
                 store: store.scope(state: \.spelling, action: \.spelling)
             )
+            .environment(\.language, store.focusedLanguage)
             
         }
         .padding()
