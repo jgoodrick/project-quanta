@@ -16,6 +16,7 @@ public struct EntryCreator {
     
     @Reducer(state: .equatable)
     public enum Destination {
+        case alert(AlertState<Never>)
         case confirmationDialog(ConfirmationDialogState<EntryCreator.ConfirmationDialog>)
         case entryDetail(EntryDetail)
     }
@@ -30,13 +31,11 @@ public struct EntryCreator {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
         case spelling(FloatingTextField.Action)
-        
-        case foundMatchForCurrentSpelling(Entry)
-        case successfullyInserted(entry: Entry)
     }
         
-    @Dependency(\.actorContext) var actorContext
+    @Dependency(\.modelContainer) var modelContainer
 
+    @MainActor
     public var body: some Reducer<State, Action> {
         
         BindingReducer()
@@ -51,37 +50,45 @@ public struct EntryCreator {
             case .spelling(.delegate(let delegatedAction)):
                 switch delegatedAction {
                 case .fieldCommitted, .saveEntryButtonTapped:
-
+                    
                     let spelling = state.spelling.text
-
+                    
                     guard !spelling.isEmpty else {
                         state.spelling = .init()
                         return .none
                     }
                     
-                    return .run { [state] send in
-
-                        let context = try actorContext()
-                        
-                        let matches = try await context.fetch(FetchDescriptor<Entry>(predicate: #Predicate { $0.spelling == spelling }))
-
-                        if let match = matches.first {
-
-                            await send(.foundMatchForCurrentSpelling(match))
-
-                        } else {
-
-                            let newEntry = try await context.insertNewEntry(
-                                spelling: spelling,
-                                for: state.focusedLanguage
-                            )
-
-                            await send(.successfullyInserted(entry: newEntry))
-
-                        }
-                    }
-                }
+                    let matches: [Entry]
                     
+                    do {
+                        
+                        matches = try modelContainer.mainContext.fetch(FetchDescriptor<Entry>(predicate: #Predicate { $0.spelling == spelling }))
+                        
+                        if let match = matches.first {
+                            
+                            state.destination = .confirmationDialog(.addOrEditExisting(entry: match))
+                            
+                        } else {
+                            
+                            let newEntry = try modelContainer.mainContext.insertNewEntry(
+                                spelling: spelling
+                            )
+                            
+//                            newEntry.language = focusedLanguage
+                            
+                            state.destination = .entryDetail(EntryDetail.State.init(entry: newEntry))
+                            
+                        }
+                        
+                    } catch {
+                        
+                        state.destination = .alert(.init(title: { .init("Could not create new entry from spelling '\(spelling)' due to: \(error.localizedDescription)") }))
+                        
+                    }
+                    
+                    return .none
+                    
+                }
             case .spelling: return .none
             case .destination(.presented(.confirmationDialog(.addNew))):
                 
@@ -90,18 +97,22 @@ public struct EntryCreator {
                 guard !spelling.isEmpty else {
                     return .none
                 }
-
-                return .run { [state] send in
-                                        
-                    let context = try actorContext()
-                    
-                    let newEntry = try await context.insertNewEntry(
-                        spelling: state.spelling.text,
-                        for: state.focusedLanguage
+                
+                do {
+                    let newEntry = try modelContainer.mainContext.insertNewEntry(
+                        spelling: state.spelling.text
                     )
+                    
+//                  newEntry.language = focusedLanguage
 
-                    await send(.successfullyInserted(entry: newEntry))
+                    state.destination = .entryDetail(EntryDetail.State.init(entry: newEntry))
+                    
+                } catch {
+                    
+                    state.destination = .alert(.init(title: { .init("Could not add new entry with spelling '\(state.spelling.text)' due to: \(error.localizedDescription)")}))
                 }
+                    
+                return .none
 
             case .destination(.presented(.confirmationDialog(.editExisting(let entry)))):
                 
@@ -114,18 +125,6 @@ public struct EntryCreator {
                 return .none
 
             case .destination: return .none
-                
-            case .foundMatchForCurrentSpelling(let entry):
-                
-                state.destination = .confirmationDialog(.addOrEditExisting(entry: entry))
-                
-                return .none
-                
-            case .successfullyInserted(let entry):
-
-                state.destination = .entryDetail(EntryDetail.State.init(entry: entry))
-
-                return .none
             }
         }
         .ifLet(\.$destination, action: \.destination)
@@ -136,7 +135,7 @@ extension ConfirmationDialogState {
     static func addOrEditExisting(entry: Entry) -> Self where Action == EntryCreator.ConfirmationDialog {
         .init(
             title: {
-                .init("A word spelled \"\(entry.spelling)\" has already been added")
+                .init("A word spelled '\(entry.spelling)' has already been added")
             },
             actions: {
                 ButtonState<EntryCreator.ConfirmationDialog>.init(
@@ -168,10 +167,11 @@ public struct EntryCreatorView: View {
             FloatingTextFieldView(
                 store: store.scope(state: \.spelling, action: \.spelling)
             )
-            .environment(\.language, store.focusedLanguage)
+//            .environment(\.language, store.focusedLanguage)
             
         }
         .padding()
+        .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
         .confirmationDialog($store.scope(state: \.destination?.confirmationDialog, action: \.destination.confirmationDialog))
         .navigationDestination(item: $store.scope(state: \.destination?.entryDetail, action: \.destination.entryDetail)) {
             EntryDetailView(store: $0)

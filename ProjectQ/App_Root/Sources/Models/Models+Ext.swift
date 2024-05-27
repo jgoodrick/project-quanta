@@ -3,9 +3,9 @@ import ComposableArchitecture
 import SwiftUI
 
 extension Entry {
-    static func empty(language: Language) -> Self {
+    static func empty() -> Self {
         @Dependency(\.date.now) var now
-        return self.init(added: now, modified: now, language: language, spelling: "")
+        return self.init(added: now, modified: now, spelling: "")
     }
     func update<T>(keyPath: ReferenceWritableKeyPath<Entry, T>, to value: T) {
         self[keyPath: keyPath] = value
@@ -14,22 +14,10 @@ extension Entry {
     }
 }
 
-extension Translation {
-    static func empty(from: Entry, to: Entry) -> Self {
-        @Dependency(\.date.now) var now
-        return self.init(from: from, to: to, added: now, modified: now)
-    }
-    func update<T>(keyPath: ReferenceWritableKeyPath<Translation, T>, to value: T) {
-        self[keyPath: keyPath] = value
-        @Dependency(\.date.now) var now
-        modified = now
-    }
-}
-
 extension Usage {
-    static func empty(included: [Entry]) -> Self {
+    static func empty() -> Self {
         @Dependency(\.date.now) var now
-        return self.init(added: now, modified: now, included: included, value: "")
+        return self.init(added: now, modified: now, value: "")
     }
     func update<T>(keyPath: ReferenceWritableKeyPath<Usage, T>, to value: T) {
         self[keyPath: keyPath] = value
@@ -41,7 +29,8 @@ extension Usage {
 
 extension Language {
     public var displayName: String {
-        definition.displayName
+        definition.id
+//        definition.displayName
     }
     public var locale: Locale? {
         switch definition {

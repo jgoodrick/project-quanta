@@ -40,16 +40,12 @@ public struct EntryDetail {
         case editLanguageMenuButtonSelected(LanguageSelection)
         case addTranslationButtonTapped
         case addTranslationLongPressMenuButtonTapped(LanguageSelection)
-        case translationSelected(Translation)
-        case translationDestructiveSwipeButtonTapped(Translation)
+        case translationSelected(Entry)
+        case translationDestructiveSwipeButtonTapped(Entry)
         case movedTranslation(fromOffsets: IndexSet, toOffset: Int)
-
-        case foundMatchForUpdatedSpelling(Entry)
-        case shouldUpdateSpelling
 
     }
 
-    @Dependency(\.actorContext) var actorContext
     @Dependency(\.modelContainer) var modelContainer
 
     @MainActor
@@ -73,14 +69,15 @@ public struct EntryDetail {
                 return .none
 
             case .editLanguageMenuButtonSelected(let selected):
-                                
-                if let newLanguage = try? modelContainer.fetchLanguageBy(definition: selected, createIfMissing: true) {
+
+                
+                if let selectedLanguage = modelContainer.mainContext.language(for: selected, createIfMissing: true) {
                     
-                    state.entry.language = newLanguage
+                    state.entry.language = selectedLanguage
                     
                 } else {
                     
-                    state.destination = .alert(.init(title: { .init("Failed to change the language") }))
+                    state.destination = .alert(.init(title: { .init("Failed to insert the new language into the database: \(selected.displayName)") }))
                     
                 }
 
@@ -88,11 +85,11 @@ public struct EntryDetail {
 
             case .addTranslationButtonTapped:
 
-                @Dependency(\.languages) var languages
+                @Dependency(\.locale) var systemLocale
                 
-                if let systemValue = state.languageSelectionList.first(where: { $0.id == languages.device().identifier }) {
+                if let systemValue = modelContainer.mainContext.language(for: .bcp47(systemLocale.identifier(.bcp47)), createIfMissing: true) {
 
-                    state.translationLanguage = systemValue
+                    state.translationLanguage = systemValue.definition
                     state.translation.collapsed = false
                     return .none
 
@@ -116,48 +113,68 @@ public struct EntryDetail {
             case .spelling(.delegate(let delegatedAction)):
                 switch delegatedAction {
                 case .fieldCommitted, .saveEntryButtonTapped:
-
+                    
                     let spelling = state.spelling.text
-
+                    
                     guard !spelling.isEmpty else {
                         state.spelling = .init()
                         return .none
                     }
-
-                    return .run { send in
-
-                        let context = try actorContext()
-
-                        let matches = try await context.fetch(FetchDescriptor<Entry>(predicate: #Predicate { $0.spelling == spelling }))
-
+                    
+                    do {
+                        
+                        let matches = try modelContainer.mainContext.fetch(FetchDescriptor<Entry>(predicate: #Predicate { $0.spelling == spelling }))
+                        
                         if let match = matches.first {
-
-                            await send(.foundMatchForUpdatedSpelling(match))
-
+                            
+                            state.destination = .confirmationDialog(.addOrMergeWithExisting(entry: match))
+                            
                         } else {
-
-                            await send(.shouldUpdateSpelling)
-
+                            
+                            state.entry.spelling = state.spelling.text
+                            
                         }
+                                         
+                    } catch {
+                        
+                        state.destination = .alert(.init(title: { .init("Failed to fetch spelling matches due to: \(error.localizedDescription)") }))
+
                     }
 
                 }
-            case .spelling: return .none
-            case .foundMatchForUpdatedSpelling(let match):
-
-                state.destination = .confirmationDialog(.addOrMergeWithExisting(entry: match))
-
+            
                 return .none
 
-            case .shouldUpdateSpelling, .destination(.presented(.confirmationDialog(.updateSpellingWithoutMerging))):
+            case .spelling: return .none
+            case .destination(.presented(.confirmationDialog(.updateSpellingWithoutMerging))):
 
                 state.entry.spelling = state.spelling.text
 
                 return .none
 
-            case .destination(.presented(.confirmationDialog(.mergeWithExisting(let entry)))):
+            case .destination(.presented(.confirmationDialog(.mergeWithExisting(let existing)))):
 
-                // TODO: handle the actual merging here
+                modelContainer.mainContext.delete(state.entry)
+
+                @Dependency(\.date) var date
+                                
+                existing.modified = date.now
+                
+                for translation in state.entry.translations {
+                    if !existing.translations.contains(translation) {
+                        existing.translations.append(translation)
+                    }
+                }
+                        
+                for keyword in state.entry.keywords {
+                    if !existing.keywords.contains(keyword) {
+                        existing.keywords.append(keyword)
+                    }
+                }
+                
+                for note in state.entry.notes {
+                    note.entry = existing
+                }
 
                 return .none
 
@@ -171,43 +188,89 @@ public struct EntryDetail {
             case .translation(.delegate(let delegatedAction)):
                 switch delegatedAction {
                 case .fieldCommitted, .saveEntryButtonTapped:
+                    
+                    let translationSpelling = state.translation.text
+                    
+                    guard !translationSpelling.isEmpty else {
+                        state.translation = .init()
+                        return .none
+                    }
+                    
+                    let matches: [Entry]
+                    
+                    do {
 
-//                    if let match = state.$entries.matching(spelling: state.translation.text) {
-//
-//                        state.$entries.establishTranslationConnectionBetween(state.$entry, and: match)
-//
-//                    } else if !state.translation.text.isEmpty {
-//
-//                        @Dependency(\.uuid) var uuid
-//                        @Dependency(\.date.now) var now
-//
-//                        let new = state.$entries.add(new: .init(
-//                            id: uuid(),
-//                            locale: state.translationLocale,
-//                            added: now,
-//                            lastModified: now,
-//                            spelling: state.translation.text
-//                        ))
-//
-//                        state.$entries.establishTranslationConnectionBetween(state.$entry, and: new)
-//
-//                    }
-//
-//                    state.translation = .init()
+                        matches = try modelContainer.mainContext.fetch(FetchDescriptor<Entry>(predicate: #Predicate { $0.spelling == translationSpelling }))
+                        
+                    } catch {
+                        
+                        state.destination = .alert(.init(title: { .init("Failed to handle translation delegated action due to: \(error.localizedDescription)") }))
+                        
+                        return .none
+                        
+                    }
 
-                    return .none
-
+                    @Dependency(\.date) var date
+                    
+                    let now = date.now
+                    
+                    if let match = matches.first {
+                        
+                        if matches.count > 1 {
+                            
+                            // what if there are more than one words in the repo that match the spelling of the translation the user just typed in? (Because the user previously decided to create a separate word with the same spelling instead of merging or editing the existing one). We will need to handle this with a confirmation dialog, as we have done previously.
+                            // TODO: handle more than one match
+                            
+                            state.destination = .alert(.init(title: { .init("There was more than one entry that matched that translation's spelling. This is not currently supported.")}))
+                            
+                        } else {
+                                                        
+                            state.entry.translations.append(match)
+                                                        
+                        }
+                        
+                    } else {
+                        
+                        // create both an entry for the newly typed word, and hook that new entry up as a translation of the focused entry
+                        
+                        guard let selectedLanguage = modelContainer.mainContext.language(for: state.translationLanguage, createIfMissing: true) else {
+                            
+                            state.destination = .alert(.init(title: { .init("Failed to insert the translation language into the database: \(state.translationLanguage.displayName)") }))
+                            
+                            return .none
+                            
+                        }
+                        
+                        let newEntryForTranslation = Entry(
+                            added: now,
+                            modified: now,
+                            spelling: translationSpelling
+                        )
+                        
+                        modelContainer.mainContext.insert(newEntryForTranslation)
+                        
+                        newEntryForTranslation.language = selectedLanguage
+                        
+                        state.entry.translations.append(newEntryForTranslation)
+                        
+                    }
+                    
+                    state.translation = .init()
+                                            
                 }
+                    
+                return .none
+
             case .translation: return .none
             case .translationSelected(let translation):
 
-                state.destination = .related(.init(entry: translation.to))
+                state.destination = .related(.init(entry: translation))
 
                 return .none
 
             case .translationDestructiveSwipeButtonTapped(let translation):
 
-                modelContainer.mainContext.delete(translation)
+                state.entry.translations.removeAll(where: { $0.persistentModelID == translation.persistentModelID })
                 
                 return .none
 
@@ -255,7 +318,7 @@ struct EntryDetailLanguageSection: View {
 
     var body: some View {
         Section {
-            Text(store.entry.language.displayName)
+            Text(store.entry.language?.displayName ?? "Not Set")
         } header: {
             HStack(alignment: .firstTextBaseline) {
                 
@@ -293,7 +356,7 @@ struct EntryDetailTranslationSection: View {
             ForEach(store.entry.translations) { translation in
                 HStack {
                     Button(action: { store.send(.translationSelected(translation)) }) {
-                        Text("\(translation.to.spelling)")
+                        Text("\(translation.spelling)")
                     }
                     Spacer()
                     Image(systemName: "line.3.horizontal").foregroundStyle(.secondary)
@@ -354,11 +417,11 @@ public struct EntryDetailView: View {
     
     public var body: some View {
         Form {
-//            
-//            EntryDetailLanguageSection(store: store)
-//            
-//            EntryDetailTranslationSection(store: store)
-//            
+            
+            EntryDetailLanguageSection(store: store)
+            
+            EntryDetailTranslationSection(store: store)
+            
         }
 //        .toolbar {
 //            ToolbarItem {
@@ -367,33 +430,33 @@ public struct EntryDetailView: View {
 //                }
 //            }
 //        }
-//        .safeAreaInset(edge: .bottom) {
-//            VStack {
-//                
-//                Spacer()
-//                        
-//                if !store.spelling.collapsed {
-//                    FloatingTextFieldView(
-//                        store: store.scope(state: \.spelling, action: \.spelling)
-//                    )
-//                } else if !store.translation.collapsed {
-//                    FloatingTextFieldView(
-//                        store: store.scope(state: \.translation, action: \.translation)
-//                    )
-//                    .environment(\.locale, store.translationLocale)
-//                }
-//                
-//            }
-//            .padding()
-//        }
-//        .confirmationDialog($store.scope(state: \.destination?.confirmationDialog, action: \.destination.confirmationDialog))
-////        .scrollContentBackground(.hidden)
-//        .navigationDestination(item: $store.scope(state: \.destination?.related, action: \.destination.related)) { store in
-//            EntryDetailView(store: store)
-//        }
-//        .navigationTitle(store.entry.spelling)
-//        .environment(\.locale, store.entry.locale)
-//        .task { await store.send(.task).finish() }
+        .safeAreaInset(edge: .bottom) {
+            VStack {
+                
+                Spacer()
+                        
+                if !store.spelling.collapsed {
+                    FloatingTextFieldView(
+                        store: store.scope(state: \.spelling, action: \.spelling)
+                    )
+                } else if !store.translation.collapsed {
+                    FloatingTextFieldView(
+                        store: store.scope(state: \.translation, action: \.translation)
+                    )
+                    .environment(\.language, store.translationLanguage)
+                }
+                
+            }
+            .padding()
+        }
+        .confirmationDialog($store.scope(state: \.destination?.confirmationDialog, action: \.destination.confirmationDialog))
+//        .scrollContentBackground(.hidden)
+        .navigationDestination(item: $store.scope(state: \.destination?.related, action: \.destination.related)) { store in
+            EntryDetailView(store: store)
+        }
+        .navigationTitle(store.entry.spelling)
+        .environment(\.language, store.entry.language?.definition ?? .defaultValue)
+        .task { await store.send(.task).finish() }
     }
 }
 
@@ -403,63 +466,3 @@ extension EnvironmentValues {
         set { self[EntryDetailView.Style.self] = newValue }
     }
 }
-
-//#Preview { Preview }
-//private var Preview: some View {
-//    let exampleEntries: Entries = .mock(all: [
-//        Entry.init(
-//            id: .init(0),
-//            locale: .init(
-//                languageCode: .ukrainian,
-//                script: .cyrillic,
-//                languageRegion: .ukraine
-//            ),
-//            added: .now,
-//            lastModified: .now,
-//            spelling: "Про",
-//            translations: [
-//                .init(1),
-//                .init(2),
-//            ],
-//            examples: [
-//                "An example sentence using the ukraininan word for \"about\"",
-//            ],
-//            notes: []
-//        ),
-//        Entry.init(
-//            id: .init(1),
-//            locale: .init(
-//                languageCode: .english,
-//                script: .latin,
-//                languageRegion: .unitedStates
-//            ),
-//            added: .now,
-//            lastModified: .now,
-//            spelling: "about",
-//            translations: [],
-//            examples: [],
-//            notes: []
-//        ),
-//        Entry.init(
-//            id: .init(2),
-//            locale: .init(
-//                languageCode: .english,
-//                script: .latin,
-//                languageRegion: .unitedStates
-//            ),
-//            added: .now,
-//            lastModified: .now,
-//            spelling: "around",
-//            translations: [],
-//            examples: [],
-//            notes: []
-//        ),
-//    ])
-//    @Shared(.entries) var entries = exampleEntries
-//    let detailed = $entries[id: .init(0)]!
-//    return NavigationStack {
-//        EntryDetailView(store: .init(initialState: .init(entry: detailed)) {
-//            EntryDetail()._printChanges()
-//        })
-//    }
-//}

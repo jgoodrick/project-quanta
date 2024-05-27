@@ -18,12 +18,8 @@ public struct Home {
         var languageContextMenuIsShowing: Bool = false
         var predicate: Predicate<Entry> {
             #Predicate<Entry> {
-                $0.language.definition == focusedLanguage
+                $0.language?.definitionID == focusedLanguage?.id
             }
-//            #Predicate {
-//                $0.language.definition == focusedLanguage &&
-//                searchField.isEmpty ? true : !$0.spelling.characterMatches(from: searchField).isEmpty
-//            }
         }
         var sortDescriptors: [SortDescriptor] = [SortDescriptor.init(\Entry.modified, order: .reverse)]
     }
@@ -58,6 +54,7 @@ public struct Home {
     
     @Dependency(\.modelContainer) var modelContainer
     
+    @MainActor
     public var body: some Reducer<State, Action> {
         
         BindingReducer()
@@ -91,11 +88,9 @@ public struct Home {
                 
             case .destructiveSwipeButtonTapped(let entry):
                 
-                return .run { send in
-                    
-                    await modelContainer.mainContext.delete(entry)
-                    
-                }
+                modelContainer.mainContext.delete(entry)
+                
+                return .none
                 
             case .editSwipeButtonTapped(_): return .none
             case .dialog(_): return .none
@@ -195,7 +190,7 @@ struct HomeRootView: View {
                 EntryCreatorView(store: store.scope(state: \.entryCreator, action: \.entryCreator))
             }
         }
-        .navigationTitle(store.focusedLanguage.displayName.capitalized)
+        .navigationTitle((store.focusedLanguage?.displayName ?? "All").capitalized)
         .onSubmit(of: .search) {
             store.send(.searchFieldCommitted)
         }

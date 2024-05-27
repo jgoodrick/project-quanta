@@ -7,7 +7,6 @@ public enum ModelsSchemaV1: VersionedSchema {
     public static var models: [any PersistentModel.Type] {
         [
             Entry.self,
-            Translation.self,
             Usage.self,
             Language.self,
             Keyword.self,
@@ -20,43 +19,25 @@ public enum ModelsSchemaV1: VersionedSchema {
         public var added: Date
         public var modified: Date
         public var spelling: String
-        public var language: Language
         
-        @Relationship(inverse: \Translation.from)
-        public var translations: [Translation] = []
+        public var language: Language?
         
-        @Relationship(inverse: \Usage.included)
+        public var translations: [Entry] = []
+        
+        @Relationship(inverse: \Entry.translations)
+        public var backTranslations: [Entry] = []
+                
+        @Relationship(inverse: \Usage.uses)
         public var usages: [Usage] = []
         
-        @Relationship(inverse: \Keyword.matches)
         public var keywords: [Keyword] = []
         
-        @Relationship(deleteRule: .cascade)
-        public var note: Note? = nil
+        public var notes: [Note] = []
 
-        public init(added: Date, modified: Date, language: Language, spelling: String) {
+        public init(added: Date, modified: Date, spelling: String) {
             self.added = added
             self.modified = modified
-            self.language = language
             self.spelling = spelling
-        }
-    }
-
-    @Model
-    public final class Translation {
-        public let from: Entry
-        public let to: Entry
-        public var added: Date
-        public var modified: Date
-        
-        @Relationship(deleteRule: .cascade)
-        public var note: Note? = nil
-        
-        public init(from: Entry, to: Entry, added: Date, modified: Date) {
-            self.from = from
-            self.to = to
-            self.added = added
-            self.modified = modified
         }
     }
 
@@ -69,20 +50,19 @@ public enum ModelsSchemaV1: VersionedSchema {
         @Relationship(deleteRule: .cascade)
         public var note: Note? = nil
         
-        public var included: [Entry] = []
+        public var uses: [Entry] = []
         
-        public init(added: Date, modified: Date, included: [Entry], value: String) {
+        public init(added: Date, modified: Date, value: String) {
             self.added = added
             self.modified = modified
-            self.included = included
             self.value = value
         }
     }
     
     @Model
     public final class Language {
-        fileprivate var definitionID: String
-        fileprivate var customLocalizedTitles: [String: String]? = nil
+        public var definitionID: String
+        public var customLocalizedTitles: [String: String]? = nil
         
         // I am storing this as a String and a [String: String] until SwiftData predicates can handle enums
         public var definition: Definition {
@@ -137,12 +117,16 @@ public enum ModelsSchemaV1: VersionedSchema {
     
     @Model
     public final class Keyword {
-        public var title: String
-        public var matches: [Entry] = []
-        
         public init(title: String) {
             self.title = title
+            self.matches = []
         }
+
+        public var title: String
+        
+        @Relationship(inverse: \Entry.keywords)
+        public var matches: [Entry] = []
+        
     }
     
     @Model
@@ -150,6 +134,9 @@ public enum ModelsSchemaV1: VersionedSchema {
         public var added: Date
         public var modified: Date
         public var value: String
+        
+        @Relationship(inverse: \Entry.notes)
+        public var entry: Entry?
 
         public init(added: Date, modified: Date, value: String) {
             self.added = added
