@@ -25,6 +25,21 @@ struct SystemLanguages: DependencyKey {
             return systemLocale.localizedString(forIdentifier: identifier) ?? identifier
         }
     }
+    
+    var inDefaultSortOrder: IdentifiedArrayOf<Language.ID> {
+        var result = configured()
+        if let first = result.first {
+            @Dependency(\.locale) var locale
+            switch first {
+            case .bcp47(let identifier):
+                if identifier == locale.identifier(.bcp47) {
+                    result[id: first.id] = nil
+                    result.append(first)
+                }
+            }
+        }
+        return result
+    }
 }
 
 extension DependencyValues {
@@ -33,3 +48,4 @@ extension DependencyValues {
         set { self[SystemLanguages.self] = newValue }
     }
 }
+

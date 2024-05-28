@@ -27,23 +27,6 @@ extension PersistenceKey where Self == PersistenceKeyDefault<FileStorageKey<Lang
     }
 }
 
-extension SystemLanguages {
-    var inDefaultSortOrder: IdentifiedArrayOf<Language.ID> {
-        var result = configured()
-        if let first = result.first {
-            @Dependency(\.locale) var locale
-            switch first {
-            case .bcp47(let identifier):
-                if identifier == locale.identifier(.bcp47) {
-                    result[id: first.id] = nil
-                    result.append(first)
-                }
-            }
-        }
-        return result
-    }
-}
-
 extension PersistenceKey where Self == PersistenceKeyDefault<FileStorageKey<Repository>> {
     static var repo: Self {
         PersistenceKeyDefault(
