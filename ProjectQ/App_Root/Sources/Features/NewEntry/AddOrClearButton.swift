@@ -1,4 +1,5 @@
 
+import Model
 import SwiftUI
 
 struct AddOrClearButton: View {

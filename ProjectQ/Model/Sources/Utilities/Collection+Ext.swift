@@ -29,15 +29,16 @@ public extension Collection {
     }
     
     func sorted<T: Comparable>(
-        byKeyPath keyPath: KeyPath<Element, T>,
+        byKeyPath keyPath: KeyPath<Element, T>?,
         reversed: Bool = false
     ) -> [Element] {
         sorted(
             by: {
+                guard let keyPath else { return true }
                 if reversed {
-                    $0[keyPath: keyPath] < $1[keyPath: keyPath]
+                    return $0[keyPath: keyPath] < $1[keyPath: keyPath]
                 } else {
-                    $0[keyPath: keyPath] > $1[keyPath: keyPath]
+                    return $0[keyPath: keyPath] > $1[keyPath: keyPath]
                 }
             }
         )

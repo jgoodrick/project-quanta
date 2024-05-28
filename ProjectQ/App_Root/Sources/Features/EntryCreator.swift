@@ -1,6 +1,6 @@
 
 import ComposableArchitecture
-import SwiftData
+import Model
 import SwiftUI
 
 @Reducer

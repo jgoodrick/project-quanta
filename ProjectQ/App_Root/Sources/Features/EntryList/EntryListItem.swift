@@ -1,5 +1,5 @@
 
-import ComposableArchitecture
+import Model
 import SwiftUI
 
 public struct HomeListItemView: View {
