@@ -11,17 +11,18 @@ public struct Home {
     public struct State: Equatable {
         public init() {}
         @Presents var destination: Destination.State?
-        @Shared(.focusedLanguage) var focusedLanguage
+//        @Shared(.repository) var repository
+        @Shared(.settings) var settings
         var searchField: String = ""
         var settingsMenu: SettingsMenu.State = .init()
         var entryCreator: EntryCreator.State = .init()
         var languageContextMenuIsShowing: Bool = false
-        var predicate: Predicate<Entry> {
-            #Predicate<Entry> {
-                $0.language?.definitionID == focusedLanguage?.id
-            }
-        }
-        var sortDescriptors: [SortDescriptor] = [SortDescriptor.init(\Entry.modified, order: .reverse)]
+//        var predicate: Predicate<Entry> {
+//            #Predicate<Entry> {
+//                $0.language?.definitionID == focusedLanguage?.id
+//            }
+//        }
+//        var sortDescriptors: [SortDescriptor] = [SortDescriptor.init(\Entry.modified, order: .reverse)]
     }
     
     @Reducer(state: .equatable)
@@ -52,7 +53,7 @@ public struct Home {
 
     }
     
-    @Dependency(\.modelContainer) var modelContainer
+//    @Dependency(\.modelContainer) var modelContainer
     
     @MainActor
     public var body: some Reducer<State, Action> {
@@ -76,19 +77,19 @@ public struct Home {
             case .searchingEnded: return .none
             case .searchingStarted:
                 
-                state.entryCreator = .init()
+//                state.entryCreator = .init()
                 
                 return .none
                 
             case .entryTapped(let entry):
                 
-                state.destination = .entryDetail(.init(entry: entry))
+//                state.destination = .entryDetail(.init(entry: entry))
                 
                 return .none
                 
             case .destructiveSwipeButtonTapped(let entry):
                 
-                modelContainer.mainContext.delete(entry)
+//                modelContainer.mainContext.delete(entry)
                 
                 return .none
                 
@@ -96,7 +97,7 @@ public struct Home {
             case .dialog(_): return .none
             case .settingsMenu(.allSettingsMenuButtonTapped):
                 
-                state.entryCreator = .init()
+//                state.entryCreator = .init()
                 
                 return .none
                 
@@ -119,12 +120,12 @@ fileprivate extension String {
 struct HomeListView: View {
     
     @Bindable var store: StoreOf<Home>
-    @Query var entries: [Entry]
+    var entries: [Entry] = []
     
-    init(store: StoreOf<Home>, query _entries: Query<Entry, [Entry]>) {
-        self.store = store
-        self._entries = _entries
-    }
+//    init(store: StoreOf<Home>, query _entries: Query<Entry, [Entry]>) {
+//        self.store = store
+//        self._entries = _entries
+//    }
     
     public var body: some View {
         List {
@@ -179,18 +180,14 @@ struct HomeRootView: View {
 
     var body: some View {
         HomeListView(
-            store: store,
-            query: Query(
-                filter: store.predicate,
-                sort: store.sortDescriptors
-            )
+            store: store
         )
         .safeAreaInset(edge: .bottom) {
             if !isSearching {
                 EntryCreatorView(store: store.scope(state: \.entryCreator, action: \.entryCreator))
             }
         }
-        .navigationTitle((store.focusedLanguage?.displayName ?? "All").capitalized)
+        .navigationTitle(store.settings.focusedLanguage.displayName.capitalized)
         .onSubmit(of: .search) {
             store.send(.searchFieldCommitted)
         }

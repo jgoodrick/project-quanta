@@ -5,7 +5,7 @@ import SwiftUI
 @ObservableState
 public struct Entry: Identifiable, Equatable, Codable, Sendable {
     public let id: UUID
-    var spelling: String = ""
+    public var spelling: String = ""
     var alternateSpellings: [String] = []
 
 //    var diagram: Diagram = .init()
@@ -28,15 +28,27 @@ public struct Entry: Identifiable, Equatable, Codable, Sendable {
     
     struct Relationships: Equatable, Codable, Sendable {
         var language: Language.ID?
-        var root: UUID?
+        var root: Entry.ID?
+        var derived: Set<Entry.ID> = []
         var translations: [Entry.ID] = []
         var backTranslations: Set<Entry.ID> = []
-        var other: [Entry.ID] = []
+        var seeAlso: [Entry.ID] = []
         var usages: [Usage.ID] = []
         var keywords: Set<Keyword.ID> = []
         var notes: [Note.ID] = []
         var userCollections: Set<UserCollection.ID> = []
 //        var recordings: [Recording.ID] = []
+        var isOrphan: Bool {
+            root == nil &&
+            derived.isEmpty &&
+            translations.isEmpty &&
+            backTranslations.isEmpty &&
+            seeAlso.isEmpty &&
+            usages.isEmpty &&
+            keywords.isEmpty &&
+            notes.isEmpty &&
+            userCollections.isEmpty
+        }
     }
     
     public struct Aggregate: Identifiable, Equatable, Sendable {
@@ -44,9 +56,10 @@ public struct Entry: Identifiable, Equatable, Codable, Sendable {
         public let entry: Shared<Entry>
         public let language: Language?
         public let root: Entry?
+        public let derived: [Entry]
         public let translations: [Entry]
         public let backTranslations: [Entry]
-        public let other: [Entry]
+        public let seeAlso: [Entry]
         public let usages: [Usage]
         public let keywords: [Keyword]
         public let notes: [Note]

@@ -8,14 +8,14 @@ public struct Settings {
     
     @ObservableState
     public struct State: Equatable {
-        @Shared(.languageSelectionList) var languageSelectionList
-        @Shared(.focusedLanguage) var focusedLanguage
+        @Shared var languageSelectionList: IdentifiedArrayOf<Language>
+        @Shared var focusedLanguage: Language
     }
     
     public enum Action {
-        case destructiveSwipeButtonTapped(LanguageSelection)
-        case addLanguageMenuButtonTapped(LanguageSelection)
-        case languageSelected(LanguageSelection)
+        case destructiveSwipeButtonTapped(Language)
+        case addLanguageMenuButtonTapped(Language)
+        case languageSelected(Language)
         case moved(fromOffsets: IndexSet, toOffset: Int)
     }
     
@@ -55,6 +55,8 @@ public struct Settings {
 struct SettingsView: View {
     
     @Bindable var store: StoreOf<Settings>
+    
+    @Environment(\.locale) var locale
     
     var body: some View {
         List {
@@ -107,5 +109,7 @@ struct SettingsView: View {
 
 #Preview { Preview }
 private var Preview: some View {
-    SettingsView(store: .init(initialState: .init(), reducer: { Settings() }))
+    let options: IdentifiedArrayOf<Language> = .init(arrayLiteral: .ukrainian, .english)
+    let focused: Language = .ukrainian
+    return SettingsView(store: .init(initialState: .init(languageSelectionList: Shared(options), focusedLanguage: Shared(focused)), reducer: { Settings() }))
 }

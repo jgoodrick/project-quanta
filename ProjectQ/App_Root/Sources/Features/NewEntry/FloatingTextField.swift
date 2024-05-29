@@ -8,6 +8,7 @@ public struct FloatingTextField {
     
     @ObservableState
     public struct State: Equatable {
+        @Shared(.settings) var settings
         public var text: String = ""
         public var collapsed: Bool = true
     }
@@ -58,7 +59,7 @@ public struct FloatingTextFieldView: View {
     }
     
     @Environment(\.floatingEntryCreator) var style
-    @Environment(\.language) var language
+//    @Environment(\.language) var language
 
     public var body: some View {
         GeometryReader { proxy in
@@ -76,12 +77,12 @@ public struct FloatingTextFieldView: View {
                                 config.isFirstResponder = !store.collapsed
                                 config.onCommit = { store.send(.delegate(.fieldCommitted)) }
                                 config.placeholder = style.placeholder
-                                config.preferredLanguage = language.bcp47
+                                config.preferredLanguage = store.settings.focusedLanguage.bcp47
                                 config.onLanguageUnavailable = {
                                     print("Could not resolve language with identifier: \($0)")
                                 }
                             }
-                            .id(language)
+                            .id(store.settings.focusedLanguage.id)
                         case .swiftUI:
                             TextField(style.placeholder, text: $store.text)
                                 .onSubmit {

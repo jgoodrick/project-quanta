@@ -10,9 +10,8 @@ public struct SettingsMenu {
     @ObservableState
     public struct State: Equatable {
         public init() {}
+        @Shared(.settings) var settings
         @Presents var destination: Destination.State?
-        @Shared(.languageSelectionList) var languageSelectionList
-        @Shared(.focusedLanguage) var focusedLanguage
     }
     
     @Reducer(state: .equatable)
@@ -25,7 +24,7 @@ public struct SettingsMenu {
         case destination(PresentationAction<Destination.Action>)
         
         case allSettingsMenuButtonTapped
-        case selectedInputLocale(LanguageSelection)
+        case selectedInputLanguage(Language)
     }
     
     public var body: some Reducer<State, Action> {
@@ -37,13 +36,13 @@ public struct SettingsMenu {
             case .binding, .destination: return .none
             case .allSettingsMenuButtonTapped:
                 
-                state.destination = .settings(.init())
+//                state.destination = .settings(.init())
                 
                 return .none
                 
-            case .selectedInputLocale(let selected):
+            case .selectedInputLanguage(let selected):
                 
-                state.focusedLanguage = selected
+//                state.focusedLanguage = selected
                 
                 return .none
                 
@@ -67,9 +66,9 @@ struct PresentsSettingsMenuInToolbar: ViewModifier {
                             Text("All Settings")
                         }
                         
-                        ForEach(store.languageSelectionList) { availableLanguage in
+                        ForEach(store.settings.languageSelectionList) { availableLanguage in
                             Button(action: {
-                                store.send(.selectedInputLocale(availableLanguage))
+                                store.send(.selectedInputLanguage(availableLanguage))
                             }) {
                                 Label(availableLanguage.displayName.capitalized, systemImage: "flag")
                             }

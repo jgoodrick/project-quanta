@@ -9,6 +9,19 @@ import PackageDescription
     let packageSettings = PackageSettings(
         productTypes: [
             "ComposableArchitecture": .framework,
+            "Dependencies": .framework,
+            "Clocks": .framework,
+            "ConcurrencyExtras": .framework,
+            "CombineSchedulers": .framework,
+            "IdentifiedCollections": .framework,
+            "OrderedCollections": .framework,
+            "_CollectionsUtilities": .framework,
+            "DependenciesMacros": .framework,
+            "SwiftUINavigationCore": .framework,
+            "Perception": .framework,
+            "CasePaths": .framework,
+            "CustomDump": .framework,
+            "XCTestDynamicOverlay": .framework,
         ]
     )
 #endif

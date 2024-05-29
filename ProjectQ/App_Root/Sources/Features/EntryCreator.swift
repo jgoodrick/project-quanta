@@ -8,7 +8,7 @@ public struct EntryCreator {
     
     @ObservableState
     public struct State: Equatable {
-        @Shared(.focusedLanguage) var focusedLanguage
+        @Shared(.settings) var settings
         public var spelling: FloatingTextField.State = .init()
         
         @Presents public var destination: Destination.State?
@@ -33,7 +33,7 @@ public struct EntryCreator {
         case spelling(FloatingTextField.Action)
     }
         
-    @Dependency(\.modelContainer) var modelContainer
+//    @Dependency(\.repository) var repository
 
     @MainActor
     public var body: some Reducer<State, Action> {
@@ -54,31 +54,32 @@ public struct EntryCreator {
                     let spelling = state.spelling.text
                     
                     guard !spelling.isEmpty else {
-                        state.spelling = .init()
+                        state.spelling.text = ""
+                        state.spelling.collapsed = true
                         return .none
                     }
                     
                     let matches: [Entry]
                     
                     do {
-                        
-                        matches = try modelContainer.mainContext.fetch(FetchDescriptor<Entry>(predicate: #Predicate { $0.spelling == spelling }))
-                        
-                        if let match = matches.first {
-                            
-                            state.destination = .confirmationDialog(.addOrEditExisting(entry: match))
-                            
-                        } else {
-                            
-                            let newEntry = try modelContainer.mainContext.insertNewEntry(
-                                spelling: spelling
-                            )
-                            
-//                            newEntry.language = focusedLanguage
-                            
-                            state.destination = .entryDetail(EntryDetail.State.init(entry: newEntry))
-                            
-                        }
+                                                
+//                        matches = try modelContainer.mainContext.fetch(FetchDescriptor<Entry>(predicate: #Predicate { $0.spelling == spelling }))
+//                        
+//                        if let match = matches.first {
+//                            
+//                            state.destination = .confirmationDialog(.addOrEditExisting(entry: match))
+//                            
+//                        } else {
+//                            
+//                            let newEntry = try modelContainer.mainContext.insertNewEntry(
+//                                spelling: spelling
+//                            )
+//                            
+////                            newEntry.language = focusedLanguage
+//                            
+//                            state.destination = .entryDetail(EntryDetail.State.init(entry: newEntry))
+//                            
+//                        }
                         
                     } catch {
                         
@@ -99,13 +100,13 @@ public struct EntryCreator {
                 }
                 
                 do {
-                    let newEntry = try modelContainer.mainContext.insertNewEntry(
-                        spelling: state.spelling.text
-                    )
+//                    let newEntry = try modelContainer.mainContext.insertNewEntry(
+//                        spelling: state.spelling.text
+//                    )
                     
 //                  newEntry.language = focusedLanguage
 
-                    state.destination = .entryDetail(EntryDetail.State.init(entry: newEntry))
+//                    state.destination = .entryDetail(EntryDetail.State.init(entry: newEntry))
                     
                 } catch {
                     
@@ -118,9 +119,15 @@ public struct EntryCreator {
                 
                 // simultaneously push the entry's detail page and clear the child state
                 
-                state.spelling = .init()
-                
-                state.destination = .entryDetail(EntryDetail.State.init(entry: entry))
+//                state.spelling.text = ""
+//                state.spelling.collapsed = true
+//
+//                state.destination = .entryDetail(
+//                    EntryDetail.State.init(
+//                        entry: entry,
+//                        languageSelectionList: state.languageSelectionList
+//                    )
+//                )
                 
                 return .none
 

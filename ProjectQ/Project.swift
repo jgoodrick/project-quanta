@@ -104,11 +104,17 @@ extension TargetID: TargetDescription {
         }
     }
     
+    var destinations: Destinations {
+        switch self {
+        case .Model, .Model_Tests: [.mac, .iPhone, .iPad]
+        default: workspaceDestinations
+        }
+    }
+
     var sources: SourceFilesList? { workspaceSources }
     var resources: ResourceFileElements? { workspaceResources() }
     var entitlements: Entitlements? { workspaceEntitlements }
     var product: Product { workspaceProduct }
-    var destinations: Destinations { workspaceDestinations }
     var productName: String? { snake_cased }
     var deploymentTargets: DeploymentTargets { workspaceDeploymentTargets }
     var copyFiles: [CopyFilesAction]? { .none }

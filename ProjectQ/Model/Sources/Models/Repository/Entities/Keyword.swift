@@ -9,6 +9,9 @@ public struct Keyword: Identifiable, Equatable, Codable, Sendable {
     var metadata: Metadata = .init()
     struct Relationships: Equatable, Codable, Sendable {
         var matches: [Entry.ID] = []
+        var isOrphan: Bool {
+            matches.isEmpty
+        }
     }
     public struct Aggregate: Identifiable, Equatable, Sendable {
         public var id: Keyword.ID { keyword.id }

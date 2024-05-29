@@ -12,6 +12,10 @@ public struct Usage: Identifiable, Equatable, Codable, Sendable {
     struct Relationships: Equatable, Codable, Sendable {
         var note: Note.ID? = nil
         var uses: Set<Entry.ID> = []
+        var isOrphan: Bool {
+            uses.isEmpty &&
+            note == nil
+        }
     }
     
     public struct Aggregate: Identifiable, Equatable, Sendable {

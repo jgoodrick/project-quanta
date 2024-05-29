@@ -10,11 +10,14 @@ public struct EntryDetail {
     @ObservableState
     public struct State: Equatable {
         let entry: Entry
-        var spelling: FloatingTextField.State = .init()
-        var translation: FloatingTextField.State = .init()
-        var translationLanguage: LanguageSelection = .systemCurrent
-        @Shared(.languageSelectionList) var languageSelectionList
+        var spelling: FloatingTextField.State
+        var translation: FloatingTextField.State
+        var translationLanguage: Language?
+        @Shared(.settings) var settings
         @Presents var destination: Destination.State?
+        var aggregated: Entry.Aggregate {
+            fatalError()
+        }
     }
     
     @Reducer(state: .equatable)
@@ -37,16 +40,14 @@ public struct EntryDetail {
 
         case task
         case editSpellingButtonTapped
-        case editLanguageMenuButtonSelected(LanguageSelection)
+        case editLanguageMenuButtonSelected(Language)
         case addTranslationButtonTapped
-        case addTranslationLongPressMenuButtonTapped(LanguageSelection)
+        case addTranslationLongPressMenuButtonTapped(Language)
         case translationSelected(Entry)
         case translationDestructiveSwipeButtonTapped(Entry)
         case movedTranslation(fromOffsets: IndexSet, toOffset: Int)
 
     }
-
-    @Dependency(\.modelContainer) var modelContainer
 
     @MainActor
     public var body: some ReducerOf<Self> {
@@ -71,15 +72,15 @@ public struct EntryDetail {
             case .editLanguageMenuButtonSelected(let selected):
 
                 
-                if let selectedLanguage = modelContainer.mainContext.language(for: selected, createIfMissing: true) {
-                    
-                    state.entry.language = selectedLanguage
-                    
-                } else {
-                    
-                    state.destination = .alert(.init(title: { .init("Failed to insert the new language into the database: \(selected.displayName)") }))
-                    
-                }
+//                if let selectedLanguage = modelContainer.mainContext.language(for: selected, createIfMissing: true) {
+//                    
+//                    state.entry.language = selectedLanguage
+//                    
+//                } else {
+//                    
+//                    state.destination = .alert(.init(title: { .init("Failed to insert the new language into the database: \(selected.displayName)") }))
+//                    
+//                }
 
                 return .none
 
@@ -87,21 +88,21 @@ public struct EntryDetail {
 
                 @Dependency(\.locale) var systemLocale
                 
-                if let systemValue = modelContainer.mainContext.language(for: .bcp47(systemLocale.identifier(.bcp47)), createIfMissing: true) {
-
-                    state.translationLanguage = systemValue.definition
-                    state.translation.collapsed = false
+//                if let systemValue = modelContainer.mainContext.language(for: .bcp47(systemLocale.identifier(.bcp47)), createIfMissing: true) {
+//
+//                    state.translationLanguage = systemValue.definition
+//                    state.translation.collapsed = false
                     return .none
-
-                } else {
-
-                    struct MissingSystemLocaleError: Error {}
-
-                    return .run { send in
-                        throw MissingSystemLocaleError()
-                    }
-
-                }
+//
+//                } else {
+//
+//                    struct MissingSystemLocaleError: Error {}
+//
+//                    return .run { send in
+//                        throw MissingSystemLocaleError()
+//                    }
+//
+//                }
 
             case .addTranslationLongPressMenuButtonTapped(let selected):
 
@@ -117,23 +118,23 @@ public struct EntryDetail {
                     let spelling = state.spelling.text
                     
                     guard !spelling.isEmpty else {
-                        state.spelling = .init()
+//                        state.spelling = .init()
                         return .none
                     }
                     
                     do {
                         
-                        let matches = try modelContainer.mainContext.fetch(FetchDescriptor<Entry>(predicate: #Predicate { $0.spelling == spelling }))
-                        
-                        if let match = matches.first {
-                            
-                            state.destination = .confirmationDialog(.addOrMergeWithExisting(entry: match))
-                            
-                        } else {
-                            
-                            state.entry.spelling = state.spelling.text
-                            
-                        }
+//                        let matches = try modelContainer.mainContext.fetch(FetchDescriptor<Entry>(predicate: #Predicate { $0.spelling == spelling }))
+//                        
+//                        if let match = matches.first {
+//                            
+//                            state.destination = .confirmationDialog(.addOrMergeWithExisting(entry: match))
+//                            
+//                        } else {
+//                            
+//                            state.entry.spelling = state.spelling.text
+//                            
+//                        }
                                          
                     } catch {
                         
@@ -148,39 +149,39 @@ public struct EntryDetail {
             case .spelling: return .none
             case .destination(.presented(.confirmationDialog(.updateSpellingWithoutMerging))):
 
-                state.entry.spelling = state.spelling.text
+//                state.entry.spelling = state.spelling.text
 
                 return .none
 
             case .destination(.presented(.confirmationDialog(.mergeWithExisting(let existing)))):
 
-                modelContainer.mainContext.delete(state.entry)
-
-                @Dependency(\.date) var date
-                                
-                existing.modified = date.now
-                
-                for translation in state.entry.translations {
-                    if !existing.translations.contains(translation) {
-                        existing.translations.append(translation)
-                    }
-                }
-                        
-                for keyword in state.entry.keywords {
-                    if !existing.keywords.contains(keyword) {
-                        existing.keywords.append(keyword)
-                    }
-                }
-                
-                for note in state.entry.notes {
-                    note.entry = existing
-                }
+//                modelContainer.mainContext.delete(state.entry)
+//
+//                @Dependency(\.date) var date
+//                                
+//                existing.modified = date.now
+//                
+//                for translation in state.entry.translations {
+//                    if !existing.translations.contains(translation) {
+//                        existing.translations.append(translation)
+//                    }
+//                }
+//                        
+//                for keyword in state.entry.keywords {
+//                    if !existing.keywords.contains(keyword) {
+//                        existing.keywords.append(keyword)
+//                    }
+//                }
+//                
+//                for note in state.entry.notes {
+//                    note.entry = existing
+//                }
 
                 return .none
 
             case .destination(.presented(.confirmationDialog(.cancel))):
 
-                state.spelling = .init()
+//                state.spelling = .init()
 
                 return .none
 
@@ -188,75 +189,76 @@ public struct EntryDetail {
             case .translation(.delegate(let delegatedAction)):
                 switch delegatedAction {
                 case .fieldCommitted, .saveEntryButtonTapped:
+                    break
                     
-                    let translationSpelling = state.translation.text
-                    
-                    guard !translationSpelling.isEmpty else {
-                        state.translation = .init()
-                        return .none
-                    }
-                    
-                    let matches: [Entry]
-                    
-                    do {
-
-                        matches = try modelContainer.mainContext.fetch(FetchDescriptor<Entry>(predicate: #Predicate { $0.spelling == translationSpelling }))
-                        
-                    } catch {
-                        
-                        state.destination = .alert(.init(title: { .init("Failed to handle translation delegated action due to: \(error.localizedDescription)") }))
-                        
-                        return .none
-                        
-                    }
-
-                    @Dependency(\.date) var date
-                    
-                    let now = date.now
-                    
-                    if let match = matches.first {
-                        
-                        if matches.count > 1 {
-                            
-                            // what if there are more than one words in the repo that match the spelling of the translation the user just typed in? (Because the user previously decided to create a separate word with the same spelling instead of merging or editing the existing one). We will need to handle this with a confirmation dialog, as we have done previously.
-                            // TODO: handle more than one match
-                            
-                            state.destination = .alert(.init(title: { .init("There was more than one entry that matched that translation's spelling. This is not currently supported.")}))
-                            
-                        } else {
-                                                        
-                            state.entry.translations.append(match)
-                                                        
-                        }
-                        
-                    } else {
-                        
-                        // create both an entry for the newly typed word, and hook that new entry up as a translation of the focused entry
-                        
-                        guard let selectedLanguage = modelContainer.mainContext.language(for: state.translationLanguage, createIfMissing: true) else {
-                            
-                            state.destination = .alert(.init(title: { .init("Failed to insert the translation language into the database: \(state.translationLanguage.displayName)") }))
-                            
-                            return .none
-                            
-                        }
-                        
-                        let newEntryForTranslation = Entry(
-                            added: now,
-                            modified: now,
-                            spelling: translationSpelling
-                        )
-                        
-                        modelContainer.mainContext.insert(newEntryForTranslation)
-                        
-                        newEntryForTranslation.language = selectedLanguage
-                        
-                        state.entry.translations.append(newEntryForTranslation)
-                        
-                    }
-                    
-                    state.translation = .init()
-                                            
+//                    let translationSpelling = state.translation.text
+//                    
+//                    guard !translationSpelling.isEmpty else {
+//                        state.translation = .init()
+//                        return .none
+//                    }
+//                    
+//                    let matches: [Entry]
+//                    
+//                    do {
+//
+//                        matches = try modelContainer.mainContext.fetch(FetchDescriptor<Entry>(predicate: #Predicate { $0.spelling == translationSpelling }))
+//                        
+//                    } catch {
+//                        
+//                        state.destination = .alert(.init(title: { .init("Failed to handle translation delegated action due to: \(error.localizedDescription)") }))
+//                        
+//                        return .none
+//                        
+//                    }
+//
+//                    @Dependency(\.date) var date
+//                    
+//                    let now = date.now
+//                    
+//                    if let match = matches.first {
+//                        
+//                        if matches.count > 1 {
+//                            
+//                            // what if there are more than one words in the repo that match the spelling of the translation the user just typed in? (Because the user previously decided to create a separate word with the same spelling instead of merging or editing the existing one). We will need to handle this with a confirmation dialog, as we have done previously.
+//                            // TODO: handle more than one match
+//                            
+//                            state.destination = .alert(.init(title: { .init("There was more than one entry that matched that translation's spelling. This is not currently supported.")}))
+//                            
+//                        } else {
+//                                                        
+//                            state.entry.translations.append(match)
+//                                                        
+//                        }
+//                        
+//                    } else {
+//                        
+//                        // create both an entry for the newly typed word, and hook that new entry up as a translation of the focused entry
+//                        
+//                        guard let selectedLanguage = modelContainer.mainContext.language(for: state.translationLanguage, createIfMissing: true) else {
+//                            
+//                            state.destination = .alert(.init(title: { .init("Failed to insert the translation language into the database: \(state.translationLanguage.displayName)") }))
+//                            
+//                            return .none
+//                            
+//                        }
+//                        
+//                        let newEntryForTranslation = Entry(
+//                            added: now,
+//                            modified: now,
+//                            spelling: translationSpelling
+//                        )
+//                        
+//                        modelContainer.mainContext.insert(newEntryForTranslation)
+//                        
+//                        newEntryForTranslation.language = selectedLanguage
+//                        
+//                        state.entry.translations.append(newEntryForTranslation)
+//                        
+//                    }
+//                    
+//                    state.translation = .init()
+//                                            
                 }
                     
                 return .none
@@ -264,19 +266,19 @@ public struct EntryDetail {
             case .translation: return .none
             case .translationSelected(let translation):
 
-                state.destination = .related(.init(entry: translation))
+//                state.destination = .related(.init(entry: translation))
 
                 return .none
 
             case .translationDestructiveSwipeButtonTapped(let translation):
 
-                state.entry.translations.removeAll(where: { $0.persistentModelID == translation.persistentModelID })
+//                state.entry.translations.removeAll(where: { $0.persistentModelID == translation.persistentModelID })
                 
                 return .none
 
             case .movedTranslation(let fromOffsets, let toOffset):
 
-                state.entry.translations.move(fromOffsets: fromOffsets, toOffset: toOffset)
+//                state.entry.translations.move(fromOffsets: fromOffsets, toOffset: toOffset)
 
                 return .none
 
@@ -318,7 +320,7 @@ struct EntryDetailLanguageSection: View {
 
     var body: some View {
         Section {
-            Text(store.entry.language?.displayName ?? "Not Set")
+            Text(store.aggregated.language?.displayName ?? "Not Set")
         } header: {
             HStack(alignment: .firstTextBaseline) {
                 
@@ -329,7 +331,7 @@ struct EntryDetailLanguageSection: View {
                 Spacer()
                 
                 Menu {
-                    ForEach(store.languageSelectionList) { menuItem in
+                    ForEach(store.settings.languageSelectionList) { menuItem in
                         Button(action: {
                             store.send(.editLanguageMenuButtonSelected(menuItem))
                         }) {
@@ -353,7 +355,7 @@ struct EntryDetailTranslationSection: View {
     
     var body: some View {
         Section {
-            ForEach(store.entry.translations) { translation in
+            ForEach(store.aggregated.translations) { translation in
                 HStack {
                     Button(action: { store.send(.translationSelected(translation)) }) {
                         Text("\(translation.spelling)")
@@ -385,7 +387,7 @@ struct EntryDetailTranslationSection: View {
                 
                 Menu(content: {
                     // long press
-                    ForEach(store.languageSelectionList) { menuItem in
+                    ForEach(store.settings.languageSelectionList) { menuItem in
                         Button(action: {
                             store.send(.addTranslationLongPressMenuButtonTapped(menuItem))
                         }) {
@@ -443,7 +445,7 @@ public struct EntryDetailView: View {
                     FloatingTextFieldView(
                         store: store.scope(state: \.translation, action: \.translation)
                     )
-                    .environment(\.language, store.translationLanguage)
+//                    .environment(\.language, store.translationLanguage)
                 }
                 
             }
@@ -455,7 +457,7 @@ public struct EntryDetailView: View {
             EntryDetailView(store: store)
         }
         .navigationTitle(store.entry.spelling)
-        .environment(\.language, store.entry.language?.definition ?? .defaultValue)
+//        .environment(\.language, store.entry.language?.definition ?? .defaultValue)
         .task { await store.send(.task).finish() }
     }
 }
