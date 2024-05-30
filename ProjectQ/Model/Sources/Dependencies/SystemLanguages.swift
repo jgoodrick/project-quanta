@@ -4,11 +4,11 @@ import SwiftUI // Locale
 
 // These are all bcp47 identifiers:
 @DependencyClient
-struct SystemLanguages: DependencyKey {
-    static let testValue: SystemLanguages = .init()
-    static let liveValue: SystemLanguages = .init()
+public struct SystemLanguages: DependencyKey {
+    public static let testValue: SystemLanguages = .init()
+    public static let liveValue: SystemLanguages = .init()
     
-    var current: @Sendable () -> Language = {
+    public var current: @Sendable () -> Language = {
         @Dependency(\.locale) var systemLocale
         return Language.init(id: .bcp47(systemLocale.identifier(.bcp47)))
     }
@@ -28,7 +28,7 @@ struct SystemLanguages: DependencyKey {
 }
 
 extension DependencyValues {
-    var systemLanguages: SystemLanguages {
+    public var systemLanguages: SystemLanguages {
         get { self[SystemLanguages.self] }
         set { self[SystemLanguages.self] = newValue }
     }

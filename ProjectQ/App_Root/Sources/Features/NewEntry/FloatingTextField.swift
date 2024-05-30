@@ -8,9 +8,14 @@ public struct FloatingTextField {
     
     @ObservableState
     public struct State: Equatable {
-        @Shared(.settings) var settings
         public var text: String = ""
         public var collapsed: Bool = true
+        public var language: Language
+        
+        mutating func reset() {
+            text = ""
+            collapsed = true
+        }
     }
     
     public enum Action: BindableAction {
@@ -77,12 +82,12 @@ public struct FloatingTextFieldView: View {
                                 config.isFirstResponder = !store.collapsed
                                 config.onCommit = { store.send(.delegate(.fieldCommitted)) }
                                 config.placeholder = style.placeholder
-                                config.preferredLanguage = store.settings.focusedLanguage.bcp47
+                                config.preferredLanguage = store.language.bcp47
                                 config.onLanguageUnavailable = {
                                     print("Could not resolve language with identifier: \($0)")
                                 }
                             }
-                            .id(store.settings.focusedLanguage.id)
+                            .id(store.language.id)
                         case .swiftUI:
                             TextField(style.placeholder, text: $store.text)
                                 .onSubmit {
@@ -164,7 +169,7 @@ extension EnvironmentValues {
 private var Preview: some View {
     VStack {
         FloatingTextFieldView(
-            store: .init(initialState: .init(), reducer: { FloatingTextField() })
+            store: .init(initialState: .init(language: .ukrainian), reducer: { FloatingTextField() })
         )
     }
 //    .background(Color.black)

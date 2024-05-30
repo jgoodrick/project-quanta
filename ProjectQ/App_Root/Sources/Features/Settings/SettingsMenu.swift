@@ -16,7 +16,7 @@ public struct SettingsMenu {
     
     @Reducer(state: .equatable)
     public enum Destination {
-        case settings(Settings)
+        case settingsEditor(SettingsEditor)
     }
     
     public enum Action: BindableAction {
@@ -36,13 +36,13 @@ public struct SettingsMenu {
             case .binding, .destination: return .none
             case .allSettingsMenuButtonTapped:
                 
-//                state.destination = .settings(.init())
+                state.destination = .settingsEditor(.init())
                 
                 return .none
                 
             case .selectedInputLanguage(let selected):
                 
-//                state.focusedLanguage = selected
+                state.settings.focusedLanguage = selected
                 
                 return .none
                 
@@ -79,8 +79,8 @@ struct PresentsSettingsMenuInToolbar: ViewModifier {
                     }
                 }
             }
-            .navigationDestination(item: $store.scope(state: \.destination?.settings, action: \.destination.settings)) { store in
-                SettingsView(store: store)
+            .navigationDestination(item: $store.scope(state: \.destination?.settingsEditor, action: \.destination.settingsEditor)) { store in
+                SettingsEditorView(store: store)
             }
     }
 }

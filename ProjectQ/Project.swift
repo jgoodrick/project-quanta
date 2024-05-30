@@ -106,7 +106,6 @@ extension TargetID: TargetDescription {
     
     var destinations: Destinations {
         switch self {
-        case .Model, .Model_Tests: [.mac, .iPhone, .iPad]
         default: workspaceDestinations
         }
     }

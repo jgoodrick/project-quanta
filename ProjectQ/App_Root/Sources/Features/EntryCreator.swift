@@ -8,10 +8,55 @@ public struct EntryCreator {
     
     @ObservableState
     public struct State: Equatable {
+        @Shared(.db) var db
         @Shared(.settings) var settings
-        public var spelling: FloatingTextField.State = .init()
+        public var spelling: FloatingTextField.State = {
+            @Shared(.settings) var settings
+            return .init(language: settings.focusedLanguage)
+        }()
         
         @Presents public var destination: Destination.State?
+        
+        mutating func addAndPushNewEntry() -> EffectOf<EntryCreator> {
+            
+            let spelling = spelling.text
+            let language = settings.focusedLanguage
+            
+            do {
+                
+                let newEntry = try $db.addNewEntry(language: language) {
+                    $0.spelling = spelling
+                }
+                
+                return resetSpellingAndPush(entry: newEntry.id)
+
+            } catch {
+                
+                destination = .alert(.failedToAddNewEntry(
+                    spelling: spelling,
+                    language: language,
+                    error: error
+                ))
+
+                return .none
+                
+            }
+
+        }
+        
+        mutating func resetSpellingAndPush(entry: Entry.ID) -> EffectOf<EntryCreator> {
+            
+            spelling.reset()
+            
+            return .run { send in
+                // add a little delay for the keyboard to finish dismissing
+                @Dependency(\.continuousClock) var clock
+                try await clock.sleep(for: .seconds(0.3))
+                
+                await send(.shouldPushDetail(of: entry))
+            }
+
+        }
     }
     
     @Reducer(state: .equatable)
@@ -23,7 +68,7 @@ public struct EntryCreator {
 
     public enum ConfirmationDialog: Equatable {
         case cancel
-        case editExisting(Entry)
+        case editExisting(Entry.Expansion)
         case addNew
     }
 
@@ -31,11 +76,9 @@ public struct EntryCreator {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
         case spelling(FloatingTextField.Action)
+        case shouldPushDetail(of: Entry.ID)
     }
-        
-//    @Dependency(\.repository) var repository
-
-    @MainActor
+    
     public var body: some Reducer<State, Action> {
         
         BindingReducer()
@@ -47,6 +90,12 @@ public struct EntryCreator {
         Reduce<State, Action> { state, action in
             switch action {
             case .binding: return .none
+            case .shouldPushDetail(let id):
+                
+                state.destination = .entryDetail(.init(entry: id))
+                
+                return .none
+                
             case .spelling(.delegate(let delegatedAction)):
                 switch delegatedAction {
                 case .fieldCommitted, .saveEntryButtonTapped:
@@ -54,82 +103,31 @@ public struct EntryCreator {
                     let spelling = state.spelling.text
                     
                     guard !spelling.isEmpty else {
-                        state.spelling.text = ""
-                        state.spelling.collapsed = true
+                        state.spelling.reset()
                         return .none
                     }
                     
-                    let matches: [Entry]
-                    
-                    do {
-                                                
-//                        matches = try modelContainer.mainContext.fetch(FetchDescriptor<Entry>(predicate: #Predicate { $0.spelling == spelling }))
-//                        
-//                        if let match = matches.first {
-//                            
-//                            state.destination = .confirmationDialog(.addOrEditExisting(entry: match))
-//                            
-//                        } else {
-//                            
-//                            let newEntry = try modelContainer.mainContext.insertNewEntry(
-//                                spelling: spelling
-//                            )
-//                            
-////                            newEntry.language = focusedLanguage
-//                            
-//                            state.destination = .entryDetail(EntryDetail.State.init(entry: newEntry))
-//                            
-//                        }
+                    if let match = state.$db.firstEntry(where: \.spelling, is: spelling) {
                         
-                    } catch {
+                        state.destination = .confirmationDialog(.addOrEditExisting(entry: match))
+
+                        return .none
+
+                    } else {
                         
-                        state.destination = .alert(.init(title: { .init("Could not create new entry from spelling '\(spelling)' due to: \(error.localizedDescription)") }))
+                        return state.addAndPushNewEntry()
                         
                     }
-                    
-                    return .none
                     
                 }
             case .spelling: return .none
             case .destination(.presented(.confirmationDialog(.addNew))):
                 
-                let spelling = state.spelling.text
+                return state.addAndPushNewEntry()
 
-                guard !spelling.isEmpty else {
-                    return .none
-                }
-                
-                do {
-//                    let newEntry = try modelContainer.mainContext.insertNewEntry(
-//                        spelling: state.spelling.text
-//                    )
-                    
-//                  newEntry.language = focusedLanguage
-
-//                    state.destination = .entryDetail(EntryDetail.State.init(entry: newEntry))
-                    
-                } catch {
-                    
-                    state.destination = .alert(.init(title: { .init("Could not add new entry with spelling '\(state.spelling.text)' due to: \(error.localizedDescription)")}))
-                }
-                    
-                return .none
-
-            case .destination(.presented(.confirmationDialog(.editExisting(let entry)))):
-                
-                // simultaneously push the entry's detail page and clear the child state
-                
-//                state.spelling.text = ""
-//                state.spelling.collapsed = true
-//
-//                state.destination = .entryDetail(
-//                    EntryDetail.State.init(
-//                        entry: entry,
-//                        languageSelectionList: state.languageSelectionList
-//                    )
-//                )
-                
-                return .none
+            case .destination(.presented(.confirmationDialog(.editExisting(let existing)))):
+                                
+                return state.resetSpellingAndPush(entry: existing.id)
 
             case .destination: return .none
             }
@@ -138,8 +136,21 @@ public struct EntryCreator {
     }
 }
 
+extension AlertState {
+    static func failedToAddNewEntry(spelling: String, language: Language, error: Error) -> Self where Action == Never {
+        .init(
+            title: {
+                .init("Could not create new \(language.displayName) entry from spelling '\(spelling)'")
+            },
+            message: {
+                .init("Error: \(error.localizedDescription)")
+            }
+        )
+    }
+}
+
 extension ConfirmationDialogState {
-    static func addOrEditExisting(entry: Entry) -> Self where Action == EntryCreator.ConfirmationDialog {
+    static func addOrEditExisting(entry: Entry.Expansion) -> Self where Action == EntryCreator.ConfirmationDialog {
         .init(
             title: {
                 .init("A word spelled '\(entry.spelling)' has already been added")
@@ -174,7 +185,6 @@ public struct EntryCreatorView: View {
             FloatingTextFieldView(
                 store: store.scope(state: \.spelling, action: \.spelling)
             )
-//            .environment(\.language, store.focusedLanguage)
             
         }
         .padding()

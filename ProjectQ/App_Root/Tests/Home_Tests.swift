@@ -16,8 +16,6 @@ final class Home_Tests: XCTestCase {
         
         store.exhaustivity = .off(showSkippedAssertions: showSkippedAssertions)
 
-        await store.send(\.task)
-
     }
     
 }

@@ -10,19 +10,19 @@ public struct Home {
     @ObservableState
     public struct State: Equatable {
         public init() {}
-        @Presents var destination: Destination.State?
-//        @Shared(.repository) var repository
+        @Shared(.db) var db
         @Shared(.settings) var settings
+        
         var searchField: String = ""
         var settingsMenu: SettingsMenu.State = .init()
         var entryCreator: EntryCreator.State = .init()
         var languageContextMenuIsShowing: Bool = false
-//        var predicate: Predicate<Entry> {
-//            #Predicate<Entry> {
-//                $0.language?.definitionID == focusedLanguage?.id
-//            }
-//        }
-//        var sortDescriptors: [SortDescriptor] = [SortDescriptor.init(\Entry.modified, order: .reverse)]
+        
+        @Presents var destination: Destination.State?
+        
+        var displayedEntries: [Entry.Expansion] {
+            $db.entriesByDescendingModifiedDate
+        }
     }
     
     @Reducer(state: .equatable)
@@ -42,9 +42,9 @@ public struct Home {
         case searchingEnded
         case searchingStarted
                 
-        case entryTapped(Entry)
-        case destructiveSwipeButtonTapped(Entry)
-        case editSwipeButtonTapped(Entry)
+        case entryTapped(Entry.Expansion)
+        case destructiveSwipeButtonTapped(Entry.Expansion)
+        case editSwipeButtonTapped(Entry.Expansion)
         
         case dialog(Dialog)
         public enum Dialog {
@@ -53,9 +53,6 @@ public struct Home {
 
     }
     
-//    @Dependency(\.modelContainer) var modelContainer
-    
-    @MainActor
     public var body: some Reducer<State, Action> {
         
         BindingReducer()
@@ -77,19 +74,19 @@ public struct Home {
             case .searchingEnded: return .none
             case .searchingStarted:
                 
-//                state.entryCreator = .init()
+                state.entryCreator = .init()
                 
                 return .none
                 
             case .entryTapped(let entry):
                 
-//                state.destination = .entryDetail(.init(entry: entry))
+                state.destination = .entryDetail(.init(entry: entry.id))
                 
                 return .none
                 
             case .destructiveSwipeButtonTapped(let entry):
                 
-//                modelContainer.mainContext.delete(entry)
+                state.db.remove(entry: entry.id)
                 
                 return .none
                 
@@ -120,16 +117,10 @@ fileprivate extension String {
 struct HomeListView: View {
     
     @Bindable var store: StoreOf<Home>
-    var entries: [Entry] = []
-    
-//    init(store: StoreOf<Home>, query _entries: Query<Entry, [Entry]>) {
-//        self.store = store
-//        self._entries = _entries
-//    }
-    
+            
     public var body: some View {
         List {
-            ForEach(entries) { entry in
+            ForEach(store.displayedEntries) { entry in
                 Button {
                     store.send(.entryTapped(entry))
                 } label: {

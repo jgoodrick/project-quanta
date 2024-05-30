@@ -20,3 +20,9 @@ extension Logger {
         Logger(subsystem: Bundle.main.bundleIdentifier ?? "", category: category)
     }
 }
+
+extension String.StringInterpolation {
+    mutating func appendInterpolation(short id: UUID) {
+        appendInterpolation(id.uuidString.suffix(3))
+    }
+}

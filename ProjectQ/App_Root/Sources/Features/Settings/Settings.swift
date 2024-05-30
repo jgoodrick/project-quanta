@@ -4,12 +4,11 @@ import Model
 import SwiftUI
 
 @Reducer
-public struct Settings {
+public struct SettingsEditor {
     
     @ObservableState
     public struct State: Equatable {
-        @Shared var languageSelectionList: IdentifiedArrayOf<Language>
-        @Shared var focusedLanguage: Language
+        @Shared(.settings) var settings
     }
     
     public enum Action {
@@ -24,26 +23,26 @@ public struct Settings {
             switch action {
             case .destructiveSwipeButtonTapped(let selected):
                 
-                state.languageSelectionList.removeAll(where: { $0 == selected })
+                state.settings.languageSelectionList.removeAll(where: { $0 == selected })
                 
                 return .none
                 
             case .addLanguageMenuButtonTapped(let selected):
                 
-                state.languageSelectionList.append(selected)
-                state.focusedLanguage = selected
+                state.settings.languageSelectionList.append(selected)
+                state.settings.focusedLanguage = selected
                 
                 return .none
 
             case .languageSelected(let selected):
                 
-                state.focusedLanguage = selected
+                state.settings.focusedLanguage = selected
                 
                 return .none
                 
             case .moved(let fromOffsets, let toOffset):
                                 
-                state.languageSelectionList.move(fromOffsets: fromOffsets, toOffset: toOffset)
+                state.settings.languageSelectionList.move(fromOffsets: fromOffsets, toOffset: toOffset)
                 
                 return .none
                 
@@ -52,16 +51,14 @@ public struct Settings {
     }
 }
 
-struct SettingsView: View {
+struct SettingsEditorView: View {
     
-    @Bindable var store: StoreOf<Settings>
-    
-    @Environment(\.locale) var locale
-    
+    @Bindable var store: StoreOf<SettingsEditor>
+        
     var body: some View {
         List {
             Section {
-                ForEach(store.languageSelectionList) { item in
+                ForEach(store.settings.languageSelectionList) { item in
                     HStack {
                         Button(action: { store.send(.languageSelected(item)) }) {
                             Text(item.displayName.capitalized)
@@ -89,7 +86,7 @@ struct SettingsView: View {
                     Text("Languages")
                     Spacer()
                     Menu {
-                        ForEach(store.languageSelectionList) { availableLanguage in
+                        ForEach(store.settings.languageSelectionList) { availableLanguage in
                             Button(action: { store.send(.addLanguageMenuButtonTapped(availableLanguage)) }) {
                                 Text(availableLanguage.displayName)
                                     .textCase(.none)
@@ -109,7 +106,5 @@ struct SettingsView: View {
 
 #Preview { Preview }
 private var Preview: some View {
-    let options: IdentifiedArrayOf<Language> = .init(arrayLiteral: .ukrainian, .english)
-    let focused: Language = .ukrainian
-    return SettingsView(store: .init(initialState: .init(languageSelectionList: Shared(options), focusedLanguage: Shared(focused)), reducer: { Settings() }))
+    SettingsEditorView(store: .init(initialState: .init(), reducer: { SettingsEditor() }))
 }

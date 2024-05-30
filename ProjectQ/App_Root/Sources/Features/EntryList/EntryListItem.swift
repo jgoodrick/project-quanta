@@ -4,7 +4,7 @@ import SwiftUI
 
 public struct HomeListItemView: View {
 
-    let entry: Entry
+    let entry: Entry.Expansion
     let highlightedCharacters: Set<Character>
     
     var title: String {

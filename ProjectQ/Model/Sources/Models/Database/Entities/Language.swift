@@ -18,20 +18,26 @@ public struct Language: Identifiable, Equatable, Codable, Sendable {
 
     var metadata: Metadata = .init()
     
-    struct Relationships: Equatable, Codable, Sendable {
+    mutating func merge(with incoming: Self) {
+        customLocalizedTitles.merge(with: incoming.customLocalizedTitles)
+        metadata.merge(with: incoming.metadata)
+    }
+
+    struct Relationships: Equatable, Codable, Sendable, RelationshipSet {
         var entries: Set<Entry.ID> = []
         var usages: Set<Usage.ID> = []
-        var isOrphan: Bool {
-            entries.isEmpty &&
-            usages.isEmpty
+        mutating func merge(with incoming: Self) {
+            entries.merge(with: incoming.entries)
+            usages.merge(with: incoming.usages)
         }
     }
     
-    public struct Aggregate: Identifiable, Equatable, Sendable {
-        public var id: Language.ID { language.id }
-        public let language: Shared<Language>
+    public struct Expansion: Identifiable, Equatable, Sendable {
+        public var shared: Shared<Language>
         public let entries: [Entry]
         public let usages: [Usage]
+        
+        public var id: Language.ID { shared.wrappedValue.id }
     }
     
     // Convenience

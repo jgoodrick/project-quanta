@@ -1,5 +1,11 @@
 
-extension Repository.Relationships {
+extension Dictionary {
+    mutating func mutateAll(with closure: (inout Value) -> Void) {
+        keys.forEach { closure(&self[$0]!) }
+    }
+}
+
+extension Database.Relationships {
     mutating func removeAllReferences(toEntry entryID: Entry.ID) {
         entries[entryID] = nil
         entries.mutateAll {
@@ -21,7 +27,7 @@ extension Repository.Relationships {
         usages.mutateAll {
             $0.uses.remove(entryID)
         }
-        userCollections.mutateAll {
+        entryCollections.mutateAll {
             $0.entries.removeAll(where: { $0 == entryID })
         }
     }
@@ -52,10 +58,10 @@ extension Repository.Relationships {
             $0.usages.removeAll(where: { $0 == usageID })
         }
     }
-    mutating func removeAllReferences(toUserCollection userCollectionID: UserCollection.ID) {
-        userCollections[userCollectionID] = nil
+    mutating func removeAllReferences(toEntryCollection entryCollectionID: EntryCollection.ID) {
+        entryCollections[entryCollectionID] = nil
         entries.mutateAll {
-            $0.userCollections.remove(userCollectionID)
+            $0.entryCollections.remove(entryCollectionID)
         }
     }
 }
