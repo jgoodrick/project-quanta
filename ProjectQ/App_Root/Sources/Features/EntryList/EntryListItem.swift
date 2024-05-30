@@ -12,8 +12,7 @@ public struct HomeListItemView: View {
     }
     
     var subtitle: String? {
-        .none
-//        entry.topTranslation?.spelling
+        entry.translations.first?.spelling
     }
             
     public struct Style: EnvironmentKey {

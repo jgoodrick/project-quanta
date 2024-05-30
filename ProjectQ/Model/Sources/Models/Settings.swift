@@ -19,6 +19,6 @@ public struct Settings: Equatable, Codable, Sendable {
     }()
     public var focusedLanguage: Language = {
         @Dependency(\.locale) var locale
-        return .init(id: .bcp47(locale.identifier(.bcp47)))
+        return .init(bcp47: locale.identifier(.bcp47))
     }()
 }

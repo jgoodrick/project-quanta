@@ -27,6 +27,14 @@ extension Shared<Database> {
         })
     }
     
+    public func languages<T: Equatable>(where keyPath: KeyPath<Language, T>, is value: T) -> [Language.Expansion] {
+        wrappedValue.stored.languages.values.filter({
+            $0[keyPath: keyPath] == value
+        }).compactMap({
+            self[language: $0.id]
+        })
+    }
+    
     public func translations(for entry: Entry.ID) -> [Entry.Expansion] {
         Query(expandWith: { self[entry: $0] }, predicate: .none, sortComparator: .none)
             .execute(on: wrappedValue.relationships.entries[id: entry].translations)

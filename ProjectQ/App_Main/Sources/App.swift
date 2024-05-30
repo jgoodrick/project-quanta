@@ -6,17 +6,17 @@ import SwiftUI
 @main
 struct ProjectQApp: App {
         
-    static let store: StoreOf<Home> = .init(
+    static let store: StoreOf<AppRoot> = .init(
         initialState: .init(),
         reducer: { 
-            Home()
+            AppRoot()
                 ._printChanges()
         }
     )
     
     var body: some Scene {
         WindowGroup {
-            HomeStackView(store: Self.store)
+            AppRootView(store: Self.store)
         }
     }
 }

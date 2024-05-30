@@ -163,7 +163,7 @@ struct HomeListView: View {
     }
 }
 
-struct HomeRootView: View {
+struct HomeStackRootView: View {
     
     @Bindable var store: StoreOf<Home>
 
@@ -193,17 +193,13 @@ struct HomeRootView: View {
     }
 }
 
-public struct HomeStackView: View {
-        
-    public init(store: StoreOf<Home>) {
-        self.store = store
-    }
+struct HomeStackView: View {
     
     @Bindable var store: StoreOf<Home>
 
-    public var body: some View {
+    var body: some View {
         NavigationStack {
-            HomeRootView(store: store)
+            HomeStackRootView(store: store)
                 .searchable(text: $store.searchField)
         }
     }

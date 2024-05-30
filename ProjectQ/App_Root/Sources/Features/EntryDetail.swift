@@ -10,13 +10,14 @@ public struct EntryDetail {
     @ObservableState
     public struct State: Equatable {
         
-        init(entry: Entry.ID) {
+        init(entry entryID: Entry.ID) {
+            self.entryID = entryID
             @Shared(.db) var shared
+            let expanded = $shared[entry: entryID]
             @Dependency(\.systemLanguages) var systemLanguages
             let system = systemLanguages.current()
-            self.entryID = entry
-            self.spelling = .init(language: $shared[entry: entry]?.language ?? system)
-            self.translation = .init(language: system)
+            self.spelling = .init(languageOverride: expanded?.language?.id ?? system.id)
+            self.translation.languageOverride = system.id
         }
         
         @Shared(.db) var db
@@ -25,7 +26,7 @@ public struct EntryDetail {
         var entryID: Entry.ID
         var entry: Entry.Expansion? { $db[entry: entryID] }
         var spelling: FloatingTextField.State
-        var translation: FloatingTextField.State
+        var translation: FloatingTextField.State = .init()
         
         @Presents var destination: Destination.State?
         
@@ -93,13 +94,13 @@ public struct EntryDetail {
 
                 @Dependency(\.systemLanguages) var systemLanguages
 
-                state.translation.language = systemLanguages.current()
                 state.translation.collapsed = false
+                state.translation.languageOverride = systemLanguages.current().id
                 return .none
 
             case .addTranslationLongPressMenuButtonTapped(let selected):
 
-                state.translation.language = selected
+                state.translation.languageOverride = selected.id
                 state.translation.collapsed = false
 
                 return .none

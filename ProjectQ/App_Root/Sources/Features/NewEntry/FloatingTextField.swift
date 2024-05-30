@@ -8,9 +8,16 @@ public struct FloatingTextField {
     
     @ObservableState
     public struct State: Equatable {
+        @Shared(.db) var db
+        @Shared(.settings) var settings
+        
         public var text: String = ""
         public var collapsed: Bool = true
-        public var language: Language
+        public var languageOverride: Language.ID?
+        
+        public var language: Language {
+            languageOverride.flatMap({ $db[language: $0]?.shared.wrappedValue }) ?? settings.focusedLanguage
+        }
         
         mutating func reset() {
             text = ""
@@ -64,7 +71,6 @@ public struct FloatingTextFieldView: View {
     }
     
     @Environment(\.floatingEntryCreator) var style
-//    @Environment(\.language) var language
 
     public var body: some View {
         GeometryReader { proxy in
@@ -169,7 +175,7 @@ extension EnvironmentValues {
 private var Preview: some View {
     VStack {
         FloatingTextFieldView(
-            store: .init(initialState: .init(language: .ukrainian), reducer: { FloatingTextField() })
+            store: .init(initialState: .init(), reducer: { FloatingTextField() })
         )
     }
 //    .background(Color.black)

@@ -10,11 +10,11 @@ public struct SystemLanguages: DependencyKey {
     
     public var current: @Sendable () -> Language = {
         @Dependency(\.locale) var systemLocale
-        return Language.init(id: .bcp47(systemLocale.identifier(.bcp47)))
+        return Language.init(bcp47: systemLocale.identifier(.bcp47))
     }
     
     var configured: () -> IdentifiedArrayOf<Language> = {
-        UITextInputMode.activeInputModes.compactMap(\.primaryLanguage).map(Language.ID.bcp47).map({Language.init(id: $0)}).reduce(into: [], { $0.append($1) })
+        UITextInputMode.activeInputModes.compactMap(\.primaryLanguage).map({ Language(bcp47: $0) }).reduce(into: [], { $0.append($1) })
     }
     
     var inDefaultSortOrder: IdentifiedArrayOf<Language> {

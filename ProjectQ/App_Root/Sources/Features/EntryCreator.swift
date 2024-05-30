@@ -10,10 +10,7 @@ public struct EntryCreator {
     public struct State: Equatable {
         @Shared(.db) var db
         @Shared(.settings) var settings
-        public var spelling: FloatingTextField.State = {
-            @Shared(.settings) var settings
-            return .init(language: settings.focusedLanguage)
-        }()
+        public var spelling: FloatingTextField.State = .init()
         
         @Presents public var destination: Destination.State?
         
@@ -185,6 +182,7 @@ public struct EntryCreatorView: View {
             FloatingTextFieldView(
                 store: store.scope(state: \.spelling, action: \.spelling)
             )
+            .id(store.settings.focusedLanguage.id)
             
         }
         .padding()

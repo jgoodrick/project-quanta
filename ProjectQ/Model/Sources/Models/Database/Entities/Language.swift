@@ -4,18 +4,17 @@ import SwiftUI
 
 @ObservableState
 public struct Language: Identifiable, Equatable, Codable, Sendable {
-    public let id: ID
-    public enum ID: Identifiable, Hashable, Codable, Sendable {
-        public var id: String { string }
-        public var string: String {
-            switch self {
-            case .bcp47(let code): return code
-            }
-        }
-        case bcp47(String)
+    
+    public init(bcp47: String) {
+        // dashes are required in order for UITextField to parse and use it
+        self.bcp47 = bcp47.replacingOccurrences(of: "_", with: "-")
     }
+    
+    public var id: String { bcp47 }
+    
+    public let bcp47: String
     var customLocalizedTitles: [String: String] = [:]
-
+    
     var metadata: Metadata = .init()
     
     mutating func merge(with incoming: Self) {
@@ -41,22 +40,66 @@ public struct Language: Identifiable, Equatable, Codable, Sendable {
     }
     
     // Convenience
-    
-    public var bcp47: String? {
-        switch id {
-        case .bcp47(let value): return value
-        }
-    }
-    
+        
     public var displayName: String {
         @Dependency(\.locale) var locale
-        return customLocalizedTitles[locale.identifier] ?? locale.localizedString(forIdentifier: id.string) ?? id.string
+        return customLocalizedTitles[locale.identifier] ?? locale.localizedString(forIdentifier: id) ?? id
     }
     
     public static var ukrainian: Language {
-        .init(id: .bcp47("uk_UA"))
+        .init(bcp47: "uk_UA")
     }
     public static var english: Language {
-        .init(id: .bcp47("en_US"))
+        .init(bcp47: "en_US")
     }
+    
+    var primaryLanguage: String? {
+        parseComponent(at: 0)
+    }
+    
+    var script: String? {
+        guard tagComponents.count > 1 else { return nil }
+        return isScriptComponent(at: 1) ? tagComponents[1] : nil
+    }
+    
+    var region: String? {
+        guard tagComponents.count > 1 else { return nil }
+        return isRegionComponent(at: tagComponents.count - 1) ? tagComponents[tagComponents.count - 1] : nil
+    }
+    
+    var variant: String? {
+        guard tagComponents.count > 2 else { return nil }
+        let startIndex = isScriptComponent(at: 1) ? 2 : 1
+        let endIndex = isRegionComponent(at: tagComponents.count - 1) ? tagComponents.count - 2 : tagComponents.count - 1
+        return startIndex <= endIndex ? tagComponents[startIndex] : nil
+    }
+    
+    var extensions: [String] {
+        return tagComponents.filter { $0.starts(with: "u-") }
+    }
+    
+    var privateUse: String? {
+        return tagComponents.first(where: { $0.starts(with: "x-") })
+    }
+    
+    private var tagComponents: [String] {
+        return bcp47.split(separator: "-").map(String.init)
+    }
+    
+    private func parseComponent(at index: Int) -> String? {
+        return tagComponents.indices.contains(index) ? tagComponents[index] : nil
+    }
+    
+    private func isScriptComponent(at index: Int) -> Bool {
+        guard tagComponents.indices.contains(index) else { return false }
+        return tagComponents[index].count == 4 && tagComponents[index].allSatisfy({ $0.isLetter })
+    }
+    
+    private func isRegionComponent(at index: Int) -> Bool {
+        guard tagComponents.indices.contains(index) else { return false }
+        let component = tagComponents[index]
+        return (component.count == 2 && component.allSatisfy({ $0.isLetter })) ||
+               (component.count == 3 && component.allSatisfy({ $0.isNumber }))
+    }
+
 }
