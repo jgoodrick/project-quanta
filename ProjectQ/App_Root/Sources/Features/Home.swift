@@ -21,7 +21,7 @@ public struct Home {
         @Presents var destination: Destination.State?
         
         var displayedEntries: [Entry.Expansion] {
-            $db.entriesByDescendingModifiedDate
+            db.focusedEntriesList
         }
     }
     
