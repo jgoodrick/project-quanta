@@ -40,14 +40,22 @@ public struct Language: Identifiable, Equatable, Codable, Sendable {
         public var id: Language.ID { shared.wrappedValue.id }
     }
     
-    // Convenience
+    // MARK: - Conveniences
     
     public var displayName: String {
         @Dependency(\.locale) var locale
         if let custom = customLocalizedNames[locale.identifier] {
             return custom
         } else {
-            return primaryLanguage.flatMap({ locale.localizedString(forLanguageCode: $0) }) ?? id
+            // we only want to show the additional (region) information if the primary language is not unique
+            @Shared(.settings) var settings
+            var copy = settings.languageSelectionList
+            copy[id: id] = nil
+            if copy.contains(where: { $0.primaryLanguage == primaryLanguage }) {
+                return locale.localizedString(forIdentifier: bcp47) ?? id
+            } else {
+                return primaryLanguage.flatMap({ locale.localizedString(forLanguageCode: $0) }) ?? id
+            }
         }
     }
     

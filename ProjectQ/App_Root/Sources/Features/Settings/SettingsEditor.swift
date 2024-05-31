@@ -36,6 +36,17 @@ public struct SettingsEditor {
                 
                 state.settings.languageSelectionList.removeAll(where: { $0 == selected })
                 
+                // if the focused language is the one that was just removed, default it to the top language:
+                
+                if state.settings.focusedLanguage == selected {
+                    if let topLanguage = state.settings.languageSelectionList.first {
+                        state.settings.focusedLanguage = topLanguage
+                    } else {
+                        @Dependency(\.systemLanguages) var systemLanguages
+                        state.settings.focusedLanguage = systemLanguages.current()
+                    }
+                }
+                
                 return .none
                 
             case .addLanguageMenuItemSelected(let selected):
