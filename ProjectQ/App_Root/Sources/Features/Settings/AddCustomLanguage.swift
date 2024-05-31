@@ -46,6 +46,10 @@ public struct AddCustomLanguage {
         case saveLocalizedNameButtonTapped
         case tappedAddLocalizedNameMenuItem(CommonLanguageCode)
         case clearCustomNameSelectionButtonTapped
+        case clearLocalizedNameButtonTapped(String)
+        case clearCustomLanguageCodeButtonTapped
+        case clearCustomScriptCodeButtonTapped
+        case clearCustomRegionCodeButtonTapped
     }
     
     public var body: some Reducer<State, Action> {
@@ -111,6 +115,8 @@ public struct AddCustomLanguage {
                 
             case .tappedAddLocalizedNameMenuItem(let languageCode):
                 
+                state.isShowingCustomNameField = false
+                state.customNameForAllLanguages = ""
                 state.currentLanguageSelectedForLocalizedName = languageCode.rawValue
                 
                 return .none
@@ -120,6 +126,33 @@ public struct AddCustomLanguage {
                 state.customNameForAllLanguages = ""
                 state.isShowingCustomNameField = false
                 
+                return .none
+                
+            case .clearLocalizedNameButtonTapped(let code):
+                
+                state.customLocalizedNamesByLanguageCode[code] = nil
+                
+                return .none
+                
+            case .clearCustomLanguageCodeButtonTapped:
+                
+                state.languageCode = ""
+                state.isShowingCustomLanguageCodeField = false
+                
+                return .none
+                
+            case .clearCustomScriptCodeButtonTapped:
+
+                state.scriptCode = ""
+                state.isShowingCustomScriptCodeField = false
+
+                return .none
+                
+            case .clearCustomRegionCodeButtonTapped:
+
+                state.regionCode = ""
+                state.isShowingCustomRegionCodeField = false
+
                 return .none
                 
             }
@@ -145,63 +178,95 @@ struct AddCustomLanguageView: View {
             }
             
             HStack {
-                VStack {
-                    Menu("Language") {
-                        Button("Custom") {
-                            store.send(.tappedCommonLanguageMenuItem(.none))
-                        }
-                        ForEach(CommonLanguageCode.allCases) { code in
-                            Button(code.displayName(for: locale)) {
-                                store.send(.tappedCommonLanguageMenuItem(code))
+                Group {
+                    VStack {
+                        if store.isShowingCustomLanguageCodeField {
+                            HStack {
+                                TextField("Language", text: $store.languageCode)
+                                Button(action: { store.send(.clearCustomLanguageCodeButtonTapped) }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                }
+                            }
+                        } else {
+                            HStack {
+                                Menu(locale.localizedString(forLanguageCode: store.languageCode) ?? "Language") {
+                                    Button("Custom") {
+                                        store.send(.tappedCommonLanguageMenuItem(.none))
+                                    }
+                                    ForEach(CommonLanguageCode.allCases) { code in
+                                        Button(code.displayName(for: locale)) {
+                                            store.send(.tappedCommonLanguageMenuItem(code))
+                                        }
+                                    }
+                                }
+                                if !store.languageCode.isEmpty {
+                                    Button(action: { store.send(.clearCustomLanguageCodeButtonTapped) }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                    }
+                                }
                             }
                         }
                     }
-                    if store.isShowingCustomLanguageCodeField {
-                        TextField("Code", text: $store.languageCode)
-                    } else {
-                        Text(locale.localizedString(forLanguageCode: store.languageCode) ?? store.languageCode)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-                
-                VStack {
-                    Menu("Script") {
-                        Button("Custom") {
-                            store.send(.tappedCommonScriptMenuItem(.none))
-                        }
-                        ForEach(CommonScriptCode.allCases) { code in
-                            Button(code.displayName(for: locale)) {
-                                store.send(.tappedCommonScriptMenuItem(code))
+                    
+                    VStack {
+                        if store.isShowingCustomScriptCodeField {
+                            HStack {
+                                TextField("Code", text: $store.scriptCode)
+                                Button(action: { store.send(.clearCustomScriptCodeButtonTapped) }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                }
+                            }
+                        } else {
+                            HStack {
+                                Menu(locale.localizedString(forScriptCode: store.scriptCode) ?? "Script") {
+                                    Button("Custom") {
+                                        store.send(.tappedCommonScriptMenuItem(.none))
+                                    }
+                                    ForEach(CommonScriptCode.allCases) { code in
+                                        Button(code.displayName(for: locale)) {
+                                            store.send(.tappedCommonScriptMenuItem(code))
+                                        }
+                                    }
+                                }
+                                if !store.scriptCode.isEmpty {
+                                    Button(action: { store.send(.clearCustomScriptCodeButtonTapped) }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                    }
+                                }
                             }
                         }
                     }
-                    if store.isShowingCustomScriptCodeField {
-                        TextField("Code", text: $store.scriptCode)
-                    } else {
-                        Text(locale.localizedString(forScriptCode: store.scriptCode) ?? store.scriptCode)
-                    }
-                }
-                .frame(maxWidth: .infinity)
-
-                VStack {
-                    Menu("Region") {
-                        Button("Custom") {
-                            store.send(.tappedCommonRegionMenuItem(.none))
-                        }
-                        ForEach(CommonRegionCode.allCases) { code in
-                            Button(code.displayName(for: locale)) {
-                                store.send(.tappedCommonRegionMenuItem(code))
+                    
+                    VStack {
+                        if store.isShowingCustomRegionCodeField {
+                            HStack {
+                                TextField("Code", text: $store.regionCode)
+                                Button(action: { store.send(.clearCustomRegionCodeButtonTapped) }) {
+                                    Image(systemName: "xmark.circle.fill")
+                                }
+                            }
+                        } else {
+                            HStack {
+                                Menu(locale.localizedString(forRegionCode: store.regionCode) ?? "Region") {
+                                    Button("Custom") {
+                                        store.send(.tappedCommonRegionMenuItem(.none))
+                                    }
+                                    ForEach(CommonRegionCode.allCases) { code in
+                                        Button(code.displayName(for: locale)) {
+                                            store.send(.tappedCommonRegionMenuItem(code))
+                                        }
+                                    }
+                                }
+                                if !store.regionCode.isEmpty {
+                                    Button(action: { store.send(.clearCustomRegionCodeButtonTapped) }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                    }
+                                }
                             }
                         }
                     }
-                    if store.isShowingCustomRegionCodeField {
-                        TextField("Code", text: $store.regionCode)
-                    } else {
-                        Text(locale.localizedString(forRegionCode: store.regionCode) ?? store.regionCode)
-                    }
                 }
-                .frame(maxWidth: .infinity)
-                
+                .padding()
             }
             
             if store.isShowingCustomNameField {
@@ -211,31 +276,43 @@ struct AddCustomLanguageView: View {
                         Image(systemName: "xmark.circle.fill")
                     }
                 }
-            } else {
+            } else if store.currentLanguageSelectedForLocalizedName == nil, store.customLocalizedNamesByLanguageCode.isEmpty {
+                
                 Button("+ Add Custom Name") {
                     store.send(.addCustomNameButtonTapped)
                 }
                 
-                if let code = store.currentLanguageSelectedForLocalizedName {
-                    HStack {
-                        Text(locale.localizedString(forLanguageCode: code) ?? code)
-                        TextField("Name", text: $store.currentLocalizedName)
-                            .frame(maxWidth: 200)
-                        Button("Save") {
-                            store.send(.saveLocalizedNameButtonTapped)
-                        }
+            }
+
+            ForEach(store.customLocalizedNamesByLanguageCode.keys.sorted(), id: \.self) { key in
+                HStack {
+                    Text("\(locale.localizedString(forLanguageCode: key) ?? key): \(store.customLocalizedNamesByLanguageCode[key] ?? "[none]")")
+                    Button(action: { store.send(.clearLocalizedNameButtonTapped(key)) }) {
+                        Image(systemName: "xmark.circle.fill")
                     }
-                } else {
-                    Menu("+ Add Localized Name") {
-                        ForEach(CommonLanguageCode.allCases) { code in
-                            Button(code.displayName(for: locale)) {
-                                store.send(.tappedAddLocalizedNameMenuItem(code))
-                            }
+                }
+            }
+
+            if let code = store.currentLanguageSelectedForLocalizedName {
+                HStack {
+                    Text(locale.localizedString(forLanguageCode: code) ?? code)
+                    TextField("Name", text: $store.currentLocalizedName)
+                        .frame(maxWidth: 200)
+                    Button("Save") {
+                        store.send(.saveLocalizedNameButtonTapped)
+                    }
+                }
+            } else if !store.isShowingCustomNameField {
+                Menu("+ Add Localized Name") {
+                    ForEach(CommonLanguageCode.allCases) { code in
+                        Button(code.displayName(for: locale)) {
+                            store.send(.tappedAddLocalizedNameMenuItem(code))
                         }
                     }
                 }
             }
-            
+
+
             Button("Create") {
                 store.send(.creationConfirmedButtonTapped)
             }

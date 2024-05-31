@@ -52,7 +52,7 @@ public struct SettingsEditor {
 
             case .addCustomLanguageMenuItemTapped:
                 
-                
+                state.destination = .addCustomLanguage(.init())
                 
                 return .none
                 
@@ -140,6 +140,9 @@ struct SettingsEditorView: View {
             }
         }
         .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
+        .sheet(item: $store.scope(state: \.destination?.addCustomLanguage, action: \.destination.addCustomLanguage)) { scoped in
+            AddCustomLanguageView(store: scoped)
+        }
     }
 }
 
