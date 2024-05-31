@@ -1,14 +1,22 @@
 
 import ComposableArchitecture
 
-extension Shared<Database> {
+extension Database {
     
-    public var entriesByDescendingModifiedDate: [Entry.Expansion] {
-        Query(expandWith: { self[entry: $0] }, predicate: .none, sortComparator: {
+    public var focusedEntriesList: [Entry.Expansion] {
+        @Shared(.db) var db
+        return Query(expandWith: { $db[entry: $0] }, predicate: {
+            @Shared(.settings) var settings
+            return $0.language == settings.focusedLanguage
+        }, sortComparator: {
             $0[keyPath: \.modified] > $1[keyPath: \.modified]
         })
-        .execute(on: wrappedValue.stored.entries.keys)
+        .execute(on: stored.entries.keys)
     }
+
+}
+
+extension Shared<Database> {
     
     public func firstEntry<T: Equatable>(where keyPath: KeyPath<Entry, T>, is value: T) -> Entry.Expansion? {
         for entry in wrappedValue.stored.entries.values {
