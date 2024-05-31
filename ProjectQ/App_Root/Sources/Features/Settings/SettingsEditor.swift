@@ -8,33 +8,55 @@ public struct SettingsEditor {
     
     @ObservableState
     public struct State: Equatable {
+        @Shared(.db) var db
         @Shared(.settings) var settings
+        @Presents var destination: Destination.State?
+    }
+    
+    @Reducer(state: .equatable)
+    public enum Destination {
+        case alert(AlertState<Never>)
+        case addCustomLanguage(AddCustomLanguage)
     }
     
     public enum Action {
+        case destination(PresentationAction<Destination.Action>)
         case destructiveSwipeButtonTapped(Language)
-        case addLanguageMenuButtonTapped(Language)
-        case languageSelected(Language)
+        case addLanguageMenuItemSelected(Language)
+        case addCustomLanguageMenuItemTapped
+        case languageListItemTapped(Language)
         case moved(fromOffsets: IndexSet, toOffset: Int)
     }
     
     public var body: some Reducer<State, Action> {
         Reduce<State, Action> { state, action in
             switch action {
+            case .destination: return .none
             case .destructiveSwipeButtonTapped(let selected):
                 
                 state.settings.languageSelectionList.removeAll(where: { $0 == selected })
                 
                 return .none
                 
-            case .addLanguageMenuButtonTapped(let selected):
+            case .addLanguageMenuItemSelected(let selected):
                 
-                state.settings.languageSelectionList.append(selected)
-                state.settings.focusedLanguage = selected
-                
+                do {
+                    try state.db.ensureExistenceOf(language: selected)
+                    state.settings.languageSelectionList.append(selected)
+                    state.settings.focusedLanguage = selected
+                } catch {
+                    state.destination = .alert(.failedToAddLanguage(selected))
+                }
+
                 return .none
 
-            case .languageSelected(let selected):
+            case .addCustomLanguageMenuItemTapped:
+                
+                
+                
+                return .none
+                
+            case .languageListItemTapped(let selected):
                 
                 state.settings.focusedLanguage = selected
                 
@@ -48,6 +70,13 @@ public struct SettingsEditor {
                 
             }
         }
+        .ifLet(\.$destination, action: \.destination)
+    }
+}
+
+extension AlertState where Action == Never {
+    static func failedToAddLanguage(_ language: Language) -> Self {
+        .init(title: { .init("Failed to add \(language.displayName)")})
     }
 }
 
@@ -60,7 +89,7 @@ struct SettingsEditorView: View {
             Section {
                 ForEach(store.settings.languageSelectionList) { item in
                     HStack {
-                        Button(action: { store.send(.languageSelected(item)) }) {
+                        Button(action: { store.send(.languageListItemTapped(item)) }) {
                             Text(item.displayName.capitalized)
                         }
                         Spacer()
@@ -82,24 +111,35 @@ struct SettingsEditorView: View {
                     store.send(.moved(fromOffsets: from, toOffset: to))
                 }
             } header: {
+                
                 HStack(alignment: .firstTextBaseline) {
+                    
                     Text("Languages")
+                    
                     Spacer()
+                    
                     Menu {
-                        ForEach(store.settings.languageSelectionList) { availableLanguage in
-                            Button(action: { store.send(.addLanguageMenuButtonTapped(availableLanguage)) }) {
+                        ForEach(store.settings.additionalLanguagesAvailable) { availableLanguage in
+                            Button(action: { store.send(.addLanguageMenuItemSelected(availableLanguage)) }) {
                                 Text(availableLanguage.displayName)
                                     .textCase(.none)
                             }
+                        }
+                        Button(action: { store.send(.addCustomLanguageMenuItemTapped) }) {
+                            Text("Add Custom Language")
+                                .textCase(.none)
                         }
                     } label: {
                         Text("+ add")
                             .font(.callout)
                             .textCase(.lowercase)
                     }
+                    
                 }
+                
             }
         }
+        .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
     }
 }
 

@@ -12,8 +12,8 @@ public struct EntryDetail {
         
         init(entry entryID: Entry.ID) {
             self.entryID = entryID
-            @Shared(.db) var shared
-            let expanded = $shared[entry: entryID]
+            @Shared(.db) var database
+            let expanded = $database[entry: entryID]
             @Dependency(\.systemLanguages) var systemLanguages
             let system = systemLanguages.current()
             self.spelling = .init(languageOverride: expanded?.language?.id ?? system.id)
@@ -24,15 +24,10 @@ public struct EntryDetail {
         @Shared(.settings) var settings
         
         var entryID: Entry.ID
-        var entry: Entry.Expansion? { $db[entry: entryID] }
         var spelling: FloatingTextField.State
         var translation: FloatingTextField.State = .init()
         
         @Presents var destination: Destination.State?
-        
-        var translations: [Entry.Expansion] {
-            $db.translations(for: entryID)
-        }
         
     }
     
@@ -107,29 +102,8 @@ public struct EntryDetail {
 
             case .spelling(.delegate(let delegatedAction)):
                 switch delegatedAction {
-                case .fieldCommitted, .saveEntryButtonTapped:
-
-                    let spelling = state.spelling.text
-
-                    guard !spelling.isEmpty else {
-                        state.spelling.reset()
-                        return .none
-                    }
-
-                    if let match = state.$db.firstEntry(where: \.spelling, is: spelling) {
-
-                        state.destination = .confirmationDialog(.addOrMergeWithExisting(entry: match))
-
-                    } else {
-
-                        state.db.updateEntry(\.spelling, on: state.entryID, to: state.spelling.text)
-
-                    }
-
+                case .fieldCommitted, .saveEntryButtonTapped: return state.submitCurrentFieldValueAsUpdatedSpelling()
                 }
-
-                return .none
-
             case .spelling: return .none
             case .destination(.presented(.confirmationDialog(.updateSpellingWithoutMerging))):
 
@@ -156,59 +130,8 @@ public struct EntryDetail {
             case .destination: return .none
             case .translation(.delegate(let delegatedAction)):
                 switch delegatedAction {
-                case .fieldCommitted, .saveEntryButtonTapped:
-                    
-                    let translationSpelling = state.translation.text
-                    
-                    guard !translationSpelling.isEmpty else {
-                        state.translation.reset()
-                        return .none
-                    }
-                    
-                    let matches = state.$db.entries(where: \.spelling, is: translationSpelling)
-                    
-                    if let first = matches.first {
-                        
-                        if matches.count > 1 {
-                            
-                            // what if there are more than one words in the repo that match the spelling of the translation the user just typed in? (Because the user previously decided to create a separate word with the same spelling instead of merging or editing the existing one). We will need to handle this with a confirmation dialog, as we have done previously.
-                            // TODO: handle more than one match
-                            
-                            state.destination = .alert(.init(title: { .init("There was more than one entry that matched that translation's spelling. This is not currently supported.")}))
-                            
-                        } else {
-                            
-                            state.db.add(translation: first.id, to: state.entryID)
-
-                        }
-
-                    } else {
-                        
-                        do {
-                            
-                            let translationSpelling = state.translation.text
-                            let translationLanguage = state.translation.language
-                            
-                            let newEntry = try state.$db.addNewEntry(language: translationLanguage) {
-                                $0.spelling = translationSpelling
-                            }
-                            
-                            state.db.add(translation: newEntry.id, to: state.entryID)
-                            
-                        } catch {
-                            
-                            state.destination = .alert(.init(title: { .init("Failed to add a new translation: \(error.localizedDescription)") }))
-                            
-                        }
-                        
-                    }
-                    
-                    state.translation.reset()
-                                            
+                case .fieldCommitted, .saveEntryButtonTapped: return state.submitCurrentFieldValueAsTranslation()
                 }
-                    
-                return .none
-
             case .translation: return .none
             case .translationSelected(let translation):
 
@@ -260,14 +183,10 @@ extension ConfirmationDialogState {
 struct EntryDetailLanguageSection: View {
     
     let store: StoreOf<EntryDetail>
-    
-    var languageName: String {
-        store.entry?.language?.displayName ?? "Not Set"
-    }
-    
+        
     var body: some View {
         Section {
-            Text(languageName)
+            Text(store.languageName)
         } header: {
             HStack(alignment: .firstTextBaseline) {
                 
@@ -364,13 +283,9 @@ public struct EntryDetailView: View {
     
     @Environment(\.entryDetail) private var style
     
-    var navTitle: String {
-        store.entry?.spelling ?? "[Unknown Entry]"
-    }
-    
     public var body: some View {
         Group {
-            if store.entry != nil {
+            if let entry = store.entry {
                 Form {
                     
                     EntryDetailLanguageSection(store: store)
@@ -403,6 +318,7 @@ public struct EntryDetailView: View {
                     }
                     .padding()
                 }
+                .navigationTitle(entry.spelling)
             } else {
                 ContentUnavailableView("Missing Entry", systemImage: "nosign")
             }
@@ -412,7 +328,6 @@ public struct EntryDetailView: View {
         .navigationDestination(item: $store.scope(state: \.destination?.related, action: \.destination.related)) { store in
             EntryDetailView(store: store)
         }
-        .navigationTitle(navTitle)
         .task { await store.send(.task).finish() }
     }
 }

@@ -13,12 +13,13 @@ public struct Language: Identifiable, Equatable, Codable, Sendable {
     public var id: String { bcp47 }
     
     public let bcp47: String
-    var customLocalizedTitles: [String: String] = [:]
+    var customNameForAllLanguages: String?
+    var customLocalizedNames: [String: String] = [:]
     
     var metadata: Metadata = .init()
     
     mutating func merge(with incoming: Self) {
-        customLocalizedTitles.merge(with: incoming.customLocalizedTitles)
+        customLocalizedNames.merge(with: incoming.customLocalizedNames)
         metadata.merge(with: incoming.metadata)
     }
 
@@ -40,10 +41,14 @@ public struct Language: Identifiable, Equatable, Codable, Sendable {
     }
     
     // Convenience
-        
+    
     public var displayName: String {
         @Dependency(\.locale) var locale
-        return customLocalizedTitles[locale.identifier] ?? locale.localizedString(forIdentifier: id) ?? id
+        if let custom = customLocalizedNames[locale.identifier] {
+            return custom
+        } else {
+            return primaryLanguage.flatMap({ locale.localizedString(forLanguageCode: $0) }) ?? id
+        }
     }
     
     public static var ukrainian: Language {

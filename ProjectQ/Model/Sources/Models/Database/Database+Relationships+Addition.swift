@@ -21,7 +21,7 @@ extension Database.Relationships {
     
     // Translations
     
-    mutating func add(translation: Entry.ID, toEntry translated: Entry.ID, bidirectional: Bool) {
+    mutating func connect(translation: Entry.ID, toEntry translated: Entry.ID, bidirectional: Bool) {
         entries[id: translated].translations.append(translation)
         entries[id: translation].backTranslations.insert(translated)
         if bidirectional {
@@ -41,7 +41,7 @@ extension Database.Relationships {
     
     // See Also
     
-    mutating func add(seeAlso: Entry.ID, toEntry entry: Entry.ID) {
+    mutating func connect(seeAlso: Entry.ID, toEntry entry: Entry.ID) {
         entries[id: entry].seeAlso.append(seeAlso)
         entries[id: seeAlso].seeAlso.append(entry)
     }
@@ -53,7 +53,7 @@ extension Database.Relationships {
     
     // Usages
     
-    mutating func add(usage: Usage.ID, toEntry entry: Entry.ID) {
+    mutating func connect(usage: Usage.ID, toEntry entry: Entry.ID) {
         entries[id: entry].usages.append(usage)
         usages[id: usage].uses.insert(entry)
     }
@@ -65,7 +65,7 @@ extension Database.Relationships {
     
     // Keywords
     
-    mutating func add(keyword: Keyword.ID, toEntry entry: Entry.ID) {
+    mutating func connect(keyword: Keyword.ID, toEntry entry: Entry.ID) {
         entries[id: entry].keywords.insert(keyword)
         keywords[id: keyword].matches.append(entry)
     }
@@ -77,7 +77,7 @@ extension Database.Relationships {
     
     // Notes
     
-    mutating func add(note: Note.ID, toEntry entry: Entry.ID) {
+    mutating func connect(note: Note.ID, toEntry entry: Entry.ID) {
         entries[id: entry].notes.append(note)
         notes[id: note].target = .entry(entry)
     }
@@ -91,7 +91,7 @@ extension Database.Relationships {
     
     // EntryCollections
     
-    mutating func add(entry: Entry.ID, toEntryCollection entryCollection: EntryCollection.ID) {
+    mutating func connect(entry: Entry.ID, toEntryCollection entryCollection: EntryCollection.ID) {
         entryCollections[id: entryCollection].entries.append(entry)
         entries[id: entry].entryCollections.insert(entryCollection)
     }
