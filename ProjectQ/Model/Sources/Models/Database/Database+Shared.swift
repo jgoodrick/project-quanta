@@ -31,6 +31,16 @@ extension Shared<Database> {
         )
     }
     
+    public subscript(entryCollection id: EntryCollection.ID) -> EntryCollection.Expansion? {
+        guard let entryCollection = projectedValue.stored.entryCollections[id] else { return nil }
+        let relationships = wrappedValue.relationships.entryCollections[id, default: .init()]
+        let entries = relationships.entries.compactMap({ wrappedValue.stored.entries[$0] })
+        return .init(
+            shared: entryCollection,
+            entries: entries
+        )
+    }
+
     public subscript(keyword id: Keyword.ID) -> Keyword.Expansion? {
         guard let keyword = projectedValue.stored.keywords[id] else { return nil }
         let relationships = wrappedValue.relationships.keywords[id, default: .init()]
@@ -86,13 +96,13 @@ extension Shared<Database> {
         )
     }
     
-    public subscript(entryCollection id: EntryCollection.ID) -> EntryCollection.Expansion? {
-        guard let entryCollection = projectedValue.stored.entryCollections[id] else { return nil }
-        let relationships = wrappedValue.relationships.entryCollections[id, default: .init()]
-        let entries = relationships.entries.compactMap({ wrappedValue.stored.entries[$0] })
+    public subscript(user id: User.ID) -> User.Expansion? {
+        guard let user = projectedValue.stored.users[id] else { return nil }
+        let relationships = wrappedValue.relationships.users[id, default: .init()]
+        let languages = relationships.languages.compactMap({ wrappedValue.stored.languages[$0] })
         return .init(
-            shared: entryCollection,
-            entries: entries
+            shared: user,
+            languages: languages
         )
     }
     

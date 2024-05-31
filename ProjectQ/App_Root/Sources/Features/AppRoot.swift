@@ -11,7 +11,7 @@ public struct AppRoot {
     public struct State: Equatable {
         public init() {
             @Shared(.db) var db
-            db.seedWithLanguagesFromSettings()
+            db.seedWithLanguagesFromSystem()
         }
         
         var home: Home.State = .init()
