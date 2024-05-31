@@ -57,6 +57,9 @@ extension Settings {
             result.insert(current, at: 1)
         }
         
+        // filter out emoji. The user can always add it later, if they want
+        result[id: "emoji"] = nil
+        
         return result
     }
 }
