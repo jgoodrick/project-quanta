@@ -18,10 +18,13 @@ extension EntryDetail.State {
 
     mutating func submitCurrentFieldValueAsUpdatedSpelling() -> EffectOf<EntryDetail> {
         
+        defer {
+            self.spelling.reset()
+        }
+        
         let spelling = spelling.text
 
         guard !spelling.isEmpty else {
-            self.spelling.reset()
             return .none
         }
 
@@ -41,10 +44,13 @@ extension EntryDetail.State {
     
     mutating func submitCurrentFieldValueAsTranslation() -> EffectOf<EntryDetail> {
         
+        defer {
+            translation.reset()
+        }
+
         let translationSpelling = translation.text
         
         guard !translationSpelling.isEmpty else {
-            translation.reset()
             return .none
         }
         
@@ -85,9 +91,7 @@ extension EntryDetail.State {
             }
             
         }
-        
-        translation.reset()
-                                
+                                        
         return .none
 
     }
