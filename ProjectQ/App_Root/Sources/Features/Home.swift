@@ -162,9 +162,6 @@ struct HomeListView: View {
         }
         .confirmationDialog($store.scope(state: \.destination?.confirmationDialog, action: \.destination.confirmationDialog))
         .modifier(PresentsSettingsMenuInToolbar(store: store.scope(state: \.settingsMenu, action: \.settingsMenu)))
-        .onAppear {
-            print(store.displayedEntries)
-        }
     }
 }
 
