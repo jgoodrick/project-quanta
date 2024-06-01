@@ -5,7 +5,10 @@ import SwiftUI
 @ObservableState
 public struct Language: Identifiable, Equatable, Codable, Sendable {
     
-    public init(bcp47: String) {
+    struct AttemptedToCreateLanguageWithEmptyLanguageCode: Error {}
+
+    public init(bcp47: String) throws {
+        guard !bcp47.isEmpty else { throw AttemptedToCreateLanguageWithEmptyLanguageCode() }
         // dashes are required in order for UITextField to parse and use it
         self.bcp47 = bcp47.replacingOccurrences(of: "_", with: "-")
     }
@@ -13,8 +16,8 @@ public struct Language: Identifiable, Equatable, Codable, Sendable {
     public var id: String { bcp47 }
     
     public let bcp47: String
-    var customNameForAllLanguages: String?
-    var customLocalizedNames: [String: String] = [:]
+    public var customNameForAllLanguages: String?
+    public var customLocalizedNames: [String: String] = [:]
     
     var metadata: Metadata = .init()
     
@@ -44,7 +47,7 @@ public struct Language: Identifiable, Equatable, Codable, Sendable {
     
     public var displayName: String {
         @Dependency(\.locale) var locale
-        if let custom = customLocalizedNames[locale.identifier] {
+        if let custom = customNameForAllLanguages ?? customLocalizedNames[locale.identifier] {
             return custom
         } else {
             // we only want to show the additional (region) information if the primary language is not unique
@@ -60,10 +63,10 @@ public struct Language: Identifiable, Equatable, Codable, Sendable {
     }
     
     public static var ukrainian: Language {
-        .init(bcp47: "uk_UA")
+        try! .init(bcp47: "uk_UA")
     }
     public static var english: Language {
-        .init(bcp47: "en_US")
+        try! .init(bcp47: "en_US")
     }
     
     var primaryLanguage: String? {

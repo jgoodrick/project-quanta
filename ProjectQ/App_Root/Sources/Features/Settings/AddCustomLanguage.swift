@@ -1,16 +1,21 @@
 
 import ComposableArchitecture
+import Model
 import SwiftUI
 
 @Reducer
 public struct AddCustomLanguage {
     @ObservableState
     public struct State: Equatable {
+        
+        @Shared(.db) var db
+        @Shared(.settings) var settings
+        
         var languageCode: String = ""
-        var scriptCode: String = ""
+//        var scriptCode: String = ""
         var regionCode: String = ""
         var isShowingCustomLanguageCodeField: Bool = false
-        var isShowingCustomScriptCodeField: Bool = false
+//        var isShowingCustomScriptCodeField: Bool = false
         var isShowingCustomRegionCodeField: Bool = false
         var isShowingCustomNameField: Bool = false
         var customNameForAllLanguages: String = ""
@@ -19,16 +24,18 @@ public struct AddCustomLanguage {
         var currentLanguageSelectedForLocalizedName: String? = nil
         var customLocalizedNamesByLanguageCode: [String: String] = [:]
         
+        @Presents var destination: Destination.State?
+        
         var resolvedBCP47Code: String? {
-            let result = [
+            
+            guard !languageCode.isEmpty else { return nil }
+            
+            return [
                 languageCode,
-                scriptCode,
+//                scriptCode,
                 regionCode
             ].compactMap({ $0.isEmpty ? nil : $0 }).joined(separator: "-")
-            
-            guard !result.isEmpty else { return nil }
-            
-            return result
+                        
         }
 
         var isValidForCreation: Bool {
@@ -36,19 +43,26 @@ public struct AddCustomLanguage {
         }
         
     }
+    
+    @Reducer(state: .equatable)
+    public enum Destination {
+        case alert(AlertState<Never>)
+    }
+
     public enum Action: BindableAction {
         case binding(BindingAction<State>)
+        case destination(PresentationAction<Destination.Action>)
         case creationConfirmedButtonTapped
         case addCustomNameButtonTapped
         case tappedCommonLanguageMenuItem(CommonLanguageCode?)
-        case tappedCommonScriptMenuItem(CommonScriptCode?)
+//        case tappedCommonScriptMenuItem(CommonScriptCode?)
         case tappedCommonRegionMenuItem(CommonRegionCode?)
         case saveLocalizedNameButtonTapped
         case tappedAddLocalizedNameMenuItem(CommonLanguageCode)
         case clearCustomNameSelectionButtonTapped
         case clearLocalizedNameButtonTapped(String)
         case clearCustomLanguageCodeButtonTapped
-        case clearCustomScriptCodeButtonTapped
+//        case clearCustomScriptCodeButtonTapped
         case clearCustomRegionCodeButtonTapped
     }
     
@@ -58,10 +72,34 @@ public struct AddCustomLanguage {
         
         Reduce<State, Action> { state, action in
             switch action {
-            case .binding: return .none
+            case .binding, .destination: return .none
             case .creationConfirmedButtonTapped:
                 
-                return .none
+                guard let newCode = state.resolvedBCP47Code else {
+                    
+                    state.destination = .alert(.init(title: { .init("Language cannot be empty")}))
+                    
+                    return .none
+                }
+                
+                do {
+                    
+                    var newLanguage = try Language(bcp47: newCode)
+                    newLanguage.customLocalizedNames = state.customLocalizedNamesByLanguageCode
+                    try state.db.ensureExistenceOf(language: newLanguage, mergeIfExists: true)
+                    state.settings.languageSelectionList.append(newLanguage)
+                    state.settings.focusedLanguage = newLanguage
+                    
+                } catch {
+                    
+                    state.destination = .alert(.failedToCreateLanguage(from: newCode))
+                    
+                }
+                
+                return .run { _ in
+                    @Dependency(\.dismiss) var dismiss
+                    await dismiss()
+                }
                 
             case .addCustomNameButtonTapped:
                 
@@ -80,17 +118,17 @@ public struct AddCustomLanguage {
                 
                 return .none
                 
-            case .tappedCommonScriptMenuItem(let scriptCode):
-                
-                if let scriptCode {
-                    state.scriptCode = scriptCode.rawValue
-                    state.isShowingCustomScriptCodeField = false
-                } else {
-                    state.isShowingCustomScriptCodeField = true
-                }
-
-                return .none
-                
+//            case .tappedCommonScriptMenuItem(let scriptCode):
+//                
+//                if let scriptCode {
+//                    state.scriptCode = scriptCode.rawValue
+//                    state.isShowingCustomScriptCodeField = false
+//                } else {
+//                    state.isShowingCustomScriptCodeField = true
+//                }
+//
+//                return .none
+//                
             case .tappedCommonRegionMenuItem(let regionCode):
                 
                 if let regionCode {
@@ -141,13 +179,13 @@ public struct AddCustomLanguage {
                 
                 return .none
                 
-            case .clearCustomScriptCodeButtonTapped:
-
-                state.scriptCode = ""
-                state.isShowingCustomScriptCodeField = false
-
-                return .none
-                
+//            case .clearCustomScriptCodeButtonTapped:
+//
+//                state.scriptCode = ""
+//                state.isShowingCustomScriptCodeField = false
+//
+//                return .none
+//                
             case .clearCustomRegionCodeButtonTapped:
 
                 state.regionCode = ""
@@ -157,6 +195,13 @@ public struct AddCustomLanguage {
                 
             }
         }
+        .ifLet(\.$destination, action: \.destination)
+    }
+}
+
+fileprivate extension AlertState where Action == Never {
+    static func failedToCreateLanguage(from resolved: String) -> Self {
+        .init(title: { .init("Failed to create a language corresponding to \(resolved)")})
     }
 }
 
@@ -208,35 +253,35 @@ struct AddCustomLanguageView: View {
                         }
                     }
                     
-                    VStack {
-                        if store.isShowingCustomScriptCodeField {
-                            HStack {
-                                TextField("Code", text: $store.scriptCode)
-                                Button(action: { store.send(.clearCustomScriptCodeButtonTapped) }) {
-                                    Image(systemName: "xmark.circle.fill")
-                                }
-                            }
-                        } else {
-                            HStack {
-                                Menu(locale.localizedString(forScriptCode: store.scriptCode) ?? "Script") {
-                                    Button("Custom") {
-                                        store.send(.tappedCommonScriptMenuItem(.none))
-                                    }
-                                    ForEach(CommonScriptCode.allCases) { code in
-                                        Button(code.displayName(for: locale)) {
-                                            store.send(.tappedCommonScriptMenuItem(code))
-                                        }
-                                    }
-                                }
-                                if !store.scriptCode.isEmpty {
-                                    Button(action: { store.send(.clearCustomScriptCodeButtonTapped) }) {
-                                        Image(systemName: "xmark.circle.fill")
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
+//                    VStack {
+//                        if store.isShowingCustomScriptCodeField {
+//                            HStack {
+//                                TextField("Code", text: $store.scriptCode)
+//                                Button(action: { store.send(.clearCustomScriptCodeButtonTapped) }) {
+//                                    Image(systemName: "xmark.circle.fill")
+//                                }
+//                            }
+//                        } else {
+//                            HStack {
+//                                Menu(locale.localizedString(forScriptCode: store.scriptCode) ?? "Script") {
+//                                    Button("Custom") {
+//                                        store.send(.tappedCommonScriptMenuItem(.none))
+//                                    }
+//                                    ForEach(CommonScriptCode.allCases) { code in
+//                                        Button(code.displayName(for: locale)) {
+//                                            store.send(.tappedCommonScriptMenuItem(code))
+//                                        }
+//                                    }
+//                                }
+//                                if !store.scriptCode.isEmpty {
+//                                    Button(action: { store.send(.clearCustomScriptCodeButtonTapped) }) {
+//                                        Image(systemName: "xmark.circle.fill")
+//                                    }
+//                                }
+//                            }
+//                        }
+//                    }
+//                    
                     VStack {
                         if store.isShowingCustomRegionCodeField {
                             HStack {
@@ -323,6 +368,7 @@ struct AddCustomLanguageView: View {
         }
         .presentationDetents([.medium])
         .textFieldStyle(.roundedBorder)
+        .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
     }
 }
 

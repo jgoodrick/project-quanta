@@ -7,7 +7,7 @@ extension Database {
         @Shared(.db) var db
         return Query(expandWith: { $db[entry: $0] }, predicate: {
             @Shared(.settings) var settings
-            return $0.language == settings.focusedLanguage
+            return $0.language?.id == settings.focusedLanguage.id
         }, sortComparator: {
             $0[keyPath: \.modified] > $1[keyPath: \.modified]
         })
