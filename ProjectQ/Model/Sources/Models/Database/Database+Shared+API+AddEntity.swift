@@ -20,15 +20,6 @@ extension Shared<Database> {
         return expansion
     }
     
-    public mutating func addNewLanguage(id: Language.ID, builder: (inout Language) -> Void) throws -> Language.Expansion {
-        var new = Language(bcp47: id)
-        builder(&new)
-        precondition(!new.id.isEmpty)
-        wrappedValue.add(language: new)
-        guard let expansion = self[language: new.id] else { throw EntityMissingImmediatelyAfterAddition(entity: new) }
-        return expansion
-    }
-    
     public mutating func addNewKeyword(builder: (inout Keyword) -> Void) throws -> Keyword.Expansion {
         @Dependency(\.uuid) var uuid
         var new = Keyword(id: uuid())

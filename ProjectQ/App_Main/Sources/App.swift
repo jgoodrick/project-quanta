@@ -10,7 +10,7 @@ struct ProjectQApp: App {
         initialState: .init(),
         reducer: { 
             AppRoot()
-                ._printChanges()
+//                ._printChanges()
         }
     )
     

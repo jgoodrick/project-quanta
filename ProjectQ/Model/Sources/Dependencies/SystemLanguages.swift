@@ -14,14 +14,15 @@ public struct SystemLanguages: DependencyKey {
     }
     
     public var allConfiguredTextInputModeLanguages: () -> IdentifiedArrayOf<Language> = {
-        UITextInputMode.activeInputModes.compactMap(\.primaryLanguage).map({ Language(bcp47: $0) }).reduce(into: [], { $0.append($1) })
+        UITextInputMode.activeInputModes.compactMap(\.primaryLanguage).compactMap({ try? Language(bcp47: $0) }).reduce(into: [], { $0.append($1) })
     }
     
 }
 
 extension Locale {
     var modelLanguage: Model.Language {
-        .init(bcp47: identifier(.bcp47))
+        // this comes from the system, and so should theoretically _always_ be a valid id
+        try! .init(bcp47: identifier(.bcp47))
     }
 }
 

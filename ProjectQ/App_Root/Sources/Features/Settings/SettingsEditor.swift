@@ -85,7 +85,7 @@ public struct SettingsEditor {
     }
 }
 
-extension AlertState where Action == Never {
+fileprivate extension AlertState where Action == Never {
     static func failedToAddLanguage(_ language: Language) -> Self {
         .init(title: { .init("Failed to add \(language.displayName)")})
     }

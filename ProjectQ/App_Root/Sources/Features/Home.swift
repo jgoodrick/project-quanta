@@ -80,6 +80,8 @@ public struct Home {
                 
             case .entryTapped(let entry):
                 
+                state.entryCreator = .init()
+                
                 state.destination = .entryDetail(.init(entry: entry.id))
                 
                 return .none
@@ -94,7 +96,7 @@ public struct Home {
             case .dialog(_): return .none
             case .settingsMenu(.allSettingsMenuButtonTapped):
                 
-//                state.entryCreator = .init()
+                state.entryCreator = .init()
                 
                 return .none
                 
@@ -160,6 +162,9 @@ struct HomeListView: View {
         }
         .confirmationDialog($store.scope(state: \.destination?.confirmationDialog, action: \.destination.confirmationDialog))
         .modifier(PresentsSettingsMenuInToolbar(store: store.scope(state: \.settingsMenu, action: \.settingsMenu)))
+        .onAppear {
+            print(store.displayedEntries)
+        }
     }
 }
 
