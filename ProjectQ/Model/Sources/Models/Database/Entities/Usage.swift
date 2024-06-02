@@ -15,6 +15,7 @@ public struct Usage: Identifiable, Equatable, Codable, Sendable {
     }
 
     struct Relationships: Equatable, Codable, Sendable, RelationshipSet {
+        var language: Language.ID? = nil
         var note: Note.ID? = nil
         var uses: Set<Entry.ID> = []
         mutating func merge(with incoming: Self) {
@@ -25,6 +26,7 @@ public struct Usage: Identifiable, Equatable, Codable, Sendable {
     
     public struct Expansion: Identifiable, Equatable, Sendable {
         public var shared: Shared<Usage>
+        public let language: Language?
         public let note: Note?
         public let uses: [Entry]
         

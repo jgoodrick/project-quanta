@@ -14,7 +14,9 @@ public struct EntryDetail {
             let shared = Shared(entryID)
             self._entryID = shared
             self.spellingEditor = .init(entryID: shared)
+            self.languageEditor = .init(entity: .entry(shared.wrappedValue))
             self.translationsEditor = .init(entryID: shared)
+            self.usagesEditor = .init(entryID: shared)
         }
         
         @Shared(.db) var db
@@ -22,13 +24,11 @@ public struct EntryDetail {
         
         @Shared var entryID: Entry.ID
         var spellingEditor: EntrySpellingEditor.State
+        var languageEditor: LanguageEditor.State
         var translationsEditor: EntryTranslationsEditor.State
+        var usagesEditor: EntryUsagesEditor.State
         
         @Presents var destination: Destination.State?
-
-        var languageName: String {
-            $db[entry: entryID]?.language?.displayName ?? "Not Set"
-        }
 
         var entry: Entry? {
             db[entry: entryID]
@@ -39,20 +39,25 @@ public struct EntryDetail {
     @Reducer(state: .equatable)
     public enum Destination {
         case translationDetail(EntryDetail)
+        case usageDetail(UsageDetail)
     }
     
     public enum Action: BindableAction {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
         case spellingEditor(EntrySpellingEditor.Action)
+        case languageEditor(LanguageEditor.Action)
         case translationsEditor(EntryTranslationsEditor.Action)
-        
-        case editLanguageMenuButtonSelected(Language)
+        case usagesEditor(EntryUsagesEditor.Action)
     }
 
     public var body: some ReducerOf<Self> {
         
         BindingReducer()
+        
+        Scope(state: \.languageEditor, action: \.languageEditor) {
+            LanguageEditor()
+        }
 
         Scope(state: \.spellingEditor, action: \.spellingEditor) {
             EntrySpellingEditor()
@@ -62,11 +67,16 @@ public struct EntryDetail {
             EntryTranslationsEditor()
         }
         
+        Scope(state: \.usagesEditor, action: \.usagesEditor) {
+            EntryUsagesEditor()
+        }
+        
         Reduce<State, Action> { state, action in
             switch action {
             case .binding: return .none
             case .destination: return .none
             case .spellingEditor: return .none
+            case .languageEditor: return .none
             case .translationsEditor(.delegate(let delegateAction)):
                 switch delegateAction {
                 case .translationSelected(let translation):
@@ -77,50 +87,19 @@ public struct EntryDetail {
 
                 }
             case .translationsEditor: return .none
-            case .editLanguageMenuButtonSelected(let selected):
-
-                state.db.updateLanguage(to: selected.id, for: state.entryID)
-
-                return .none
-
+            case .usagesEditor(.delegate(let delegateAction)):
+                switch delegateAction {
+                case .usageSelected(let usage):
+                    
+                    state.destination = .usageDetail(.init(id: usage.id, languageEditor: .init(entity: .usage(usage.id))))
+                    
+                    return .none
+                    
+                }
+            case .usagesEditor: return .none
             }
         }
         .ifLet(\.$destination, action: \.destination)
-    }
-}
-
-struct EntryDetailLanguageSectionView: View {
-    
-    let store: StoreOf<EntryDetail>
-        
-    var body: some View {
-        Section {
-            Text(store.languageName)
-        } header: {
-            HStack(alignment: .firstTextBaseline) {
-                
-                Text("Language")
-                    .font(.footnote)
-                    .textCase(.uppercase)
-                
-                Spacer()
-                
-                Menu {
-                    ForEach(store.settings.languageSelectionList) { menuItem in
-                        Button(action: {
-                            store.send(.editLanguageMenuButtonSelected(menuItem))
-                        }) {
-                            Label(menuItem.displayName.capitalized, systemImage: "flag")
-                        }
-                    }
-                } label: {
-                    Text("Edit")
-                        .font(.callout)
-                        .textCase(.lowercase)
-                }
-                
-            }
-        }
     }
 }
 
@@ -139,13 +118,22 @@ public struct EntryDetailView: View {
             if let entry = store.entry {
                 Form {
                     
-                    EntryDetailLanguageSectionView(store: store)
+                    LanguageEditorView(store: store.scope(state: \.languageEditor, action: \.languageEditor))
         
                     EntryTranslationsEditorView(store: store.scope(state: \.translationsEditor, action: \.translationsEditor))
                     
+                    EntryUsagesEditorView(store: store.scope(state: \.usagesEditor, action: \.usagesEditor))
+                    
                 }
-                .modifier(EntrySpellingEditorViewModifier(store: store.scope(state: \.spellingEditor, action: \.spellingEditor)))
-                .modifier(EntryTranslationsEditorViewModifier(store: store.scope(state: \.translationsEditor, action: \.translationsEditor)))
+                .modifier(
+                    EntrySpellingEditorViewModifier(store: store.scope(state: \.spellingEditor, action: \.spellingEditor))
+                )
+                .modifier(
+                    FloatingTextFieldInset(store: store.scope(state: \.translationsEditor.textField, action: \.translationsEditor.textField))
+                )
+                .modifier(LanguageTrackingFloatingTextFieldInset(
+                    store: store.scope(state: \.usagesEditor.tracking, action: \.usagesEditor.tracking))
+                )
                 .navigationTitle(entry.spelling)
             } else {
                 ContentUnavailableView("Missing Entry", systemImage: "nosign")

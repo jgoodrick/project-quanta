@@ -87,10 +87,12 @@ extension Shared<Database> {
     public subscript(usage id: Usage.ID) -> Usage.Expansion? {
         guard let usage = projectedValue.stored.usages[id] else { return nil }
         let relationships = wrappedValue.relationships.usages[id, default: .init()]
+        let language = relationships.language.flatMap({ wrappedValue.stored.languages[$0] })
         let note = relationships.note.flatMap({ wrappedValue.stored.notes[$0] })
         let uses = relationships.uses.compactMap({ wrappedValue.stored.entries[$0] })
         return .init(
             shared: usage,
+            language: language,
             note: note,
             uses: uses
         )

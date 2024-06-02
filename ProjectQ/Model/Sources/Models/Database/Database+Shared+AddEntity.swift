@@ -14,7 +14,7 @@ extension Shared<Database> {
         precondition(!new.spelling.isEmpty)
         wrappedValue.add(entry: new)
         if let language {
-            wrappedValue.updateLanguage(to: language.id, for: new.id)
+            wrappedValue.updateEntryLanguage(to: language.id, for: new.id)
         }
         guard let expansion = self[entry: new.id] else { throw EntityMissingImmediatelyAfterAddition(entity: new) }
         return expansion

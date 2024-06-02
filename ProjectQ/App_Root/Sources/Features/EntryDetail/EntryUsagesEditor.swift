@@ -1,38 +1,43 @@
 
+
 import ComposableArchitecture
 import Foundation
 import Model
 import SwiftUI
 
 @Reducer
-public struct EntryTranslationsEditor {
+public struct EntryUsagesEditor {
     
     @ObservableState
     public struct State: Equatable {
-                
+        
+        init(entryID: Shared<Entry.ID>) {
+            self._entryID = entryID
+            @Shared(.db) var database
+            self.tracking = .init(
+                languageID: $database.languageOf(entry: entryID.wrappedValue)
+            )
+        }
+
         @Shared(.db) var db
         @Shared(.settings) var settings
         
         @Shared var entryID: Entry.ID
-        var textField: FloatingTextField.State = {
-            @Dependency(\.systemLanguages) var systemLanguages
-            let system = systemLanguages.current()
-            return .init(languageOverride: system.id)
-        }()
-        
+        var tracking: LanguageTrackingFloatingTextField.State
+
         @Presents var destination: Destination.State?
         
-        var translations: [Entry.Expansion] {
-            $db.translations(for: entryID)
+        var usages: [Usage.Expansion] {
+            $db.usages(for: entryID)
         }
 
-        mutating func submitCurrentFieldValueAsTranslation() -> EffectOf<EntryTranslationsEditor> {
+        mutating func submitCurrentFieldValueAsUsage() -> EffectOf<EntryUsagesEditor> {
             
             defer {
-                textField.reset()
+                tracking.textField.reset()
             }
 
-            let translationSpelling = textField.text
+            let translationSpelling = tracking.textField.text
             
             guard !translationSpelling.isEmpty else {
                 return .none
@@ -61,8 +66,8 @@ public struct EntryTranslationsEditor {
                 
                 do {
                     
-                    let translationSpelling = textField.text
-                    let translationLanguage = textField.language
+                    let translationSpelling = tracking.textField.text
+                    let translationLanguage = tracking.textField.language
                     
                     let newEntry = try $db.addNewEntry(language: translationLanguage) {
                         $0.spelling = translationSpelling
@@ -86,28 +91,28 @@ public struct EntryTranslationsEditor {
     @Reducer(state: .equatable)
     public enum Destination {
         case alert(AlertState<Never>)
-        case confirmationDialog(ConfirmationDialogState<EntryTranslationsEditor.ConfirmationDialog>)
+        case confirmationDialog(ConfirmationDialogState<EntryUsagesEditor.ConfirmationDialog>)
     }
     
     public enum ConfirmationDialog: Equatable {
         case cancel
-        case addTranslationAsExistingEntry(Entry.Expansion)
-        case addTranslationAsNewEntry
+        case addUsageAsExistingEntry(Entry.Expansion)
+        case addUsageAsNewEntry
     }
 
     public enum Action: BindableAction {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
-        case textField(FloatingTextField.Action)
+        case tracking(LanguageTrackingFloatingTextField.Action)
         
         case addButtonTapped
         case addLongPressMenuButtonTapped(Language)
-        case destructiveSwipeButtonTapped(Entry.Expansion)
+        case destructiveSwipeButtonTapped(Usage.Expansion)
         case moved(fromOffsets: IndexSet, toOffset: Int)
         
         case delegate(Delegate)
         public enum Delegate {
-            case translationSelected(Entry.Expansion)
+            case usageSelected(Usage.Expansion)
         }
     }
 
@@ -115,8 +120,8 @@ public struct EntryTranslationsEditor {
         
         BindingReducer()
         
-        Scope(state: \.textField, action: \.textField) {
-            FloatingTextField()
+        Scope(state: \.tracking, action: \.tracking) {
+            LanguageTrackingFloatingTextField()
         }
         
         Reduce<State, Action> { state, action in
@@ -129,23 +134,23 @@ public struct EntryTranslationsEditor {
 
                 @Dependency(\.systemLanguages) var systemLanguages
 
-                state.textField.languageOverride = systemLanguages.current().id
-                state.textField.collapsed = false
+                state.tracking.textField.languageOverride = systemLanguages.current().id
+                state.tracking.textField.collapsed = false
                 
                 return .none
 
             case .addLongPressMenuButtonTapped(let selected):
 
-                state.textField.languageOverride = selected.id
-                state.textField.collapsed = false
+                state.tracking.textField.languageOverride = selected.id
+                state.tracking.textField.collapsed = false
 
                 return .none
 
-            case .textField(.delegate(let delegatedAction)):
+            case .tracking(.textField(.delegate(let delegatedAction))):
                 switch delegatedAction {
-                case .fieldCommitted, .saveEntryButtonTapped: return state.submitCurrentFieldValueAsTranslation()
+                case .fieldCommitted, .saveEntryButtonTapped: return state.submitCurrentFieldValueAsUsage()
                 }
-            case .textField: return .none
+            case .tracking: return .none
             case .destructiveSwipeButtonTapped(let translation):
 
                 state.db.remove(translation: translation.id, from: state.entryID)
@@ -154,7 +159,7 @@ public struct EntryTranslationsEditor {
 
             case .moved(let fromOffsets, let toOffset):
 
-                state.db.moveTranslations(on: state.entryID, fromOffsets: fromOffsets, toOffset: toOffset)
+                state.db.moveUsages(on: state.entryID, fromOffsets: fromOffsets, toOffset: toOffset)
 
                 return .none
             }
@@ -164,7 +169,7 @@ public struct EntryTranslationsEditor {
 }
 
 extension ConfirmationDialogState {
-    static func addOrUseExisting(entry: Entry.Expansion) -> Self where Action == EntryTranslationsEditor.ConfirmationDialog {
+    static func addOrUseExisting(entry: Entry.Expansion) -> Self where Action == EntryUsagesEditor.ConfirmationDialog {
         .init(
             title: {
                 .init("A word spelled \"\(entry.spelling)\" already exists")
@@ -174,10 +179,10 @@ extension ConfirmationDialogState {
                     action: .cancel, label: { .init("Cancel") }
                 )
                 ButtonState<Action>.init(
-                    action: .addTranslationAsNewEntry, label: { .init("Create new entry") }
+                    action: .addUsageAsNewEntry, label: { .init("Create new entry") }
                 )
                 ButtonState<Action>.init(
-                    action: .addTranslationAsExistingEntry(entry), label: { .init("Use existing") }
+                    action: .addUsageAsExistingEntry(entry), label: { .init("Use existing") }
                 )
             },
             message: {
@@ -187,16 +192,16 @@ extension ConfirmationDialogState {
     }
 }
 
-struct EntryTranslationsEditorView: View {
+struct EntryUsagesEditorView: View {
     
-    @Bindable var store: StoreOf<EntryTranslationsEditor>
+    @Bindable var store: StoreOf<EntryUsagesEditor>
     
     var body: some View {
         Section {
-            ForEach(store.translations) { translation in
+            ForEach(store.usages) { usage in
                 HStack {
-                    Button(action: { store.send(.delegate(.translationSelected(translation))) }) {
-                        Text("\(translation.spelling)")
+                    Button(action: { store.send(.delegate(.usageSelected(usage))) }) {
+                        Text("\(usage.value)")
                     }
                     Spacer()
                     Image(systemName: "line.3.horizontal").foregroundStyle(.secondary)
@@ -205,7 +210,7 @@ struct EntryTranslationsEditorView: View {
                     Button(
                         role: .destructive,
                         action: {
-                            store.send(.destructiveSwipeButtonTapped(translation))
+                            store.send(.destructiveSwipeButtonTapped(usage))
                         },
                         label: {
                             Label(title: { Text("Delete") }, icon: { Image(systemName: "trash") })
@@ -219,7 +224,7 @@ struct EntryTranslationsEditorView: View {
 
         } header: {
             HStack(alignment: .firstTextBaseline) {
-                Text("Translations")
+                Text("Usages")
                 
                 Spacer()
                 
