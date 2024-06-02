@@ -17,6 +17,7 @@ public struct EntryDetail {
             self.languageEditor = .init(entity: .entry(shared.wrappedValue))
             self.translationsEditor = .init(entryID: shared)
             self.usagesEditor = .init(entryID: shared)
+            self.notesEditor = .init(entryID: shared)
         }
         
         @Shared(.db) var db
@@ -27,6 +28,7 @@ public struct EntryDetail {
         var languageEditor: LanguageEditor.State
         var translationsEditor: EntryTranslationsEditor.State
         var usagesEditor: EntryUsagesEditor.State
+        var notesEditor: EntryNotesEditor.State
         
         @Presents var destination: Destination.State?
 
@@ -49,6 +51,7 @@ public struct EntryDetail {
         case languageEditor(LanguageEditor.Action)
         case translationsEditor(EntryTranslationsEditor.Action)
         case usagesEditor(EntryUsagesEditor.Action)
+        case notesEditor(EntryNotesEditor.Action)
     }
 
     public var body: some ReducerOf<Self> {
@@ -69,6 +72,10 @@ public struct EntryDetail {
         
         Scope(state: \.usagesEditor, action: \.usagesEditor) {
             EntryUsagesEditor()
+        }
+        
+        Scope(state: \.notesEditor, action: \.notesEditor) {
+            EntryNotesEditor()
         }
         
         Reduce<State, Action> { state, action in
@@ -97,6 +104,7 @@ public struct EntryDetail {
                     
                 }
             case .usagesEditor: return .none
+            case .notesEditor: return .none
             }
         }
         .ifLet(\.$destination, action: \.destination)
@@ -122,7 +130,12 @@ public struct EntryDetailView: View {
         
                     EntryTranslationsEditorView(store: store.scope(state: \.translationsEditor, action: \.translationsEditor))
                     
-                    EntryUsagesEditorView(store: store.scope(state: \.usagesEditor, action: \.usagesEditor))
+                    Group {
+                        EntryUsagesEditorView(store: store.scope(state: \.usagesEditor, action: \.usagesEditor))
+                        
+                        EntryNotesEditorView(store: store.scope(state: \.notesEditor, action: \.notesEditor))
+                    }
+                    .environment(\.floatingTextField.autocapitalization, .sentences)
                     
                 }
                 .modifier(
@@ -134,6 +147,16 @@ public struct EntryDetailView: View {
                 .modifier(LanguageTrackingFloatingTextFieldInset(
                     store: store.scope(state: \.usagesEditor.tracking, action: \.usagesEditor.tracking))
                 )
+                .toolbar {
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        
+                        // this toolbar has to live here due to a SwiftUI bug that only allows one toolbar modifier for a form
+                        Button("Done") {
+                            store.send(.notesEditor(.doneButtonTapped))
+                        }
+                    }
+                }
                 .navigationTitle(entry.spelling)
             } else {
                 ContentUnavailableView("Missing Entry", systemImage: "nosign")
@@ -143,6 +166,7 @@ public struct EntryDetailView: View {
         .navigationDestination(item: $store.scope(state: \.destination?.translationDetail, action: \.destination.translationDetail)) { store in
             EntryDetailView(store: store)
         }
+        .safeAreaPadding(.bottom, 12)
     }
 }
 

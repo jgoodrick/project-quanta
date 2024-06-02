@@ -30,11 +30,10 @@ extension Shared<Database> {
         return expansion
     }
     
-    public mutating func addNewNote(builder: (inout Note) -> Void) throws -> Note.Expansion {
+    public mutating func addNewNote(builder: (inout Note) -> Void = { _ in }) throws -> Note.Expansion {
         @Dependency(\.uuid) var uuid
         var new = Note(id: uuid())
         builder(&new)
-        precondition(!new.value.isEmpty)
         wrappedValue.add(note: new)
         guard let expansion = self[note: new.id] else { throw EntityMissingImmediatelyAfterAddition(entity: new) }
         return expansion
