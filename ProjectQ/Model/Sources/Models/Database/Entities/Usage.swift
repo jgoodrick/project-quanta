@@ -5,7 +5,7 @@ import SwiftUI
 @ObservableState
 public struct Usage: Identifiable, Equatable, Codable, Sendable {
     public let id: UUID
-    var value: String = ""
+    public var value: String = ""
     
     var metadata: Metadata = .init()
     

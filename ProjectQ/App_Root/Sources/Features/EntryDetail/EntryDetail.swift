@@ -11,176 +11,85 @@ public struct EntryDetail {
     public struct State: Equatable {
         
         init(entry entryID: Entry.ID) {
-            self.entryID = entryID
-            @Shared(.db) var database
-            let expanded = $database[entry: entryID]
-            @Dependency(\.systemLanguages) var systemLanguages
-            let system = systemLanguages.current()
-            self.spelling = .init(languageOverride: expanded?.language?.id ?? system.id)
-            self.translation.languageOverride = system.id
+            let shared = Shared(entryID)
+            self._entryID = shared
+            self.spellingEditor = .init(entryID: shared)
+            self.translationsEditor = .init(entryID: shared)
         }
         
         @Shared(.db) var db
         @Shared(.settings) var settings
         
-        var entryID: Entry.ID
-        var spelling: FloatingTextField.State
-        var translation: FloatingTextField.State = .init()
+        @Shared var entryID: Entry.ID
+        var spellingEditor: EntrySpellingEditor.State
+        var translationsEditor: EntryTranslationsEditor.State
         
         @Presents var destination: Destination.State?
-        
+
+        var languageName: String {
+            $db[entry: entryID]?.language?.displayName ?? "Not Set"
+        }
+
+        var entry: Entry? {
+            db[entry: entryID]
+        }
+
     }
     
     @Reducer(state: .equatable)
     public enum Destination {
-        case alert(AlertState<Never>)
-        case confirmationDialog(ConfirmationDialogState<EntryDetail.ConfirmationDialog>)
-        case related(EntryDetail)
+        case translationDetail(EntryDetail)
     }
     
-    public enum ConfirmationDialog: Equatable {
-        case cancel
-        case mergeWithExisting(Entry.Expansion)
-        case updateSpellingWithoutMerging
-    }
-
-    public enum Action {
+    public enum Action: BindableAction {
+        case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
-        case spelling(FloatingTextField.Action)
-        case translation(FloatingTextField.Action)
-
-        case task
-        case editSpellingButtonTapped
+        case spellingEditor(EntrySpellingEditor.Action)
+        case translationsEditor(EntryTranslationsEditor.Action)
+        
         case editLanguageMenuButtonSelected(Language)
-        case addTranslationButtonTapped
-        case addTranslationLongPressMenuButtonTapped(Language)
-        case translationSelected(Entry.Expansion)
-        case translationDestructiveSwipeButtonTapped(Entry.Expansion)
-        case movedTranslation(fromOffsets: IndexSet, toOffset: Int)
-
     }
 
     public var body: some ReducerOf<Self> {
         
-        Scope(state: \.spelling, action: \.spelling) {
-            FloatingTextField()
+        BindingReducer()
+
+        Scope(state: \.spellingEditor, action: \.spellingEditor) {
+            EntrySpellingEditor()
         }
         
-        Scope(state: \.translation, action: \.translation) {
-            FloatingTextField()
+        Scope(state: \.translationsEditor, action: \.translationsEditor) {
+            EntryTranslationsEditor()
         }
         
         Reduce<State, Action> { state, action in
             switch action {
-            case .task: return .none
-            case .editSpellingButtonTapped:
+            case .binding: return .none
+            case .destination: return .none
+            case .spellingEditor: return .none
+            case .translationsEditor(.delegate(let delegateAction)):
+                switch delegateAction {
+                case .translationSelected(let translation):
 
-                state.spelling.collapsed = false
+                    state.destination = .translationDetail(.init(entry: translation.id))
 
-                return .none
+                    return .none
 
+                }
+            case .translationsEditor: return .none
             case .editLanguageMenuButtonSelected(let selected):
 
                 state.db.updateLanguage(to: selected.id, for: state.entryID)
 
                 return .none
 
-            case .addTranslationButtonTapped:
-
-                @Dependency(\.systemLanguages) var systemLanguages
-
-                state.translation.collapsed = false
-                state.translation.languageOverride = systemLanguages.current().id
-                return .none
-
-            case .addTranslationLongPressMenuButtonTapped(let selected):
-
-                state.translation.languageOverride = selected.id
-                state.translation.collapsed = false
-
-                return .none
-
-            case .spelling(.delegate(let delegatedAction)):
-                switch delegatedAction {
-                case .fieldCommitted, .saveEntryButtonTapped: return state.submitCurrentFieldValueAsUpdatedSpelling()
-                }
-            case .spelling: return .none
-            case .destination(.presented(.confirmationDialog(.updateSpellingWithoutMerging))):
-
-                state.db.updateEntry(\.spelling, on: state.entryID, to: state.spelling.text)
-
-                return .none
-
-            case .destination(.presented(.confirmationDialog(.mergeWithExisting(let existing)))):
-
-                let preMergeID = state.entryID
-                
-                state.entryID = existing.id
-                
-                state.db.merge(entry: preMergeID, into: existing.id)
-
-                return .none
-
-            case .destination(.presented(.confirmationDialog(.cancel))):
-
-                state.spelling.reset()
-
-                return .none
-
-            case .destination: return .none
-            case .translation(.delegate(let delegatedAction)):
-                switch delegatedAction {
-                case .fieldCommitted, .saveEntryButtonTapped: return state.submitCurrentFieldValueAsTranslation()
-                }
-            case .translation: return .none
-            case .translationSelected(let translation):
-
-                state.destination = .related(.init(entry: translation.id))
-
-                return .none
-
-            case .translationDestructiveSwipeButtonTapped(let translation):
-
-                state.db.remove(translation: translation.id, from: state.entryID)
-                
-                return .none
-
-            case .movedTranslation(let fromOffsets, let toOffset):
-
-                state.db.moveTranslations(on: state.entryID, fromOffsets: fromOffsets, toOffset: toOffset)
-
-                return .none
             }
         }
         .ifLet(\.$destination, action: \.destination)
     }
 }
 
-extension ConfirmationDialogState {
-    static func addOrMergeWithExisting(entry: Entry.Expansion) -> Self where Action == EntryDetail.ConfirmationDialog {
-        .init(
-            title: {
-                .init("A word spelled \"\(entry.spelling)\" already exists")
-            },
-            actions: {
-                ButtonState<Action>.init(
-                    action: .cancel, label: { .init("Cancel") }
-                )
-                ButtonState<Action>.init(
-                    action: .updateSpellingWithoutMerging, label: { .init("Keep separate") }
-                )
-                ButtonState<Action>.init(
-                    action: .mergeWithExisting(entry), label: { .init("Merge") }
-                )
-            },
-            message: {
-                .init("Would you like to merge with it, or keep this as a separate word with the same spelling?")
-            }
-        )
-    }
-}
-
-struct EntryDetailLanguageSection: View {
+struct EntryDetailLanguageSectionView: View {
     
     let store: StoreOf<EntryDetail>
         
@@ -215,67 +124,9 @@ struct EntryDetailLanguageSection: View {
     }
 }
 
-struct EntryDetailTranslationSection: View {
-    
-    let store: StoreOf<EntryDetail>
-    
-    var body: some View {
-        Section {
-            ForEach(store.translations) { translation in
-                HStack {
-                    Button(action: { store.send(.translationSelected(translation)) }) {
-                        Text("\(translation.spelling)")
-                    }
-                    Spacer()
-                    Image(systemName: "line.3.horizontal").foregroundStyle(.secondary)
-                }
-                .swipeActions {
-                    Button(
-                        role: .destructive,
-                        action: {
-                            store.send(.translationDestructiveSwipeButtonTapped(translation))
-                        },
-                        label: {
-                            Label(title: { Text("Delete") }, icon: { Image(systemName: "trash") })
-                        }
-                    )
-                }
-            }
-            .onMove { from, to in
-                store.send(.movedTranslation(fromOffsets: from, toOffset: to))
-            }
-
-        } header: {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Translations")
-                
-                Spacer()
-                
-                Menu(content: {
-                    // long press
-                    ForEach(store.settings.languageSelectionList) { menuItem in
-                        Button(action: {
-                            store.send(.addTranslationLongPressMenuButtonTapped(menuItem))
-                        }) {
-                            Label(menuItem.displayName.capitalized, systemImage: "flag")
-                        }
-                    }
-                }, label: {
-                    Text("+ Add")
-                        .font(.callout)
-                        .textCase(.lowercase)
-                }, primaryAction: {
-                    // on tap
-                    store.send(.addTranslationButtonTapped)
-                })
-            }
-        }
-    }
-}
-
 public struct EntryDetailView: View {
     
-    @Bindable public var store: StoreOf<EntryDetail>
+    @Bindable var store: StoreOf<EntryDetail>
     
     public struct Style: EnvironmentKey {
         public static var defaultValue: Self = .init()
@@ -288,47 +139,22 @@ public struct EntryDetailView: View {
             if let entry = store.entry {
                 Form {
                     
-                    EntryDetailLanguageSection(store: store)
+                    EntryDetailLanguageSectionView(store: store)
         
-                    EntryDetailTranslationSection(store: store)
+                    EntryTranslationsEditorView(store: store.scope(state: \.translationsEditor, action: \.translationsEditor))
                     
                 }
-                .toolbar {
-                    ToolbarItem {
-                        Button(action: { store.send(.editSpellingButtonTapped) }) {
-                            Image(systemName: "pencil")
-                        }
-                    }
-                }
-                .safeAreaInset(edge: .bottom) {
-                    VStack {
-                        
-                        Spacer()
-                                
-                        if !store.spelling.collapsed {
-                            FloatingTextFieldView(
-                                store: store.scope(state: \.spelling, action: \.spelling)
-                            )
-                        } else if !store.translation.collapsed {
-                            FloatingTextFieldView(
-                                store: store.scope(state: \.translation, action: \.translation)
-                            )
-                        }
-                        
-                    }
-                    .padding()
-                }
+                .modifier(EntrySpellingEditorViewModifier(store: store.scope(state: \.spellingEditor, action: \.spellingEditor)))
+                .modifier(EntryTranslationsEditorViewModifier(store: store.scope(state: \.translationsEditor, action: \.translationsEditor)))
                 .navigationTitle(entry.spelling)
             } else {
                 ContentUnavailableView("Missing Entry", systemImage: "nosign")
             }
         }
-        .confirmationDialog($store.scope(state: \.destination?.confirmationDialog, action: \.destination.confirmationDialog))
 //        .scrollContentBackground(.hidden)
-        .navigationDestination(item: $store.scope(state: \.destination?.related, action: \.destination.related)) { store in
+        .navigationDestination(item: $store.scope(state: \.destination?.translationDetail, action: \.destination.translationDetail)) { store in
             EntryDetailView(store: store)
         }
-        .task { await store.send(.task).finish() }
     }
 }
 
