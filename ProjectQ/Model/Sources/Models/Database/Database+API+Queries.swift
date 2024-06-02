@@ -14,6 +14,10 @@ extension Database {
         .execute(on: stored.entries.keys)
     }
 
+    public func keyboardLanguageID(for entry: Entry.ID) -> Language.ID {
+        @Dependency(\.systemLanguages) var systemLanguages
+        return relationships.entries[id: entry].language ?? systemLanguages.current().id
+    }
 }
 
 extension Shared<Database> {
@@ -46,6 +50,11 @@ extension Shared<Database> {
     public func translations(for entry: Entry.ID) -> [Entry.Expansion] {
         Query(expandWith: { self[entry: $0] }, predicate: .none, sortComparator: .none)
             .execute(on: wrappedValue.relationships.entries[id: entry].translations)
+    }
+    
+    public func usages(for entry: Entry.ID) -> [Usage.Expansion] {
+        Query(expandWith: { self[usage: $0] }, predicate: .none, sortComparator: .none)
+            .execute(on: wrappedValue.relationships.entries[id: entry].usages)
     }
     
 }

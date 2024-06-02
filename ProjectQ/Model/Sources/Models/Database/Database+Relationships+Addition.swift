@@ -1,12 +1,21 @@
 
 extension Database.Relationships {
     
-    mutating func setLanguage(of entry: Entry.ID, toLanguage language: Language.ID) {
+    mutating func setEntryLanguage(of entry: Entry.ID, toLanguage language: Language.ID) {
         let previous = entries[entry]
         entries[id: entry].language = language
         languages[id: language].entries.insert(entry)
         if let previousLanguage = previous?.language {
             languages[id: previousLanguage].entries.remove(entry)
+        }
+    }
+    
+    mutating func setUsageLanguage(of usage: Usage.ID, toLanguage language: Language.ID) {
+        let previous = usages[usage]
+        usages[id: usage].language = language
+        languages[id: language].usages.insert(usage)
+        if let previousLanguage = previous?.language {
+            languages[id: previousLanguage].usages.remove(usage)
         }
     }
     
