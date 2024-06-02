@@ -39,6 +39,14 @@ extension Shared<Database> {
         })
     }
     
+    public func usages<T: Equatable>(where keyPath: KeyPath<Usage, T>, is value: T) -> [Usage.Expansion] {
+        wrappedValue.stored.usages.values.filter({
+            $0[keyPath: keyPath] == value
+        }).compactMap({
+            self[usage: $0.id]
+        })
+    }
+    
     public func languages<T: Equatable>(where keyPath: KeyPath<Language, T>, is value: T) -> [Language.Expansion] {
         wrappedValue.stored.languages.values.filter({
             $0[keyPath: keyPath] == value
