@@ -63,6 +63,8 @@ public struct FloatingTextFieldView: View {
         var customHeight: Double? = .none
         var background: Color = .gray
         var placeholder: String = "New Entry"
+        var autocapitalization: UITextAutocapitalizationType = .none
+        var autocorrection: UITextAutocorrectionType = .default
         var textFieldSource: TextFieldSource = .uiKit
         enum TextFieldSource {
             case uiKit
@@ -70,7 +72,7 @@ public struct FloatingTextFieldView: View {
         }
     }
     
-    @Environment(\.floatingEntryCreator) var style
+    @Environment(\.floatingTextField) var style
 
     public var body: some View {
         GeometryReader { proxy in
@@ -85,6 +87,8 @@ public struct FloatingTextFieldView: View {
                         switch style.textFieldSource {
                         case .uiKit:
                             ConfigurableTextField(text: $store.text) { config in
+                                config.autocapitalization = style.autocapitalization
+                                config.autocorrection = style.autocorrection
                                 config.isFirstResponder = !store.collapsed
                                 config.onCommit = { store.send(.delegate(.fieldCommitted)) }
                                 config.placeholder = style.placeholder
@@ -165,7 +169,7 @@ struct SaveEntryButton: View {
 }
 
 extension EnvironmentValues {
-    var floatingEntryCreator: FloatingTextFieldView.Style {
+    var floatingTextField: FloatingTextFieldView.Style {
         get { self[FloatingTextFieldView.Style.self] }
         set { self[FloatingTextFieldView.Style.self] = newValue}
     }

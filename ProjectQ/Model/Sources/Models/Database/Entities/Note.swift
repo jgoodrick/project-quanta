@@ -5,7 +5,7 @@ import SwiftUI
 @ObservableState
 public struct Note: Identifiable, Equatable, Codable, Sendable {
     public let id: UUID
-    var value: String = ""
+    public var value: String = ""
     var metadata: Metadata = .init()
     
     mutating func merge(with incoming: Self) {
@@ -25,23 +25,29 @@ public struct Note: Identifiable, Equatable, Codable, Sendable {
         }
     }
     public struct Expansion: Identifiable, Equatable, Sendable {
-        public var shared: Shared<Note>
+        @Shared public var shared: Note
         public let target: Target?
         public enum Target: Equatable, Sendable {
             case entry(Entry)
             case usage(Usage)
         }
         
-        public var id: Note.ID { shared.wrappedValue.id }
+        public var id: Note.ID { shared.id }
         public var value: String {
-            get { shared.wrappedValue.value }
-            set { shared.wrappedValue.value = newValue }
+            get { shared.value }
+            set { shared.value = newValue }
         }
         public var added: Date {
-            get { shared.wrappedValue.metadata.added }
+            get { shared.metadata.added }
         }
         public var modified: Date {
-            get { shared.wrappedValue.metadata.modified }
+            get { shared.metadata.modified }
+        }
+        public var bound: Binding<Note> {
+            .init(
+                get: { shared },
+                set: { shared = $0}
+            )
         }
     }
 }

@@ -47,6 +47,14 @@ extension Shared<Database> {
         })
     }
     
+    public func notes<T: Equatable>(where keyPath: KeyPath<Note, T>, is value: T) -> [Note.Expansion] {
+        wrappedValue.stored.notes.values.filter({
+            $0[keyPath: keyPath] == value
+        }).compactMap({
+            self[note: $0.id]
+        })
+    }
+    
     public func languages<T: Equatable>(where keyPath: KeyPath<Language, T>, is value: T) -> [Language.Expansion] {
         wrappedValue.stored.languages.values.filter({
             $0[keyPath: keyPath] == value
@@ -63,6 +71,11 @@ extension Shared<Database> {
     public func usages(for entry: Entry.ID) -> [Usage.Expansion] {
         Query(expandWith: { self[usage: $0] }, predicate: .none, sortComparator: .none)
             .execute(on: wrappedValue.relationships.entries[id: entry].usages)
+    }
+    
+    public func notes(for entry: Entry.ID) -> [Note.Expansion] {
+        Query(expandWith: { self[note: $0] }, predicate: .none, sortComparator: .none)
+            .execute(on: wrappedValue.relationships.entries[id: entry].notes)
     }
     
 }

@@ -52,7 +52,7 @@ struct ConfigurableTextField: UIViewRepresentable {
         var isFirstResponder: Bool?
         var becomeFirstResponderDelayNanoseconds: Double = 0
         
-        var autocapitalization: UITextAutocapitalizationType?
+        var autocapitalization: UITextAutocapitalizationType = .none
         var borderStyle: UITextField.BorderStyle = .none
         var uiFont: UIFont?
         var keyboardType: UIKeyboardType = .default
@@ -65,6 +65,7 @@ struct ConfigurableTextField: UIViewRepresentable {
         var enablesReturnKeyAutomatically: Bool? = true
         var returnKeyEnabled: Bool? = true // only works with enablesReturnKeyAutomatically set to true
         var adjustsFontSizeToFitWidth: Bool?
+        var autocorrection: UITextAutocorrectionType = .default
     }
     
     class Coordinator: NSObject, UITextFieldDelegate {
@@ -160,20 +161,12 @@ struct ConfigurableTextField: UIViewRepresentable {
         uiView.editingRect = configuration.editingRect
         uiView.clearButtonRect = configuration.clearButtonRect
         
-        if let autocapitalization = configuration.autocapitalization {
-            uiView.autocapitalizationType = autocapitalization
-        } else {
-            uiView.autocapitalizationType = .sentences
-        }
+        uiView.autocapitalizationType = configuration.autocapitalization
+        
+        uiView.autocorrectionType = configuration.autocorrection
         
         uiView.borderStyle = configuration.borderStyle
-        
-        if let disableAutocorrection = context.environment.disableAutocorrection {
-            uiView.autocorrectionType = disableAutocorrection ? .no : .yes
-        } else {
-            uiView.autocorrectionType = .default
-        }
-        
+                
         uiView.font = configuration.uiFont ?? context.environment.font?.toUIFont()
         
         uiView.isUserInteractionEnabled = context.environment.isEnabled
