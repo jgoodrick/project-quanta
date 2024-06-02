@@ -37,28 +37,28 @@ public struct EntryUsagesEditor {
                 tracking.textField.reset()
             }
 
-            let translationSpelling = tracking.textField.text
+            let value = tracking.textField.text
             
-            guard !translationSpelling.isEmpty else {
+            guard !value.isEmpty else {
                 return .none
             }
             
-            let matches = $db.entries(where: \.spelling, is: translationSpelling)
+            let matches = $db.usages(where: \.value, is: value)
             
             if let first = matches.first {
                 
                 if matches.count > 1 {
                     
-                    // what if there are more than one words in the repo that match the spelling of the translation the user just typed in? (Because the user previously decided to create a separate word with the same spelling instead of merging or editing the existing one). We will need to handle this with a confirmation dialog, as we have done previously.
+                    // what if there are more than one words in the repo that match the spelling of the usage the user just typed in? (Because the user previously decided to create a separate word with the same spelling instead of merging or editing the existing one). We will need to handle this with a confirmation dialog, as we have done previously.
                     // TODO: handle more than one match
                     
                     // Note, this is where we would delegate to the confirmation dialog to get a decision from the user about which one to use, or whether to create a new one
                     
-                    destination = .alert(.init(title: { .init("There was more than one entry that matched that translation's spelling. This is not currently supported.")}))
+                    destination = .alert(.init(title: { .init("There was more than one entry that matched that usage's. This is not currently supported.")}))
                     
                 } else {
                     
-                    db.connect(translation: first.id, to: entryID)
+                    db.connect(usage: first.id, to: entryID)
 
                 }
 
@@ -66,18 +66,18 @@ public struct EntryUsagesEditor {
                 
                 do {
                     
-                    let translationSpelling = tracking.textField.text
-                    let translationLanguage = tracking.textField.language
+                    let value = tracking.textField.text
+                    let valueLanguage = tracking.textField.language
                     
-                    let newEntry = try $db.addNewEntry(language: translationLanguage) {
-                        $0.spelling = translationSpelling
+                    let newUsage = try $db.addNewUsage(language: valueLanguage) {
+                        $0.value = value
                     }
                     
-                    db.connect(translation: newEntry.id, to: entryID)
+                    db.connect(usage: newUsage.id, to: entryID)
                     
                 } catch {
                     
-                    destination = .alert(.init(title: { .init("Failed to add a new translation: \(error.localizedDescription)") }))
+                    destination = .alert(.init(title: { .init("Failed to add a new usage: \(error.localizedDescription)") }))
                     
                 }
                 

@@ -40,12 +40,15 @@ extension Shared<Database> {
         return expansion
     }
     
-    public mutating func addNewUsage(builder: (inout Usage) -> Void) throws -> Usage.Expansion {
+    public mutating func addNewUsage(language: Language? = nil, builder: (inout Usage) -> Void) throws -> Usage.Expansion {
         @Dependency(\.uuid) var uuid
         var new = Usage(id: uuid())
         builder(&new)
         precondition(!new.value.isEmpty)
         wrappedValue.add(usage: new)
+        if let language {
+            wrappedValue.updateUsageLanguage(to: language.id, for: new.id)
+        }
         guard let expansion = self[usage: new.id] else { throw EntityMissingImmediatelyAfterAddition(entity: new) }
         return expansion
     }
