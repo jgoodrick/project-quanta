@@ -13,10 +13,10 @@ enum TargetID: String, CaseIterable {
     case App_Main_Tests
     case App_Root
     case App_Root_Tests
-    case Intent_ExtensionKitExtension
+//    case Intent_ExtensionKitExtension
     case Model
     case Model_Tests
-    case Widget_AppExtension
+//    case Widget_AppExtension
 
 }
 
@@ -32,8 +32,8 @@ extension TargetID: TargetDescription {
         case .App_Main:
             return [
                 .target(.App_Root),
-                .target(.Intent_ExtensionKitExtension),
-                .target(.Widget_AppExtension),
+//                .target(.Intent_ExtensionKitExtension),
+//                .target(.Widget_AppExtension),
             ]
         case .App_Main_Tests:
             return [
@@ -47,10 +47,10 @@ extension TargetID: TargetDescription {
             return [
                 .target(.App_Root),
             ]
-        case .Intent_ExtensionKitExtension:
-            return [
-                .target(.Model),
-            ]
+//        case .Intent_ExtensionKitExtension:
+//            return [
+//                .target(.Model),
+//            ]
         case .Model:
             return [
                 .external(name: "ComposableArchitecture", condition: .none),
@@ -59,10 +59,10 @@ extension TargetID: TargetDescription {
             return [
                 .target(.Model),
             ]
-        case .Widget_AppExtension:
-            return [
-                .target(.Model),
-            ]
+//        case .Widget_AppExtension:
+//            return [
+//                .target(.Model),
+//            ]
         }
     }
 
