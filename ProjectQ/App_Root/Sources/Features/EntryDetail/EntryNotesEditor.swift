@@ -104,48 +104,26 @@ extension AlertState {
     }
 }
 
+extension Note.Expansion: TextEditableItem {
+    var boundValue: Binding<String> { bound.value }
+}
+
 struct EntryNotesEditorView: View {
     
     @SwiftUI.Bindable var store: StoreOf<EntryNotesEditor>
     
     @FocusState var focused: Note.ID?
-    
+
     var body: some View {
-        Section {
-            ForEach(store.notes) { note in
-                TextEditor(text: note.bound.value)
-                    .focused($focused, equals: note.id)
-                    .swipeActions {
-                        Button(
-                            role: .destructive,
-                            action: {
-                                store.send(.destructiveSwipeButtonTapped(note))
-                            },
-                            label: {
-                                Label(title: { Text("Delete") }, icon: { Image(systemName: "trash") })
-                            }
-                        )
-                    }
-            }
-            .onMove { from, to in
-                store.send(.moved(fromOffsets: from, toOffset: to))
-            }
-        } header: {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Notes")
-                
-                Spacer()
-                
-                Button {
-                    store.send(.addButtonTapped)
-                } label: {
-                    Text("+ Add")
-                        .font(.callout)
-                        .textCase(.lowercase)
-                }
-            }
-        }
-        .synchronize($store.focusedNote, $focused)
+        TextEditableItemsSection(
+            title: "Notes",
+            items: store.notes,
+            focusedItem: $store.focusedNote,
+            onDelete: { store.send(.destructiveSwipeButtonTapped($0)) },
+            onMoved: { store.send(.moved(fromOffsets: $0, toOffset: $1)) },
+            onMenuShortPressed: { store.send(.addButtonTapped) }
+        )
+        .environment(\.floatingTextField.autocapitalization, .sentences)
     }
 }
 

@@ -112,7 +112,7 @@ public struct EntryUsagesEditor {
         
         case delegate(Delegate)
         public enum Delegate {
-            case usageSelected(Usage.Expansion)
+            case selected(Usage.Expansion)
         }
     }
 
@@ -192,6 +192,10 @@ extension ConfirmationDialogState {
     }
 }
 
+extension Usage.Expansion: CategorizedItem {}
+extension Language: CategorizedItemsSectionCategory {
+    var title: String { displayName }
+}
 
 struct EntryUsagesEditorView: View {
     
@@ -202,23 +206,12 @@ struct EntryUsagesEditorView: View {
             title: "Usages",
             items: store.usages,
             availableCategories: store.settings.languageSelectionList.map({ $0 }),
-            onSelected: { store.send(.delegate(.usageSelected($0))) },
+            onSelected: { store.send(.delegate(.selected($0))) },
             onDeleted: { store.send(.destructiveSwipeButtonTapped($0)) },
-            onMoved: { from, to in
-                store.send(.moved(fromOffsets: from, toOffset: to))
-            },
-            onMenuItemTapped: {
-                store.send(.addLongPressMenuButtonTapped($0))
-            },
-            onMenuShortPressed: {
-                // on tap
-                store.send(.addButtonTapped)
-            }
+            onMoved: { store.send(.moved(fromOffsets: $0, toOffset: $1)) },
+            onMenuItemTapped: { store.send(.addLongPressMenuButtonTapped($0)) },
+            onMenuShortPressed: { store.send(.addButtonTapped) }
         )
+        .environment(\.floatingTextField.autocapitalization, .sentences)
     }
-}
-
-extension Usage.Expansion: CategorizedItem {}
-extension Language: CategorizedItemsSectionCategory {
-    var title: String { displayName }
 }

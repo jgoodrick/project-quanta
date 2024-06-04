@@ -33,7 +33,7 @@ struct CategorizedItemsSection<Item: CategorizedItem, Category: CategorizedItems
                         Text(item.value)
                     }
                     Spacer()
-                    Image(systemName: "line.3.horizontal").foregroundStyle(.secondary)
+//                    Image(systemName: "line.3.horizontal").foregroundStyle(.secondary)
                 }
                 .swipeActions {
                     Button(

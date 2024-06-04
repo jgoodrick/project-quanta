@@ -107,7 +107,7 @@ public struct EntryTranslationsEditor {
         
         case delegate(Delegate)
         public enum Delegate {
-            case translationSelected(Entry.Expansion)
+            case selected(Entry.Expansion)
         }
     }
 
@@ -187,61 +187,24 @@ extension ConfirmationDialogState {
     }
 }
 
+extension Entry.Expansion: CategorizedItem {
+    var value: String { spelling }
+}
+
 struct EntryTranslationsEditorView: View {
     
     @SwiftUI.Bindable var store: StoreOf<EntryTranslationsEditor>
     
     var body: some View {
-        Section {
-            ForEach(store.translations) { translation in
-                HStack {
-                    Button(action: { store.send(.delegate(.translationSelected(translation))) }) {
-                        Text("\(translation.spelling)")
-                    }
-                    Spacer()
-                    Image(systemName: "line.3.horizontal").foregroundStyle(.secondary)
-                }
-                .swipeActions {
-                    Button(
-                        role: .destructive,
-                        action: {
-                            store.send(.destructiveSwipeButtonTapped(translation))
-                        },
-                        label: {
-                            Label(title: { Text("Delete") }, icon: { Image(systemName: "trash") })
-                        }
-                    )
-                }
-            }
-            .onMove { from, to in
-                store.send(.moved(fromOffsets: from, toOffset: to))
-            }
-
-        } header: {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Translations")
-                
-                Spacer()
-                
-                Menu(content: {
-                    // long press
-                    ForEach(store.settings.languageSelectionList) { menuItem in
-                        Button(action: {
-                            store.send(.addLongPressMenuButtonTapped(menuItem))
-                        }) {
-                            Label(menuItem.displayName.capitalized, systemImage: "flag")
-                        }
-                    }
-                }, label: {
-                    Text("+ Add")
-                        .font(.callout)
-                        .textCase(.lowercase)
-                }, primaryAction: {
-                    // on tap
-                    store.send(.addButtonTapped)
-                })
-            }
-        }
+        CategorizedItemsSection(
+            title: "Translations",
+            items: store.translations,
+            availableCategories: store.settings.languageSelectionList.map({ $0 }),
+            onSelected: { store.send(.delegate(.selected($0))) },
+            onDeleted: { store.send(.destructiveSwipeButtonTapped($0)) },
+            onMoved: { store.send(.moved(fromOffsets: $0, toOffset: $1)) },
+            onMenuItemTapped: { store.send(.addLongPressMenuButtonTapped($0)) },
+            onMenuShortPressed: { store.send(.addButtonTapped) }
+        )
     }
 }
-
