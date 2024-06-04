@@ -61,13 +61,26 @@ public struct UsageDetailView: View {
     
     @Environment(\.usageDetail) private var style
     
+    var languagesStore: StoreOf<LanguageEditor> { store.scope(state: \.languageEditor, action: \.languageEditor) }
+    
     public var body: some View {
         Group {
             if let usage = store.usage {
                 Form {
                     
-                    LanguageEditorView(store: store.scope(state: \.languageEditor, action: \.languageEditor))
-        
+                    CategorizedItemsSection(
+                        title: "Language",
+                        items: languagesStore.languages,
+                        availableCategories: languagesStore.settings.languageSelectionList.map({ $0 }),
+                        onSelected: nil,
+                        onDeleted: { languagesStore.send(.destructiveSwipeButtonTapped($0)) },
+                        onMoved: { languagesStore.send(.moved(fromOffsets: $0, toOffset: $1)) },
+                        onMenuItemTapped: {
+                            languagesStore.send(.addMenuButtonTapped($0))
+                        },
+                        onMenuShortPressed: nil
+                    )
+
 //                    EntryTranslationsEditorView(store: store.scope(state: \.translationsEditor, action: \.translationsEditor))
                     
                 }

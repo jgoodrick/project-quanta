@@ -89,12 +89,8 @@ struct LanguageEditorView: View {
             availableCategories: store.settings.languageSelectionList.map({ $0 }),
             onSelected: nil,
             onDeleted: { store.send(.destructiveSwipeButtonTapped($0)) },
-            onMoved: { from, to in
-                store.send(.moved(fromOffsets: from, toOffset: to))
-            },
-            onMenuItemTapped: {
-                store.send(.addMenuButtonTapped($0))
-            },
+            onMoved: { store.send(.moved(fromOffsets: $0, toOffset: $1)) },
+            onMenuItemTapped: { store.send(.addMenuButtonTapped($0)) },
             onMenuShortPressed: nil
         )
     }

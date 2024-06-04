@@ -86,7 +86,7 @@ public struct EntryDetail {
             case .languageEditor: return .none
             case .translationsEditor(.delegate(let delegateAction)):
                 switch delegateAction {
-                case .translationSelected(let translation):
+                case .selected(let translation):
 
                     state.destination = .translationDetail(.init(entry: translation.id))
 
@@ -96,7 +96,7 @@ public struct EntryDetail {
             case .translationsEditor: return .none
             case .usagesEditor(.delegate(let delegateAction)):
                 switch delegateAction {
-                case .usageSelected(let usage):
+                case .selected(let usage):
                     
                     state.destination = .usageDetail(.init(id: usage.id, languageEditor: .init(entity: .usage(usage.id))))
                     
@@ -120,23 +120,28 @@ public struct EntryDetailView: View {
     }
     
     @Environment(\.entryDetail) private var style
-    
+        
     public var body: some View {
         Group {
             if let entry = store.entry {
                 Form {
                     
-                    LanguageEditorView(store: store.scope(state: \.languageEditor, action: \.languageEditor))
-        
-                    EntryTranslationsEditorView(store: store.scope(state: \.translationsEditor, action: \.translationsEditor))
-                    
-                    Group {
-                        EntryUsagesEditorView(store: store.scope(state: \.usagesEditor, action: \.usagesEditor))
-                        
-                        EntryNotesEditorView(store: store.scope(state: \.notesEditor, action: \.notesEditor))
-                    }
-                    .environment(\.floatingTextField.autocapitalization, .sentences)
-                    
+                    LanguageEditorView(
+                        store: store.scope(state: \.languageEditor, action: \.languageEditor)
+                    )
+
+                    EntryTranslationsEditorView(
+                        store: store.scope(state: \.translationsEditor, action: \.translationsEditor)
+                    )
+
+                    EntryUsagesEditorView(
+                        store: store.scope(state: \.usagesEditor, action: \.usagesEditor)
+                    )
+
+                    EntryNotesEditorView(
+                        store: store.scope(state: \.notesEditor, action: \.notesEditor)
+                    )
+
                 }
                 .modifier(
                     EntrySpellingEditorViewModifier(store: store.scope(state: \.spellingEditor, action: \.spellingEditor))
@@ -144,8 +149,8 @@ public struct EntryDetailView: View {
                 .modifier(
                     FloatingTextFieldInset(store: store.scope(state: \.translationsEditor.textField, action: \.translationsEditor.textField))
                 )
-                .modifier(LanguageTrackingFloatingTextFieldInset(
-                    store: store.scope(state: \.usagesEditor.tracking, action: \.usagesEditor.tracking))
+                .modifier(
+                    LanguageTrackingFloatingTextFieldInset(store: store.scope(state: \.usagesEditor.tracking, action: \.usagesEditor.tracking))
                 )
                 .toolbar {
                     ToolbarItemGroup(placement: .keyboard) {
@@ -157,7 +162,8 @@ public struct EntryDetailView: View {
                         }
                     }
                 }
-                .navigationTitle(entry.spelling)
+                .navigationTitle(entry.spelling.capitalized)
+                .navigationBarTitleDisplayMode(.inline)
             } else {
                 ContentUnavailableView("Missing Entry", systemImage: "nosign")
             }

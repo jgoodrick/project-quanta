@@ -154,8 +154,8 @@ struct EntrySpellingEditorViewModifier: ViewModifier {
         content
             .toolbar {
                 ToolbarItem {
-                    Button(action: { store.send(.editSpellingButtonTapped) }) {
-                        Image(systemName: "pencil")
+                    Button("Edit") {
+                        store.send(.editSpellingButtonTapped)
                     }
                 }
             }
