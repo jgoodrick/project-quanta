@@ -118,7 +118,7 @@ fileprivate extension String {
 
 struct HomeListView: View {
     
-    @Bindable var store: StoreOf<Home>
+    @SwiftUI.Bindable var store: StoreOf<Home>
             
     public var body: some View {
         List {
@@ -167,7 +167,7 @@ struct HomeListView: View {
 
 struct HomeStackRootView: View {
     
-    @Bindable var store: StoreOf<Home>
+    @SwiftUI.Bindable var store: StoreOf<Home>
 
     @Environment(\.isSearching) var isSearching
 
@@ -197,7 +197,7 @@ struct HomeStackRootView: View {
 
 struct HomeStackView: View {
     
-    @Bindable var store: StoreOf<Home>
+    @SwiftUI.Bindable var store: StoreOf<Home>
 
     var body: some View {
         NavigationStack {

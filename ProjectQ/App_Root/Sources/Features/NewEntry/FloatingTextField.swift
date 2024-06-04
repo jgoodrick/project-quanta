@@ -56,7 +56,7 @@ public struct FloatingTextField {
 
 public struct FloatingTextFieldView: View {
     
-    @Bindable var store: StoreOf<FloatingTextField>
+    @SwiftUI.Bindable var store: StoreOf<FloatingTextField>
     
     public struct Style: EnvironmentKey {
         public static var defaultValue: Self = .init()

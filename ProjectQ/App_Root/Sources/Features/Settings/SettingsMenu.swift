@@ -54,7 +54,7 @@ public struct SettingsMenu {
 
 struct PresentsSettingsMenuInToolbar: ViewModifier {
     
-    @Bindable var store: StoreOf<SettingsMenu>
+    @SwiftUI.Bindable var store: StoreOf<SettingsMenu>
     
     func body(content: Content) -> some View {
         content

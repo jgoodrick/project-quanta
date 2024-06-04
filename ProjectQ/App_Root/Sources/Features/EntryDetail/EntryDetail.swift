@@ -113,7 +113,7 @@ public struct EntryDetail {
 
 public struct EntryDetailView: View {
     
-    @Bindable var store: StoreOf<EntryDetail>
+    @SwiftUI.Bindable var store: StoreOf<EntryDetail>
     
     public struct Style: EnvironmentKey {
         public static var defaultValue: Self = .init()
