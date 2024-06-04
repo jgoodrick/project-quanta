@@ -93,7 +93,7 @@ fileprivate extension AlertState where Action == Never {
 
 struct SettingsEditorView: View {
     
-    @Bindable var store: StoreOf<SettingsEditor>
+    @SwiftUI.Bindable var store: StoreOf<SettingsEditor>
         
     var body: some View {
         List {

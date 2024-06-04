@@ -194,7 +194,7 @@ extension ConfirmationDialogState {
 
 struct EntryUsagesEditorView: View {
     
-    @Bindable var store: StoreOf<EntryUsagesEditor>
+    @SwiftUI.Bindable var store: StoreOf<EntryUsagesEditor>
     
     var body: some View {
         Section {

@@ -106,7 +106,7 @@ extension AlertState {
 
 struct EntryNotesEditorView: View {
     
-    @Bindable var store: StoreOf<EntryNotesEditor>
+    @SwiftUI.Bindable var store: StoreOf<EntryNotesEditor>
     
     @FocusState var focused: Note.ID?
     

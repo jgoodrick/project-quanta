@@ -172,7 +172,7 @@ extension ConfirmationDialogState {
 
 public struct EntryCreatorView: View {
     
-    @Bindable var store: StoreOf<EntryCreator>
+    @SwiftUI.Bindable var store: StoreOf<EntryCreator>
     
     public var body: some View {
         VStack {

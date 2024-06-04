@@ -207,7 +207,7 @@ fileprivate extension AlertState where Action == Never {
 
 struct AddCustomLanguageView: View {
     
-    @Bindable var store: StoreOf<AddCustomLanguage>
+    @SwiftUI.Bindable var store: StoreOf<AddCustomLanguage>
     
     @Environment(\.locale) var locale
     
