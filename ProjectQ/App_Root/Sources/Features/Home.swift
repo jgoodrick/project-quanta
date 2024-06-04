@@ -161,7 +161,6 @@ struct HomeListView: View {
             EntryDetailView(store: store)
         }
         .confirmationDialog($store.scope(state: \.destination?.confirmationDialog, action: \.destination.confirmationDialog))
-        .modifier(PresentsSettingsMenuInToolbar(store: store.scope(state: \.settingsMenu, action: \.settingsMenu)))
     }
 }
 
@@ -172,9 +171,16 @@ struct HomeStackRootView: View {
     @Environment(\.isSearching) var isSearching
 
     var body: some View {
-        HomeListView(
-            store: store
-        )
+        Group {
+            if store.displayedEntries.isEmpty {
+                ContentUnavailableView("No Entries Yet", systemImage: "tray", description: Text("Select your language above or tap on the plus symbol below to add your first entry to this language!"))
+            } else {
+                HomeListView(
+                    store: store
+                )
+            }
+        }
+        .modifier(PresentsSettingsMenuInToolbar(store: store.scope(state: \.settingsMenu, action: \.settingsMenu)))
         .safeAreaInset(edge: .bottom) {
             if !isSearching {
                 EntryCreatorView(store: store.scope(state: \.entryCreator, action: \.entryCreator))
