@@ -1,22 +1,40 @@
 
 extension Database {
     
-    public mutating func updateEntryLanguage(to language: Language.ID, for entry: Entry.ID) {
+    public mutating func add(language: Language.ID, toEntry entry: Entry.ID) {
         precondition(stored.languages[language] != nil)
         precondition(stored.entries[entry] != nil)
-        relationships.setEntryLanguage(of: entry, toLanguage: language)
+        relationships.connect(language: language, toEntry: entry)
     }
     
-    public mutating func updateUsageLanguage(to language: Language.ID, for usage: Usage.ID) {
+    public mutating func remove(language: Language.ID, fromEntry entry: Entry.ID) {
+        precondition(stored.languages[language] != nil)
+        precondition(stored.entries[entry] != nil)
+        relationships.disconnect(language: language, fromEntry: entry)
+    }
+    
+    public mutating func add(language: Language.ID, toUsage usage: Usage.ID) {
         precondition(stored.languages[language] != nil)
         precondition(stored.usages[usage] != nil)
-        relationships.setUsageLanguage(of: usage, toLanguage: language)
+        relationships.connect(language: language, toUsage: usage)
     }
     
-    public mutating func updateRoot(to root: Entry.ID, for entry: Entry.ID) {
+    public mutating func remove(language: Language.ID, fromUsage usage: Usage.ID) {
+        precondition(stored.languages[language] != nil)
+        precondition(stored.usages[usage] != nil)
+        relationships.disconnect(language: language, fromUsage: usage)
+    }
+    
+    public mutating func add(root: Entry.ID, toEntry entry: Entry.ID) {
         precondition(stored.entries[root] != nil)
         precondition(stored.entries[entry] != nil)
-        relationships.setRoot(of: entry, to: root)
+        relationships.connect(root: root, toEntry: entry, bidirectional: true)
+    }
+    
+    public mutating func remove(root: Entry.ID, fromEntry entry: Entry.ID) {
+        precondition(stored.entries[root] != nil)
+        precondition(stored.entries[entry] != nil)
+        relationships.disconnect(root: root, fromEntry: entry, bidirectional: true)
     }
     
 }

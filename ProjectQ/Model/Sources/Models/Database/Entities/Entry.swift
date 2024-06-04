@@ -16,8 +16,8 @@ public struct Entry: Identifiable, Equatable, Codable, Sendable, Mergeable {
     }
     
     struct Relationships: Equatable, Codable, Sendable, RelationshipSet {
-        var language: Language.ID?
-        var root: Entry.ID?
+        var languages: [Language.ID] = []
+        var roots: [Entry.ID] = []
         var derived: Set<Entry.ID> = []
         var translations: [Entry.ID] = []
         var backTranslations: Set<Entry.ID> = []
@@ -27,8 +27,8 @@ public struct Entry: Identifiable, Equatable, Codable, Sendable, Mergeable {
         var notes: [Note.ID] = []
         var entryCollections: Set<EntryCollection.ID> = []
         mutating func merge(with incoming: Self) {
-            language.merge(with: incoming.language)
-            root.merge(with: incoming.root)
+            languages.merge(with: incoming.languages)
+            roots.merge(with: incoming.roots)
             derived.merge(with: incoming.derived)
             translations.merge(with: incoming.translations)
             backTranslations.merge(with: incoming.backTranslations)
@@ -42,8 +42,8 @@ public struct Entry: Identifiable, Equatable, Codable, Sendable, Mergeable {
     
     public struct Expansion: Identifiable, Equatable, Sendable {
         public var shared: Shared<Entry>
-        public let language: Language?
-        public let root: Entry?
+        public let languages: [Language]
+        public let roots: [Entry]
         public let derived: [Entry]
         public let translations: [Entry]
         public let backTranslations: [Entry]

@@ -15,7 +15,7 @@ public struct EntryUsagesEditor {
             self._entryID = entryID
             @Shared(.db) var database
             self.tracking = .init(
-                languageID: $database.languageOf(entry: entryID.wrappedValue)
+                languages: $database.languagesOf(entry: entryID.wrappedValue)
             )
         }
 
@@ -192,61 +192,33 @@ extension ConfirmationDialogState {
     }
 }
 
+
 struct EntryUsagesEditorView: View {
     
     @SwiftUI.Bindable var store: StoreOf<EntryUsagesEditor>
     
     var body: some View {
-        Section {
-            ForEach(store.usages) { usage in
-                HStack {
-                    Button(action: { store.send(.delegate(.usageSelected(usage))) }) {
-                        Text("\(usage.value)")
-                    }
-                    Spacer()
-                    Image(systemName: "line.3.horizontal").foregroundStyle(.secondary)
-                }
-                .swipeActions {
-                    Button(
-                        role: .destructive,
-                        action: {
-                            store.send(.destructiveSwipeButtonTapped(usage))
-                        },
-                        label: {
-                            Label(title: { Text("Delete") }, icon: { Image(systemName: "trash") })
-                        }
-                    )
-                }
-            }
-            .onMove { from, to in
+        CategorizedItemsSection(
+            title: "Usages",
+            items: store.usages,
+            availableCategories: store.settings.languageSelectionList.map({ $0 }),
+            onSelected: { store.send(.delegate(.usageSelected($0))) },
+            onDeleted: { store.send(.destructiveSwipeButtonTapped($0)) },
+            onMoved: { from, to in
                 store.send(.moved(fromOffsets: from, toOffset: to))
+            },
+            onMenuItemTapped: {
+                store.send(.addLongPressMenuButtonTapped($0))
+            },
+            onMenuShortPressed: {
+                // on tap
+                store.send(.addButtonTapped)
             }
-
-        } header: {
-            HStack(alignment: .firstTextBaseline) {
-                Text("Usages")
-                
-                Spacer()
-                
-                Menu(content: {
-                    // long press
-                    ForEach(store.settings.languageSelectionList) { menuItem in
-                        Button(action: {
-                            store.send(.addLongPressMenuButtonTapped(menuItem))
-                        }) {
-                            Label(menuItem.displayName.capitalized, systemImage: "flag")
-                        }
-                    }
-                }, label: {
-                    Text("+ Add")
-                        .font(.callout)
-                        .textCase(.lowercase)
-                }, primaryAction: {
-                    // on tap
-                    store.send(.addButtonTapped)
-                })
-            }
-        }
+        )
     }
 }
 
+extension Usage.Expansion: CategorizedItem {}
+extension Language: CategorizedItemsSectionCategory {
+    var title: String { displayName }
+}

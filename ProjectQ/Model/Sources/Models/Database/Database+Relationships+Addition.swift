@@ -1,30 +1,45 @@
 
 extension Database.Relationships {
     
-    mutating func setEntryLanguage(of entry: Entry.ID, toLanguage language: Language.ID) {
-        let previous = entries[entry]
-        entries[id: entry].language = language
+    // Languages
+    
+    mutating func connect(language: Language.ID, toEntry entry: Entry.ID) {
+        entries[id: entry].languages.append(language)
         languages[id: language].entries.insert(entry)
-        if let previousLanguage = previous?.language {
-            languages[id: previousLanguage].entries.remove(entry)
-        }
     }
     
-    mutating func setUsageLanguage(of usage: Usage.ID, toLanguage language: Language.ID) {
-        let previous = usages[usage]
-        usages[id: usage].language = language
+    mutating func disconnect(language: Language.ID, fromEntry entry: Entry.ID) {
+        entries[id: entry].languages.removeAll(where: { $0 == language })
+        languages[id: language].entries.remove(entry)
+    }
+
+    mutating func connect(language: Language.ID, toUsage usage: Usage.ID) {
+        usages[id: usage].languages.append(language)
         languages[id: language].usages.insert(usage)
-        if let previousLanguage = previous?.language {
-            languages[id: previousLanguage].usages.remove(usage)
+    }
+    
+    mutating func disconnect(language: Language.ID, fromUsage usage: Usage.ID) {
+        usages[id: usage].languages.removeAll(where: { $0 == language })
+        languages[id: language].usages.remove(usage)
+    }
+    
+    // Roots
+    
+    mutating func connect(root: Entry.ID, toEntry derived: Entry.ID, bidirectional: Bool) {
+        entries[id: derived].roots.append(root)
+        entries[id: root].backTranslations.insert(derived)
+        if bidirectional {
+            entries[id: root].roots.append(derived)
+            entries[id: derived].backTranslations.insert(root)
         }
     }
     
-    mutating func setRoot(of derived: Entry.ID, to root: Entry.ID) {
-        let previous = entries[derived]
-        entries[id: derived].root = root
-        entries[id: root].derived.insert(derived)
-        if let previousRoot = previous?.root {
-            entries[previousRoot]?.derived.remove(derived)
+    mutating func disconnect(root: Entry.ID, fromEntry derived: Entry.ID, bidirectional: Bool) {
+        entries[id: derived].roots.removeAll(where: { $0 == root })
+        entries[id: root].backTranslations.remove(derived)
+        if bidirectional {
+            entries[id: root].roots.removeAll(where: { $0 == derived })
+            entries[id: derived].backTranslations.remove(root)
         }
     }
     
@@ -88,14 +103,22 @@ extension Database.Relationships {
     
     mutating func connect(note: Note.ID, toEntry entry: Entry.ID) {
         entries[id: entry].notes.append(note)
-        notes[id: note].target = .entry(entry)
+        notes[id: note].targets.insert(.entry(entry))
     }
     
     mutating func disconnect(note: Note.ID, fromEntry entry: Entry.ID) {
         entries[id: entry].notes.removeAll(where: { $0 == note })
-        if case .entry(let target) = notes[note]?.target, target == entry {
-            notes[id: note].target = nil
-        }
+        notes[id: note].targets.remove(.entry(entry))
+    }
+    
+    mutating func connect(note: Note.ID, toUsage usage: Usage.ID) {
+        usages[id: usage].notes.append(note)
+        notes[id: note].targets.insert(.usage(usage))
+    }
+    
+    mutating func disconnect(note: Note.ID, fromUsage usage: Usage.ID) {
+        usages[id: usage].notes.removeAll(where: { $0 == note })
+        notes[id: note].targets.remove(.usage(usage))
     }
     
     // EntryCollections

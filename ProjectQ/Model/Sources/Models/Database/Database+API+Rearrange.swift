@@ -8,7 +8,17 @@ extension Database {
         relationships.entries[id: entry].translations.move(fromOffsets: fromOffsets, toOffset: toOffset)
     }
     
-    public mutating func moveLanguages(for user: User.ID, fromOffsets: IndexSet, toOffset: Int) {
+    public mutating func moveLanguages(onEntry entry: Entry.ID, fromOffsets: IndexSet, toOffset: Int) {
+        precondition(stored.entries[entry] != nil)
+        relationships.entries[id: entry].languages.move(fromOffsets: fromOffsets, toOffset: toOffset)
+    }
+    
+    public mutating func moveLanguages(onUsage usage: Entry.ID, fromOffsets: IndexSet, toOffset: Int) {
+        precondition(stored.usages[usage] != nil)
+        relationships.usages[id: usage].languages.move(fromOffsets: fromOffsets, toOffset: toOffset)
+    }
+    
+    public mutating func moveLanguages(forUser user: User.ID, fromOffsets: IndexSet, toOffset: Int) {
         precondition(stored.users[user] != nil)
         relationships.users[id: user].languages.move(fromOffsets: fromOffsets, toOffset: toOffset)
     }

@@ -7,7 +7,7 @@ extension Database {
         @Shared(.db) var db
         return Query(expandWith: { $db[entry: $0] }, predicate: {
             @Shared(.settings) var settings
-            return $0.language?.id == settings.focusedLanguage.id
+            return $0.languages.contains(where: { $0.id == settings.focusedLanguage.id })
         }, sortComparator: {
             $0[keyPath: \.modified] > $1[keyPath: \.modified]
         })
@@ -16,7 +16,7 @@ extension Database {
 
     public func keyboardLanguageID(for entry: Entry.ID) -> Language.ID {
         @Dependency(\.systemLanguages) var systemLanguages
-        return relationships.entries[id: entry].language ?? systemLanguages.current().id
+        return relationships.entries[id: entry].languages.first ?? systemLanguages.current().id
     }
 }
 

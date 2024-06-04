@@ -13,24 +13,20 @@ public struct Note: Identifiable, Equatable, Codable, Sendable {
         metadata.merge(with: incoming.metadata)
     }
 
-    enum Target: Equatable, Codable, Sendable {
+    public enum Target: Hashable, Codable, Sendable {
         case entry(Entry.ID)
         case usage(Usage.ID)
     }
     
     struct Relationships: Equatable, Codable, Sendable, RelationshipSet {
-        var target: Target?
+        var targets: Set<Target> = []
         mutating func merge(with incoming: Self) {
-            target.merge(with: incoming.target)
+            targets.merge(with: incoming.targets)
         }
     }
     public struct Expansion: Identifiable, Equatable, Sendable {
         @Shared public var shared: Note
-        public let target: Target?
-        public enum Target: Equatable, Sendable {
-            case entry(Entry)
-            case usage(Usage)
-        }
+        public let targets: Set<Target>
         
         public var id: Note.ID { shared.id }
         public var value: String {

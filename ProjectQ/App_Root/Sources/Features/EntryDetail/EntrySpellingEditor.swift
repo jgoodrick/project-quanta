@@ -14,7 +14,7 @@ public struct EntrySpellingEditor {
             self._entryID = entryID
             @Shared(.db) var database
             self.tracking = .init(
-                languageID: $database.languageOf(entry: entryID.wrappedValue)
+                languages: $database.languagesOf(entry: entryID.wrappedValue)
             )
         }
         
