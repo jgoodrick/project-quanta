@@ -6,8 +6,8 @@ extension Shared<Database> {
     public subscript(entry id: Entry.ID) -> Entry.Expansion? {
         guard let entry = projectedValue.stored.entries[id] else { return nil }
         let relationships = wrappedValue.relationships.entries[id, default: .init()]
-        let language = relationships.language.flatMap({ wrappedValue.stored.languages[$0] })
-        let root = relationships.root.flatMap({ wrappedValue.stored.entries[$0] })
+        let languages = relationships.languages.compactMap({ wrappedValue.stored.languages[$0] })
+        let roots = relationships.roots.compactMap({ wrappedValue.stored.entries[$0] })
         let derived = relationships.derived.compactMap({ wrappedValue.stored.entries[$0] })
         let translations = relationships.translations.compactMap({ wrappedValue.stored.entries[$0] })
         let backTranslations = relationships.backTranslations.compactMap({ wrappedValue.stored.entries[$0] })
@@ -18,8 +18,8 @@ extension Shared<Database> {
         let entryCollections = relationships.entryCollections.compactMap({ wrappedValue.stored.entryCollections[$0] })
         return .init(
             shared: entry,
-            language: language,
-            root: root,
+            languages: languages,
+            roots: roots,
             derived: derived,
             translations: translations,
             backTranslations: backTranslations,
@@ -66,34 +66,22 @@ extension Shared<Database> {
     public subscript(note id: Note.ID) -> Note.Expansion? {
         guard let note = projectedValue.stored.notes[id] else { return nil }
         let relationships = wrappedValue.relationships.notes[id, default: .init()]
-        var target: Note.Expansion.Target?
-        switch relationships.target {
-        case .none: break
-        case .entry(let entryID):
-            if let entry = wrappedValue.stored.entries[entryID] {
-                target = .entry(entry)
-            }
-        case .usage(let usageID):
-            if let usage = wrappedValue.stored.usages[usageID] {
-                target = .usage(usage)
-            }
-        }
         return .init(
             shared: note,
-            target: target
+            targets: relationships.targets
         )
     }
 
     public subscript(usage id: Usage.ID) -> Usage.Expansion? {
         guard let usage = projectedValue.stored.usages[id] else { return nil }
         let relationships = wrappedValue.relationships.usages[id, default: .init()]
-        let language = relationships.language.flatMap({ wrappedValue.stored.languages[$0] })
-        let note = relationships.note.flatMap({ wrappedValue.stored.notes[$0] })
+        let languages = relationships.languages.compactMap({ wrappedValue.stored.languages[$0] })
+        let notes = relationships.notes.compactMap({ wrappedValue.stored.notes[$0] })
         let uses = relationships.uses.compactMap({ wrappedValue.stored.entries[$0] })
         return .init(
             shared: usage,
-            language: language,
-            note: note,
+            languages: languages,
+            notes: notes,
             uses: uses
         )
     }

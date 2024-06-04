@@ -9,7 +9,7 @@ extension Database.Relationships {
     mutating func removeAllReferences(toEntry entryID: Entry.ID) {
         entries[entryID] = nil
         entries.mutateAll {
-            if $0.root == entryID { $0.root = nil }
+            $0.roots.removeAll(where: { $0 == entryID })
             $0.derived.remove(entryID)
             $0.translations.removeAll(where: { $0 == entryID })
             $0.backTranslations.remove(entryID)
@@ -22,7 +22,7 @@ extension Database.Relationships {
             $0.entries.remove(entryID)
         }
         notes.mutateAll {
-            if case .entry(entryID) = $0.target { $0.target = nil }
+            $0.targets.remove(.entry(entryID))
         }
         usages.mutateAll {
             $0.uses.remove(entryID)
@@ -40,7 +40,7 @@ extension Database.Relationships {
     mutating func removeAllReferences(toLanguage languageID: Language.ID) {
         languages[languageID] = nil
         entries.mutateAll {
-            if $0.language == languageID { $0.language = nil }
+            $0.languages.removeAll(where: { $0 == languageID })
         }
     }
     mutating func removeAllReferences(toNote noteID: Note.ID) {
@@ -49,7 +49,7 @@ extension Database.Relationships {
             $0.notes.removeAll(where: { $0 == noteID })
         }
         usages.mutateAll {
-            if $0.note == noteID { $0.note = nil }
+            $0.notes.removeAll(where: { $0 == noteID })
         }
     }
     mutating func removeAllReferences(toUsage usageID: Usage.ID) {

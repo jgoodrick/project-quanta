@@ -15,19 +15,20 @@ public struct Usage: Identifiable, Equatable, Codable, Sendable {
     }
 
     struct Relationships: Equatable, Codable, Sendable, RelationshipSet {
-        var language: Language.ID? = nil
-        var note: Note.ID? = nil
+        var languages: [Language.ID] = []
+        var notes: [Note.ID] = []
         var uses: Set<Entry.ID> = []
         mutating func merge(with incoming: Self) {
-            note.merge(with: incoming.note)
+            languages.merge(with: incoming.languages)
+            notes.merge(with: incoming.notes)
             uses.merge(with: incoming.uses)
         }
     }
     
     public struct Expansion: Identifiable, Equatable, Sendable {
         public var shared: Shared<Usage>
-        public let language: Language?
-        public let note: Note?
+        public let languages: [Language]
+        public let notes: [Note]
         public let uses: [Entry]
         
         public var id: Usage.ID { shared.wrappedValue.id }

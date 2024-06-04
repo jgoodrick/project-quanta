@@ -9,7 +9,7 @@ public struct LanguageTrackingFloatingTextField {
     
     @ObservableState
     public struct State: Equatable {
-        @Shared var languageID: Language.ID?
+        @Shared var languages: [Language.ID]
         var textField: FloatingTextField.State = .init()
     }
     
@@ -17,7 +17,7 @@ public struct LanguageTrackingFloatingTextField {
         case textField(FloatingTextField.Action)
         
         case task
-        case languageIDUpdated(Language.ID?)
+        case languagesUpdated([Language.ID])
     }
     
     public var body: some Reducer<State, Action> {
@@ -30,13 +30,13 @@ public struct LanguageTrackingFloatingTextField {
             switch action {
             case .textField: return .none
             case .task:
-                state.textField.languageOverride = state.languageID
+                state.textField.languageOverride = state.languages.first
                 return .publisher {
-                    state.$languageID.publisher.map(Action.languageIDUpdated)
+                    state.$languages.publisher.map(Action.languagesUpdated)
                 }
-            case .languageIDUpdated(let newID):
+            case .languagesUpdated(let newIDs):
                 
-                state.textField.languageOverride = newID
+                state.textField.languageOverride = newIDs.first
                 
                 return .none
             }

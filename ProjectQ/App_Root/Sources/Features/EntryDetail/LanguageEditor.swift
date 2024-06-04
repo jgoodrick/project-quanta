@@ -16,37 +16,66 @@ public struct LanguageEditor {
             case usage(Usage.ID)
         }
         
-        var languageName: String {
+        var languages: [Language] {
             switch entity {
             case .entry(let entryID):
-                $db[entry: entryID]?.language?.displayName ?? "Not Set"
+                $db[entry: entryID]?.languages ?? []
             case .usage(let usageID):
-                $db[usage: usageID]?.language?.displayName ?? "Not Set"
+                $db[usage: usageID]?.languages ?? []
             }
         }
 
     }
     
     public enum Action {
-        case editLanguageMenuButtonSelected(Language)
+        case addMenuButtonTapped(Language)
+        case destructiveSwipeButtonTapped(Language)
+        case moved(fromOffsets: IndexSet, toOffset: Int)
     }
     
     public var body: some ReducerOf<Self> {
         Reduce<State, Action> { state, action in
             switch action {
-            case .editLanguageMenuButtonSelected(let selected):
-                
+            case .addMenuButtonTapped(let selected):
+
                 switch state.entity {
                 case .entry(let entryID):
-                    state.db.updateEntryLanguage(to: selected.id, for: entryID)
+                    state.db.add(language: selected.id, toEntry: entryID)
                 case .usage(let usageID):
-                    state.db.updateUsageLanguage(to: selected.id, for: usageID)
+                    state.db.add(language: selected.id, toUsage: usageID)
                 }
                 
                 return .none
+
+            case .destructiveSwipeButtonTapped(let selected):
+
+                switch state.entity {
+                case .entry(let entryID):
+                    state.db.remove(language: selected.id, fromEntry: entryID)
+                case .usage(let usageID):
+                    state.db.remove(language: selected.id, fromUsage: usageID)
+                }
+
+                return .none
+                
+            case .moved(let fromOffsets, let toOffset):
+
+                switch state.entity {
+                case .entry(let entryID):
+                    state.db.moveLanguages(onEntry: entryID, fromOffsets: fromOffsets, toOffset: toOffset)
+                case .usage(let usageID):
+                    state.db.moveLanguages(onUsage: usageID, fromOffsets: fromOffsets, toOffset: toOffset)
+                }
+
+                return .none
+
             }
         }
     }
+}
+
+extension Language: CategorizedItem {
+    var value: String { displayName }
 }
 
 struct LanguageEditorView: View {
@@ -54,33 +83,20 @@ struct LanguageEditorView: View {
     let store: StoreOf<LanguageEditor>
         
     var body: some View {
-        Section {
-            Text(store.languageName)
-        } header: {
-            HStack(alignment: .firstTextBaseline) {
-                
-                Text("Language")
-                    .font(.footnote)
-                    .textCase(.uppercase)
-                
-                Spacer()
-                
-                Menu {
-                    ForEach(store.settings.languageSelectionList) { menuItem in
-                        Button(action: {
-                            store.send(.editLanguageMenuButtonSelected(menuItem))
-                        }) {
-                            Label(menuItem.displayName.capitalized, systemImage: "flag")
-                        }
-                    }
-                } label: {
-                    Text("Edit")
-                        .font(.callout)
-                        .textCase(.lowercase)
-                }
-                
-            }
-        }
+        CategorizedItemsSection(
+            title: "Language",
+            items: store.languages,
+            availableCategories: store.settings.languageSelectionList.map({ $0 }),
+            onSelected: nil,
+            onDeleted: { store.send(.destructiveSwipeButtonTapped($0)) },
+            onMoved: { from, to in
+                store.send(.moved(fromOffsets: from, toOffset: to))
+            },
+            onMenuItemTapped: {
+                store.send(.addMenuButtonTapped($0))
+            },
+            onMenuShortPressed: nil
+        )
     }
 }
 
