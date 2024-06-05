@@ -144,13 +144,30 @@ public struct EntryDetailView: View {
 
                 }
                 .modifier(
-                    EntrySpellingEditorViewModifier(store: store.scope(state: \.spellingEditor, action: \.spellingEditor))
+                    EntrySpellingEditorViewModifier(
+                        store: store.scope(state: \.spellingEditor, action: \.spellingEditor),
+                        placeholder: "Provide the spelling"
+                    )
                 )
                 .modifier(
-                    FloatingTextFieldInset(store: store.scope(state: \.translationsEditor.textField, action: \.translationsEditor.textField))
+                    FloatingTextFieldInset(
+                        store: store.scope(state: \.translationsEditor.textField, action: \.translationsEditor.textField),
+                        placeholder: "Add a \(store.translationsEditor.textField.language.displayName) translation"
+                    )
                 )
                 .modifier(
-                    LanguageTrackingFloatingTextFieldInset(store: store.scope(state: \.usagesEditor.tracking, action: \.usagesEditor.tracking))
+                    FloatingTextFieldInset(
+                        store: store.scope(state: \.usagesEditor.textField, action: \.usagesEditor.textField),
+                        placeholder: "Add an example sentence",
+                        autocapitalization: .sentences
+                    )
+                )
+                .modifier(
+                    FloatingTextFieldInset(
+                        store: store.scope(state: \.notesEditor.textField, action: \.notesEditor.textField),
+                        placeholder: "Add a note about this word",
+                        autocapitalization: .sentences
+                    )
                 )
                 .toolbar {
                     ToolbarItemGroup(placement: .keyboard) {

@@ -12,27 +12,24 @@ public struct EntrySpellingEditor {
         
         init(entryID: Shared<Entry.ID>) {
             self._entryID = entryID
-            @Shared(.db) var database
-            self.tracking = .init(
-                languages: $database.languagesOf(entry: entryID.wrappedValue)
-            )
+            self.textField = .init(matching: .entry(entryID.wrappedValue))
         }
         
         @Shared(.db) var db
         @Shared(.settings) var settings
         
         @Shared var entryID: Entry.ID
-        var tracking: LanguageTrackingFloatingTextField.State
+        var textField: FloatingTextField.State
         
         @Presents var destination: Destination.State?
         
         mutating func submitCurrentFieldValueAsUpdatedSpelling() -> EffectOf<EntrySpellingEditor> {
             
             defer {
-                tracking.textField.reset()
+                textField.reset()
             }
             
-            let text = tracking.textField.text
+            let text = textField.text
 
             guard !text.isEmpty else {
                 return .none
@@ -68,34 +65,36 @@ public struct EntrySpellingEditor {
 
     public enum Action {
         case destination(PresentationAction<Destination.Action>)
-        case tracking(LanguageTrackingFloatingTextField.Action)
+        case textField(FloatingTextField.Action)
         
         case editSpellingButtonTapped
     }
 
     public var body: some ReducerOf<Self> {
         
-        Scope(state: \.tracking, action: \.tracking) {
-            LanguageTrackingFloatingTextField()
+        Scope(state: \.textField, action: \.textField) {
+            FloatingTextField()
         }
         
         Reduce<State, Action> { state, action in
             switch action {
             case .editSpellingButtonTapped:
 
-                state.tracking.textField.collapsed = false
+                state.textField.text = state.$db[entry: state.entryID]?.spelling ?? ""
+                state.textField.collapsed = false
 
                 return .none
 
-            case .tracking(.textField(.delegate(let delegatedAction))):
+            case .textField(.delegate(let delegatedAction)):
                 switch delegatedAction {
-                case .fieldCommitted, .saveEntryButtonTapped: return state.submitCurrentFieldValueAsUpdatedSpelling()
+                case .fieldCommitted, .saveEntryButtonTapped:
+                    return state.submitCurrentFieldValueAsUpdatedSpelling()
                 }
-            case .tracking: return .none
+            case .textField: return .none
 
             case .destination(.presented(.confirmationDialog(.updateSpellingWithoutMerging))):
 
-                state.db.updateEntry(\.spelling, on: state.entryID, to: state.tracking.textField.text)
+                state.db.updateEntry(\.spelling, on: state.entryID, to: state.textField.text)
 
                 return .none
 
@@ -111,7 +110,7 @@ public struct EntrySpellingEditor {
 
             case .destination(.presented(.confirmationDialog(.cancel))):
 
-                state.tracking.textField.reset()
+                state.textField.reset()
 
                 return .none
 
@@ -149,6 +148,7 @@ extension ConfirmationDialogState {
 struct EntrySpellingEditorViewModifier: ViewModifier {
     
     let store: StoreOf<EntrySpellingEditor>
+    let placeholder: String
         
     func body(content: Content) -> some View {
         content
@@ -159,7 +159,12 @@ struct EntrySpellingEditorViewModifier: ViewModifier {
                     }
                 }
             }
-            .modifier(LanguageTrackingFloatingTextFieldInset(store: store.scope(state: \.tracking, action: \.tracking)))
+            .modifier(
+                FloatingTextFieldInset(
+                    store: store.scope(state: \.textField, action: \.textField),
+                    placeholder: placeholder
+                )
+            )
     }
 }
 

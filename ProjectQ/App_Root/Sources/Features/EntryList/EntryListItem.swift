@@ -2,28 +2,25 @@
 import Model
 import SwiftUI
 
-public struct HomeListItemView: View {
+protocol HomeListItem {
+    var title: String { get }
+    var subtitle: String? { get }
+}
 
-    let entry: Entry.Expansion
+struct HomeListItemStyle: EnvironmentKey {
+    static let defaultValue: Self = .init()
+    var wordFont: Font = .largeTitle
+    var highlightedCharactersFont: Font = .largeTitle
+    var highlightedCharactersWeight: Font.Weight = .semibold
+    var highlightedCharactersForegroundColor: Color? = .none
+    var subtitleFont: Font = .body
+    var italicizeSubtitle: Bool = true
+}
+
+struct HomeListItemView<Item: HomeListItem>: View {
+
+    let item: Item
     let highlightedCharacters: Set<Character>
-    
-    var title: String {
-        entry.spelling
-    }
-    
-    var subtitle: String? {
-        entry.translations.first?.spelling
-    }
-            
-    public struct Style: EnvironmentKey {
-        public static let defaultValue: Self = .init()
-        public var wordFont: Font = .largeTitle
-        public var highlightedCharactersFont: Font = .largeTitle
-        public var highlightedCharactersWeight: Font.Weight = .semibold
-        public var highlightedCharactersForegroundColor: Color? = .none
-        public var subtitleFont: Font = .body
-        public var italicizeSubtitle: Bool = true
-    }
     
     @Environment(\.homeListItem) private var style
     
@@ -41,14 +38,14 @@ public struct HomeListItemView: View {
     
     var highlightedTextView: some View {
         var result = Text("")
-        for (_, character) in title.enumerated() {
+        for (_, character) in item.title.enumerated() {
             result = result + highlighted(character: character, if: highlightedCharacters.contains(character))
         }
         return result
     }
     
     var italicizedSubtitle: Text? {
-        guard let subtitle else { return nil }
+        guard let subtitle = item.subtitle else { return nil }
         if style.italicizeSubtitle {
             return Text(subtitle).italic()
         } else {
@@ -64,7 +61,7 @@ public struct HomeListItemView: View {
             .clipped()
     }
     
-    public var body: some View {
+    var body: some View {
         VStack(alignment: .leading) {
             highlightedTextView
                 .allowsTightening(true).minimumScaleFactor(0.5)
@@ -77,15 +74,21 @@ public struct HomeListItemView: View {
 }
 
 extension EnvironmentValues {
-    var homeListItem: HomeListItemView.Style {
-        get { self[HomeListItemView.Style.self] }
-        set { self[HomeListItemView.Style.self] = newValue }
+    var homeListItem: HomeListItemStyle {
+        get { self[HomeListItemStyle.self] }
+        set { self[HomeListItemStyle.self] = newValue }
     }
 }
 
-//#Preview { Host() }
-//private struct Host: View {
-//    var body: some View {
-//        HomeListItemView(entry: .mock(id: 0, spelling: "Example"), highlightedCharacters: ["E", "x"])
-//    }
-//}
+#Preview { Preview }
+private var Preview: some View {
+    HomeListItemView<MockItem>(
+        item: .init(),
+        highlightedCharacters: ["i", "l"]
+    )
+}
+
+private struct MockItem: HomeListItem {
+    var title: String = "Title"
+    var subtitle: String? = "Subtitle"
+}

@@ -9,16 +9,12 @@ public struct EntryTranslationsEditor {
     
     @ObservableState
     public struct State: Equatable {
-                
+        
         @Shared(.db) var db
         @Shared(.settings) var settings
         
         @Shared var entryID: Entry.ID
-        var textField: FloatingTextField.State = {
-            @Dependency(\.systemLanguages) var systemLanguages
-            let system = systemLanguages.current()
-            return .init(languageOverride: system.id)
-        }()
+        var textField: FloatingTextField.State = .init()
         
         @Presents var destination: Destination.State?
         
@@ -27,41 +23,27 @@ public struct EntryTranslationsEditor {
         }
 
         mutating func submitCurrentFieldValueAsTranslation() -> EffectOf<EntryTranslationsEditor> {
-            
-            defer {
-                textField.reset()
-            }
-
+            defer { textField.reset() }
             let translationSpelling = textField.text
-            
-            guard !translationSpelling.isEmpty else {
-                return .none
-            }
-            
+            guard !translationSpelling.isEmpty else { return .none }
             let matches = $db.entries(where: \.spelling, is: translationSpelling)
-            
             if let first = matches.first {
                 
                 if matches.count > 1 {
                     
-                    // what if there are more than one words in the repo that match the spelling of the translation the user just typed in? (Because the user previously decided to create a separate word with the same spelling instead of merging or editing the existing one). We will need to handle this with a confirmation dialog, as we have done previously.
                     // TODO: handle more than one match
-                    
-                    // Note, this is where we would delegate to the confirmation dialog to get a decision from the user about which one to use, or whether to create a new one
-                    
+                    // delegate to the confirmation dialog to get a decision from the user
+
                     destination = .alert(.init(title: { .init("There was more than one entry that matched that translation's spelling. This is not currently supported.")}))
                     
                 } else {
-                    
                     db.connect(translation: first.id, to: entryID)
-
                 }
 
             } else {
                 
                 do {
                     
-                    let translationSpelling = textField.text
                     let translationLanguage = textField.language
                     
                     let newEntry = try $db.addNewEntry(language: translationLanguage) {
@@ -71,9 +53,7 @@ public struct EntryTranslationsEditor {
                     db.connect(translation: newEntry.id, to: entryID)
                     
                 } catch {
-                    
-                    destination = .alert(.init(title: { .init("Failed to add a new translation: \(error.localizedDescription)") }))
-                    
+                    destination = .alert(.failedToAddNewTranslation(error: error))
                 }
                 
             }
@@ -143,9 +123,11 @@ public struct EntryTranslationsEditor {
 
             case .textField(.delegate(let delegatedAction)):
                 switch delegatedAction {
-                case .fieldCommitted, .saveEntryButtonTapped: return state.submitCurrentFieldValueAsTranslation()
+                case .fieldCommitted, .saveEntryButtonTapped: 
+                    return state.submitCurrentFieldValueAsTranslation()
                 }
             case .textField: return .none
+                
             case .destructiveSwipeButtonTapped(let translation):
 
                 state.db.remove(translation: translation.id, from: state.entryID)
@@ -160,6 +142,19 @@ public struct EntryTranslationsEditor {
             }
         }
         .ifLet(\.$destination, action: \.destination)
+    }
+}
+
+extension AlertState {
+    static func failedToAddNewTranslation(error: Error) -> Self where Action == Never {
+        .init(
+            title: {
+                .init("Could not add that translation")
+            },
+            message: {
+                .init("Error: \(error.localizedDescription)")
+            }
+        )
     }
 }
 

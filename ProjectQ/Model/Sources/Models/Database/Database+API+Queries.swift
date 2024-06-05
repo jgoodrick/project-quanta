@@ -1,6 +1,11 @@
 
 import ComposableArchitecture
 
+public enum TranslatableEntity: Equatable {
+    case entry(Entry.ID)
+    case usage(Usage.ID)
+}
+
 extension Database {
     
     public var focusedEntriesList: [Entry.Expansion] {
@@ -14,10 +19,17 @@ extension Database {
         .execute(on: stored.entries.keys)
     }
 
-    public func keyboardLanguageID(for entry: Entry.ID) -> Language.ID {
+    public func keyboardLanguageID(for entity: TranslatableEntity) -> Language.ID {
         @Dependency(\.systemLanguages) var systemLanguages
-        return relationships.entries[id: entry].languages.first ?? systemLanguages.current().id
+        let result: Language.ID? = switch entity {
+        case .entry(let entryID):
+            relationships.entries[id: entryID].languages.first
+        case .usage(let usageID):
+            relationships.usages[id: usageID].languages.first
+        }
+        return result ?? systemLanguages.current().id
     }
+    
 }
 
 extension Shared<Database> {

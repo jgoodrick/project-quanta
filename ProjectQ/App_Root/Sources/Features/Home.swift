@@ -116,6 +116,16 @@ fileprivate extension String {
     }
 }
 
+extension Entry.Expansion: HomeListItem {
+    var title: String {
+        spelling
+    }
+    
+    var subtitle: String? {
+        translations.first?.spelling
+    }
+}
+
 struct HomeListView: View {
     
     @SwiftUI.Bindable var store: StoreOf<Home>
@@ -127,7 +137,7 @@ struct HomeListView: View {
                     store.send(.entryTapped(entry))
                 } label: {
                     HomeListItemView(
-                        entry: entry,
+                        item: entry,
                         highlightedCharacters: entry.spelling.characterMatches(from: store.searchField)
                     )
                     .frame(maxWidth: .infinity, minHeight: 40)

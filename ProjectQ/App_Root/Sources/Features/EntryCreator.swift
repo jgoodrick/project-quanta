@@ -180,9 +180,9 @@ public struct EntryCreatorView: View {
             Spacer()
                     
             FloatingTextFieldView(
-                store: store.scope(state: \.spelling, action: \.spelling)
+                store: store.scope(state: \.spelling, action: \.spelling),
+                placeholder: "New Entry"
             )
-            .id(store.settings.focusedLanguage.id)
             
         }
         .padding()
