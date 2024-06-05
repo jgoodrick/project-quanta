@@ -1,5 +1,5 @@
 
-@testable import Model
+import Model
 import ComposableArchitecture
 import XCTest
 
