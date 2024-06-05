@@ -14,26 +14,50 @@ public struct EntryNotesEditor {
         @Shared(.settings) var settings
         
         @Shared var entryID: Entry.ID
-        var focusedNote: Note.ID?
+        var editing: Note.ID?
+        var textField: FloatingTextField.State = .init()
+        
         @Presents var destination: Destination.State?
         
         var notes: [Note.Expansion] {
             $db.notes(for: entryID)
         }
         
-        mutating func addNewEmptyNote() -> EffectOf<EntryNotesEditor> {
+        mutating func commitTextField() -> EffectOf<EntryNotesEditor> {
             
-            do {
-                let newNote = try $db.addNewNote()
+            defer {
+                editing = .none
+                textField.reset()
+            }
+            
+            let value = textField.text
+            
+            if let editing {
                 
-                db.connect(note: newNote.id, to: entryID)
+                guard !value.isEmpty else {
+                    db.remove(note: editing)
+                    return .none
+                }
+                    
+                db.updateNote(\.value, on: editing, to: value)
                 
-                focusedNote = newNote.id
-                
-            } catch {
-                
-                destination = .alert(.failedToAddNewNote(error: error))
-                
+            } else {
+                guard !value.isEmpty else {
+                    textField.reset()
+                    return .none
+                }
+                    
+                do {
+                    
+                    let newNote = try $db.addNewNote {
+                        $0.value = value
+                    }
+                    
+                    db.connect(note: newNote.id, to: entryID)
+                    
+                } catch {
+                    destination = .alert(.failedToAddNewNote(error: error))
+                }
             }
             
             return .none
@@ -48,32 +72,45 @@ public struct EntryNotesEditor {
     public enum Action: BindableAction {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
-        
+        case textField(FloatingTextField.Action)
+
         case addButtonTapped
         case doneButtonTapped
         case destructiveSwipeButtonTapped(Note.Expansion)
         case moved(fromOffsets: IndexSet, toOffset: Int)
+        case selected(Note.Expansion)
     }
 
     public var body: some ReducerOf<Self> {
         
         BindingReducer()
         
+        Scope(state: \.textField, action: \.textField) {
+            FloatingTextField()
+        }
+        
         Reduce<State, Action> { state, action in
             switch action {
             case .binding: return .none
             case .destination: return .none
-
+                
             case .addButtonTapped:
 
-                return state.addNewEmptyNote()
-
-            case .doneButtonTapped:
-                
-                state.focusedNote = nil
+                state.textField.collapsed = false
                 
                 return .none
                 
+            case .doneButtonTapped:
+
+                return state.commitTextField()
+                
+            case .textField(.delegate(let delegatedAction)):
+                switch delegatedAction {
+                case .fieldCommitted, .saveEntryButtonTapped: 
+                    return state.commitTextField()
+                }
+            case .textField: return .none
+
             case .destructiveSwipeButtonTapped(let note):
 
                 state.db.remove(note: note.id)
@@ -85,6 +122,15 @@ public struct EntryNotesEditor {
                 state.db.moveNotes(on: state.entryID, fromOffsets: fromOffsets, toOffset: toOffset)
 
                 return .none
+                
+            case .selected(let note):
+                
+                state.editing = note.id
+                state.textField.text = note.value
+                state.textField.collapsed = false
+                
+                return .none
+                
             }
         }
         .ifLet(\.$destination, action: \.destination)
@@ -104,26 +150,21 @@ extension AlertState {
     }
 }
 
-extension Note.Expansion: TextEditableItem {
-    var boundValue: Binding<String> { bound.value }
-}
+extension Note.Expansion: TextEditableItem {}
 
 struct EntryNotesEditorView: View {
     
     @SwiftUI.Bindable var store: StoreOf<EntryNotesEditor>
     
-    @FocusState var focused: Note.ID?
-
     var body: some View {
         TextEditableItemsSection(
             title: "Notes",
             items: store.notes,
-            focusedItem: $store.focusedNote,
-            onDelete: { store.send(.destructiveSwipeButtonTapped($0)) },
+            onSelected: { store.send(.selected($0)) },
+            onDeleted: { store.send(.destructiveSwipeButtonTapped($0)) },
             onMoved: { store.send(.moved(fromOffsets: $0, toOffset: $1)) },
             onMenuShortPressed: { store.send(.addButtonTapped) }
         )
-        .environment(\.floatingTextField.autocapitalization, .sentences)
     }
 }
 

@@ -3,6 +3,7 @@ import ComposableArchitecture
 import Model
 import SwiftUI
 
+
 @Reducer
 public struct LanguageEditor {
     
@@ -11,10 +12,6 @@ public struct LanguageEditor {
         @Shared(.db) var db
         @Shared(.settings) var settings
         var entity: TranslatableEntity
-        enum TranslatableEntity: Equatable {
-            case entry(Entry.ID)
-            case usage(Usage.ID)
-        }
         
         var languages: [Language] {
             switch entity {

@@ -8,25 +8,32 @@ public struct FloatingTextField {
     
     @ObservableState
     public struct State: Equatable {
+        
         @Shared(.db) var db
         @Shared(.settings) var settings
         
-        public var text: String = ""
-        public var collapsed: Bool = true
-        public var languageOverride: Language.ID?
+        var matching: TranslatableEntity?
+        var languageOverride: Language.ID?
+        var text: String = ""
+        var collapsed: Bool = true
         
-        public var language: Language {
-            languageOverride.flatMap({ $db[language: $0]?.shared.wrappedValue }) ?? settings.focusedLanguage
+        var overriddenLanguage: Language.ID? {
+            languageOverride ?? matching.flatMap({ db.keyboardLanguageID(for: $0) })
+        }
+        var language: Language {
+            overriddenLanguage.flatMap({ $db[language: $0]?.shared.wrappedValue }) ?? settings.focusedLanguage
         }
         
         mutating func reset() {
             text = ""
             collapsed = true
         }
+        
     }
     
     public enum Action: BindableAction {
         case binding(BindingAction<State>)
+        
         case rotatingButtonTapped
         
         case delegate(Delegate)
@@ -43,9 +50,14 @@ public struct FloatingTextField {
         Reduce<State, Action> { state, action in
             switch action {
             case .binding, .delegate: return .none
+                
             case .rotatingButtonTapped:
                 
-                state.collapsed.toggle()
+                if !state.collapsed {
+                    state.reset()
+                } else {
+                    state.collapsed = false
+                }
                 
                 return .none
                 
@@ -57,18 +69,24 @@ public struct FloatingTextField {
 public struct FloatingTextFieldView: View {
     
     @SwiftUI.Bindable var store: StoreOf<FloatingTextField>
-    
+    let placeholder: String
+
     public struct Style: EnvironmentKey {
         public static var defaultValue: Self = .init()
         var customHeight: Double? = .none
+        var font: Font = .title2
         var background: Color = .gray
-        var placeholder: String = "New Entry"
         var autocapitalization: UITextAutocapitalizationType = .none
-        var autocorrection: UITextAutocorrectionType = .default
-        var textFieldSource: TextFieldSource = .uiKit
-        enum TextFieldSource {
+        var autocorrectionDisabled: Bool = true
+        var implementation: Implementation = .uiKit
+        enum Implementation {
             case uiKit
             case swiftUI
+        }
+        var entryStyle: EntryStyle = .field
+        enum EntryStyle {
+            case field
+            case editor
         }
     }
     
@@ -84,32 +102,55 @@ public struct FloatingTextFieldView: View {
                 
                 HStack(spacing: 0) {
                     Group {
-                        switch style.textFieldSource {
+                        switch style.implementation {
                         case .uiKit:
-                            ConfigurableTextField(text: $store.text) { config in
-                                config.autocapitalization = style.autocapitalization
-                                config.autocorrection = style.autocorrection
-                                config.isFirstResponder = !store.collapsed
-                                config.onCommit = { store.send(.delegate(.fieldCommitted)) }
-                                config.placeholder = style.placeholder
-                                config.preferredLanguage = store.language.bcp47
-                                config.onLanguageUnavailable = {
-                                    print("Could not resolve language with identifier: \($0)")
+                            Group {
+                                switch style.entryStyle {
+                                case .field:
+                                    ConfigurableTextField(text: $store.text) { config in
+                                        config.autocapitalization = style.autocapitalization
+                                        config.autocorrection = style.autocorrectionDisabled ? .no : .yes
+                                        config.isFirstResponder = !store.collapsed
+                                        config.onCommit = { store.send(.delegate(.fieldCommitted)) }
+                                        config.placeholder = placeholder
+                                        config.preferredLanguage = store.language.bcp47
+                                        config.onLanguageUnavailable = {
+                                            print("Could not resolve language with identifier: \($0)")
+                                        }
+                                    }
+                                case .editor:
+                                    ConfigurableTextView(text: $store.text) { config in
+                                        config.autocapitalization = style.autocapitalization
+                                        config.autocorrection = style.autocorrectionDisabled ? .no : .yes
+                                        config.isFirstResponder = !store.collapsed
+                                        config.onCommit = { store.send(.delegate(.fieldCommitted)) }
+                                        config.preferredLanguage = store.language.bcp47
+                                        config.onLanguageUnavailable = {
+                                            print("Could not resolve language with identifier: \($0)")
+                                        }
+                                    }
+                                    .multilineTextAlignment(.leading)
                                 }
                             }
-                            .id(store.language.id)
                         case .swiftUI:
-                            TextField(style.placeholder, text: $store.text)
-                                .onSubmit {
-                                    store.send(.delegate(.fieldCommitted))
+                            Group {
+                                switch style.entryStyle {
+                                case .field:
+                                    TextField(placeholder, text: $store.text)
+                                case .editor:
+                                    TextEditor(text: $store.text)
                                 }
+                            }
+                            .onSubmit {
+                                store.send(.delegate(.fieldCommitted))
+                            }
+                            .autocapitalization(style.autocapitalization)
+                            .autocorrectionDisabled(style.autocorrectionDisabled)
                         }
                     }
+                    .id(store.language.id)
+                    .font(style.font)
                     .transition(.move(edge: .leading).combined(with: .opacity))
-                    .multilineTextAlignment(.center)
-                    .font(.title)
-                    .autocapitalization(.none)
-                    .disableAutocorrection(true)
                     .padding(.leading)
                     .frame(maxWidth: store.collapsed ? 0 : .infinity, maxHeight: .infinity)
                     /* 
@@ -168,6 +209,8 @@ struct SaveEntryButton: View {
     }
 }
 
+
+
 extension EnvironmentValues {
     var floatingTextField: FloatingTextFieldView.Style {
         get { self[FloatingTextFieldView.Style.self] }
@@ -175,14 +218,9 @@ extension EnvironmentValues {
     }
 }
 
-#Preview { Preview }
-private var Preview: some View {
-    VStack {
-        FloatingTextFieldView(
-            store: .init(initialState: .init(), reducer: { FloatingTextField() })
-        )
-    }
-//    .background(Color.black)
-//    .previewLayout(.sizeThatFits)
-//    .colorScheme(.dark)
-}
+//#Preview { Preview }
+//private var Preview: some View {
+//    FloatingTextFieldView(
+//        store: .init(initialState: .init(trackedLanguages: Shared([Language.ID]())), reducer: { FloatingTextField() })
+//    )
+//}

@@ -13,61 +13,45 @@ public struct EntryUsagesEditor {
         
         init(entryID: Shared<Entry.ID>) {
             self._entryID = entryID
-            @Shared(.db) var database
-            self.tracking = .init(
-                languages: $database.languagesOf(entry: entryID.wrappedValue)
-            )
+            self.textField = .init(matching: .entry(entryID.wrappedValue))
         }
 
         @Shared(.db) var db
         @Shared(.settings) var settings
         
         @Shared var entryID: Entry.ID
-        var tracking: LanguageTrackingFloatingTextField.State
+        var textField: FloatingTextField.State
 
         @Presents var destination: Destination.State?
         
         var usages: [Usage.Expansion] {
             $db.usages(for: entryID)
         }
-
+        
         mutating func submitCurrentFieldValueAsUsage() -> EffectOf<EntryUsagesEditor> {
-            
-            defer {
-                tracking.textField.reset()
-            }
-
-            let value = tracking.textField.text
-            
-            guard !value.isEmpty else {
-                return .none
-            }
-            
+            defer { textField.reset() }
+            let value = textField.text
+            guard !value.isEmpty else { return .none }
             let matches = $db.usages(where: \.value, is: value)
-            
             if let first = matches.first {
                 
                 if matches.count > 1 {
                     
-                    // what if there are more than one words in the repo that match the spelling of the usage the user just typed in? (Because the user previously decided to create a separate word with the same spelling instead of merging or editing the existing one). We will need to handle this with a confirmation dialog, as we have done previously.
                     // TODO: handle more than one match
-                    
-                    // Note, this is where we would delegate to the confirmation dialog to get a decision from the user about which one to use, or whether to create a new one
+                    // delegate to the confirmation dialog to get a decision from the user
                     
                     destination = .alert(.init(title: { .init("There was more than one entry that matched that usage's. This is not currently supported.")}))
                     
                 } else {
-                    
                     db.connect(usage: first.id, to: entryID)
-
                 }
-
+                
             } else {
                 
                 do {
                     
-                    let value = tracking.textField.text
-                    let valueLanguage = tracking.textField.language
+                    let value = textField.text
+                    let valueLanguage = textField.language
                     
                     let newUsage = try $db.addNewUsage(language: valueLanguage) {
                         $0.value = value
@@ -76,9 +60,7 @@ public struct EntryUsagesEditor {
                     db.connect(usage: newUsage.id, to: entryID)
                     
                 } catch {
-                    
                     destination = .alert(.init(title: { .init("Failed to add a new usage: \(error.localizedDescription)") }))
-                    
                 }
                 
             }
@@ -103,7 +85,7 @@ public struct EntryUsagesEditor {
     public enum Action: BindableAction {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
-        case tracking(LanguageTrackingFloatingTextField.Action)
+        case textField(FloatingTextField.Action)
         
         case addButtonTapped
         case addLongPressMenuButtonTapped(Language)
@@ -120,8 +102,8 @@ public struct EntryUsagesEditor {
         
         BindingReducer()
         
-        Scope(state: \.tracking, action: \.tracking) {
-            LanguageTrackingFloatingTextField()
+        Scope(state: \.textField, action: \.textField) {
+            FloatingTextField()
         }
         
         Reduce<State, Action> { state, action in
@@ -132,25 +114,24 @@ public struct EntryUsagesEditor {
 
             case .addButtonTapped:
 
-                @Dependency(\.systemLanguages) var systemLanguages
-
-                state.tracking.textField.languageOverride = systemLanguages.current().id
-                state.tracking.textField.collapsed = false
+                state.textField.languageOverride = .none
+                state.textField.collapsed = false
                 
                 return .none
 
             case .addLongPressMenuButtonTapped(let selected):
 
-                state.tracking.textField.languageOverride = selected.id
-                state.tracking.textField.collapsed = false
+                state.textField.languageOverride = selected.id
+                state.textField.collapsed = false
 
                 return .none
 
-            case .tracking(.textField(.delegate(let delegatedAction))):
+            case .textField(.delegate(let delegatedAction)):
                 switch delegatedAction {
-                case .fieldCommitted, .saveEntryButtonTapped: return state.submitCurrentFieldValueAsUsage()
+                case .fieldCommitted, .saveEntryButtonTapped:
+                    return state.submitCurrentFieldValueAsUsage()
                 }
-            case .tracking: return .none
+            case .textField: return .none
             case .destructiveSwipeButtonTapped(let translation):
 
                 state.db.remove(translation: translation.id, from: state.entryID)
@@ -212,6 +193,5 @@ struct EntryUsagesEditorView: View {
             onMenuItemTapped: { store.send(.addLongPressMenuButtonTapped($0)) },
             onMenuShortPressed: { store.send(.addButtonTapped) }
         )
-        .environment(\.floatingTextField.autocapitalization, .sentences)
     }
 }
