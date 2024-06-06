@@ -217,6 +217,7 @@ PLATFORMS
 
 DEPENDENCIES
   abbrev
+  dotenv
   fastlane
   mutex_m
 
