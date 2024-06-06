@@ -1,0 +1,39 @@
+platform :ios do
+
+  desc "Sync signing"
+  lane :signing do
+    match#(readonly: true)
+  end
+
+  desc "Build Binary"
+  lane :build do
+    signing
+      # build_app(scheme: "App-Main")
+  end
+
+  desc "Build Binary"
+  lane :release_beta do
+    build
+    # upload_to_testflight
+  end
+
+end
+
+platform :mac do
+
+
+  desc "Sync signing"
+  lane :signing do
+  end
+
+  desc "Build Binary"
+  lane :build do
+    signing
+  end
+
+  desc "Build Binary"
+  lane :release_beta do
+    build
+  end
+
+end
