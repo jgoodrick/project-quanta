@@ -74,53 +74,38 @@ playground.xcworkspace
 
 # End of https://www.gitignore.io/api/swift,macos
 
+# fastlane
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/test_output
+
+# Release artifacts
+.bundle
+*.xcarchive
+
+# Tuist makes committing projects and workspaces undesirable
 **/*.xcodeproj
 **/*.xcworkspace
-.byebug_history
-*.xcarchive
-tmp/
-/build/
+xcschemes/
+TuistCloud
 
-.env
-.idea/
-/Carthage/Checkouts
-*.profraw
-tuist.zip
-TODO
-TODO.md
-mkmf.log
-.rubocop-http---shopify-github-io-ruby-style-guide-rubocop-yml
-generated_fixtures
-.fixtures.generated.json
+# Tuist generated files
 **/Derived/
-Tuist.xcworkspace
-node_modules
-Fixture
-
 Tuist/Dependencies/SwiftPackageManager
 Tuist/Dependencies/graph.json
 
 # VSCode Settings
 .vscode/launch.json
 
-# Release artifacts
-.bundle
-
-# Tuist Cloud
-TuistCloud
-!make/tasks/cloud
-
+# Custom
 .obsidian
-xcschemes/
 
-# fastlane specific
-**/fastlane/report.xml
+# config
+.env
+.env.ios
+.env.mac
 
-# deliver temporary files
-**/fastlane/Preview.html
-
-# snapshot generated screenshots
-**/fastlane/screenshots
-
-# scan temporary files
-**/fastlane/test_output
+# secrets
+.env.secret
+*.p8
