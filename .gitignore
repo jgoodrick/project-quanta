@@ -83,6 +83,7 @@ playground.xcworkspace
 # Release artifacts
 .bundle
 *.xcarchive
+build/**
 
 # Tuist makes committing projects and workspaces undesirable
 **/*.xcodeproj

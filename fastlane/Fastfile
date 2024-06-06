@@ -6,12 +6,13 @@ platform :ios do
   desc "Sync signing"
   lane :signing do
     match#(readonly: true)
+
   end
 
   desc "Build Binary"
   lane :build do
     signing
-      # build_app(scheme: "App-Main")
+    build_ios_app(scheme: "App_Main")
   end
 
   desc "Build Binary"
