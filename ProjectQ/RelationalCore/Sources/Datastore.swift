@@ -6,7 +6,7 @@ public struct Database: Equatable, Codable, Sendable {
     public init() {}
     
     internal var stored: Stored = .init()
-    struct Stored: Equatable, Codable, Sendable {
+    internal struct Stored: Equatable, Codable, Sendable {
         var entries: [Entry.ID: Tracked<Entry>] = [:]
         var keywords: [Keyword.ID: Tracked<Keyword>] = [:]
         var languages: [Language.ID: Tracked<Language>] = [:]
@@ -16,7 +16,7 @@ public struct Database: Equatable, Codable, Sendable {
     }
     
     internal var relationships: Relationships = .init()
-    struct Relationships: Equatable, Codable, Sendable {
+    internal struct Relationships: Equatable, Codable, Sendable {
         var entries: [Entry.ID: Entry.Relationships] = [:]
         var keywords: [Keyword.ID: Keyword.Relationships] = [:]
         var languages: [Language.ID: Language.Relationships] = [:]

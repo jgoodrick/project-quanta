@@ -8,14 +8,20 @@ public enum TranslatableEntity: Equatable {
 
 extension Database {
 
-    public func entries(forLanguage language: Language) -> [Entry] {
+    public func entries(forLanguage language: Language? = nil) -> [Entry] {
+        let ids: any Collection<Entry.ID>
+        if let language {
+            ids = relationships.languages[language.id]?.entries ?? []
+        } else {
+            ids = stored.entries.keys
+        }
         return Query(expandWith: { self[entry: $0] }, predicate: { _ in true }, sortComparator: {
             guard let lhs = stored.entries[$0.id], let rhs = stored.entries[$1.id] else {
                 return true
             }
             return lhs.metadata.modified > rhs.metadata.modified
         })
-        .execute(on: relationships.languages[language.id]?.entries ?? [])
+        .execute(on: ids)
     }
 
     public func keyboardLanguageID(for entity: TranslatableEntity) -> Language.ID? {

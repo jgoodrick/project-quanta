@@ -202,7 +202,9 @@ extension TargetID {
     
     var destinations: Destinations {
         switch self {
-        default: 
+        case .Model_Core, .Relational_Core, .Relational_Core_Tests:
+            [.iPhone, .iPad, .mac]
+        default:
             .iOS
         }
     }
