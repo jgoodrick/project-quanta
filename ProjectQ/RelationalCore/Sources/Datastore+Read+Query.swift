@@ -8,9 +8,12 @@ public enum TranslatableEntity: Equatable {
 
 extension Database {
 
-    public func entries(forLanguage language: Language) -> [Tracked<Entry>] {
+    public func entries(forLanguage language: Language) -> [Entry] {
         return Query(expandWith: { self[entry: $0] }, predicate: { _ in true }, sortComparator: {
-            $0[keyPath: \.metadata.modified] > $1[keyPath: \.metadata.modified]
+            guard let lhs = stored.entries[$0.id], let rhs = stored.entries[$1.id] else {
+                return true
+            }
+            return lhs.metadata.modified > rhs.metadata.modified
         })
         .execute(on: relationships.languages[language.id]?.entries ?? [])
     }
@@ -29,8 +32,8 @@ extension Database {
 
 extension Database {
     
-    public func firstEntry<T: Equatable>(where keyPath: KeyPath<Tracked<Entry>, T>, is value: T) -> Tracked<Entry>? {
-        for entry in stored.entries.values {
+    public func firstEntry<T: Equatable>(where keyPath: KeyPath<Entry, T>, is value: T) -> Entry? {
+        for entry in stored.entries.values.map(\.value) {
             if entry[keyPath: keyPath] == value {
                 return self[entry: entry.id]
             }
@@ -38,39 +41,39 @@ extension Database {
         return nil
     }
     
-    public func entries<T: Equatable>(where keyPath: KeyPath<Tracked<Entry>, T>, is value: T) -> [Tracked<Entry>] {
-        stored.entries.values.filter({
+    public func entries<T: Equatable>(where keyPath: KeyPath<Entry, T>, is value: T) -> [Entry] {
+        stored.entries.values.map(\.value).filter({
             $0[keyPath: keyPath] == value
         }).compactMap({
             self[entry: $0.id]
         })
     }
     
-    public func usages<T: Equatable>(where keyPath: KeyPath<Tracked<Usage>, T>, is value: T) -> [Tracked<Usage>] {
-        stored.usages.values.filter({
+    public func usages<T: Equatable>(where keyPath: KeyPath<Usage, T>, is value: T) -> [Usage] {
+        stored.usages.values.map(\.value).filter({
             $0[keyPath: keyPath] == value
         }).compactMap({
             self[usage: $0.id]
         })
     }
     
-    public func notes<T: Equatable>(where keyPath: KeyPath<Tracked<Note>, T>, is value: T) -> [Tracked<Note>] {
-        stored.notes.values.filter({
+    public func notes<T: Equatable>(where keyPath: KeyPath<Note, T>, is value: T) -> [Note] {
+        stored.notes.values.map(\.value).filter({
             $0[keyPath: keyPath] == value
         }).compactMap({
             self[note: $0.id]
         })
     }
     
-    public func languages<T: Equatable>(where keyPath: KeyPath<Tracked<Language>, T>, is value: T) -> [Tracked<Language>] {
-        stored.languages.values.filter({
+    public func languages<T: Equatable>(where keyPath: KeyPath<Language, T>, is value: T) -> [Language] {
+        stored.languages.values.map(\.value).filter({
             $0[keyPath: keyPath] == value
         }).compactMap({
             self[language: $0.id]
         })
     }
     
-    public func languages(for translatableEntity: TranslatableEntity) -> [Tracked<Language>] {
+    public func languages(for translatableEntity: TranslatableEntity) -> [Language] {
         switch translatableEntity {
         case .entry(let id):
             relationships.entries[id]?.languages.compactMap({
@@ -83,17 +86,17 @@ extension Database {
         }
     }
     
-    public func translations(for entry: Entry.ID) -> [Tracked<Entry>] {
+    public func translations(for entry: Entry.ID) -> [Entry] {
         Query(expandWith: { self[entry: $0] }, predicate: .none, sortComparator: .none)
             .execute(on: relationships.entries[id: entry].translations)
     }
     
-    public func usages(for entry: Entry.ID) -> [Tracked<Usage>] {
+    public func usages(for entry: Entry.ID) -> [Usage] {
         Query(expandWith: { self[usage: $0] }, predicate: .none, sortComparator: .none)
             .execute(on: relationships.entries[id: entry].usages)
     }
     
-    public func notes(for entry: Entry.ID) -> [Tracked<Note>] {
+    public func notes(for entry: Entry.ID) -> [Note] {
         Query(expandWith: { self[note: $0] }, predicate: .none, sortComparator: .none)
             .execute(on: relationships.entries[id: entry].notes)
     }

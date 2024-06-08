@@ -27,14 +27,14 @@ public struct EntryUsagesEditor {
         @Presents var destination: Destination.State?
         
         var usages: [Usage] {
-            db.usages(for: entryID).map(\.value)
+            db.usages(for: entryID)
         }
         
         mutating func submitCurrentFieldValueAsUsage() -> EffectOf<EntryUsagesEditor> {
             defer { textField.reset() }
             let value = textField.text
             guard !value.isEmpty else { return .none }
-            let matches = db.usages(where: \.value.value, is: value)
+            let matches = db.usages(where: \.value, is: value)
             if let first = matches.first {
                 
                 if matches.count > 1 {

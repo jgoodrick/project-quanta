@@ -24,28 +24,28 @@ extension Database {
 
 extension Database {
     
-    public subscript(entry id: Entry.ID) -> Tracked<Entry>? {
-        stored.entries[id]
+    public subscript(entry id: Entry.ID) -> Entry? {
+        stored.entries[id]?.value
     }
     
-    public subscript(entryCollection id: EntryCollection.ID) -> Tracked<EntryCollection>? {
-        stored.entryCollections[id]
+    public subscript(entryCollection id: EntryCollection.ID) -> EntryCollection? {
+        stored.entryCollections[id]?.value
     }
     
-    public subscript(keyword id: Keyword.ID) -> Tracked<Keyword>? {
-        stored.keywords[id]
+    public subscript(keyword id: Keyword.ID) -> Keyword? {
+        stored.keywords[id]?.value
     }
     
-    public subscript(language id: Language.ID) -> Tracked<Language>? {
-        stored.languages[id]
+    public subscript(language id: Language.ID) -> Language? {
+        stored.languages[id]?.value
     }
     
-    public subscript(note id: Note.ID) -> Tracked<Note>? {
-        stored.notes[id]
+    public subscript(note id: Note.ID) -> Note? {
+        stored.notes[id]?.value
     }
 
-    public subscript(usage id: Usage.ID) -> Tracked<Usage>? {
-        stored.usages[id]
+    public subscript(usage id: Usage.ID) -> Usage? {
+        stored.usages[id]?.value
     }
         
 }

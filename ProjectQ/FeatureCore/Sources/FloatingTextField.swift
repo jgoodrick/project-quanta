@@ -40,7 +40,7 @@ public struct FloatingTextField {
             })
         }
         public var language: Language {
-            overriddenLanguage.flatMap({ $db[language: $0]?.wrappedValue.value }) ?? settings.focusedLanguage
+            overriddenLanguage.flatMap({ db[language: $0] }) ?? settings.focusedLanguage
         }
         
         public mutating func reset() {
