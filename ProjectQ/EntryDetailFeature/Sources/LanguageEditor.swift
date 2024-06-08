@@ -16,7 +16,7 @@ public struct LanguageEditor {
         var entity: TranslatableEntity
         
         var languages: [Language] {
-            db.languages(for: entity).map(\.value)
+            db.languages(for: entity)
         }
 
     }

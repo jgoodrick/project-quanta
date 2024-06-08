@@ -21,7 +21,7 @@ public struct UsageDetail {
         @Presents var destination: Destination.State?
 
         var usage: Usage? {
-            db[usage: id]?.value
+            db[usage: id]
         }
 
     }

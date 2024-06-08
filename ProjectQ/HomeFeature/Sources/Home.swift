@@ -28,8 +28,8 @@ public struct Home {
         var displayedEntries: [Item] {
             db.entries(forLanguage: settings.focusedLanguage).map({
                 Item(
-                    entry: $0.value,
-                    topTranslation: db.translations(for: $0.id).first?.value
+                    entry: $0,
+                    topTranslation: db.translations(for: $0.id).first
                 )
             })
         }

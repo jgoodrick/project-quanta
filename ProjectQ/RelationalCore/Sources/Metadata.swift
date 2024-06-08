@@ -18,13 +18,13 @@ extension Metadata: Mergeable {
     }
 }
 
-@dynamicMemberLookup
+//@dynamicMemberLookup
 public struct Tracked<Value> {
     public var value: Value
     public var metadata: Metadata
-    public subscript<T>(dynamicMember keyPath: KeyPath<Value, T>) -> T {
-      self.value[keyPath: keyPath]
-    }
+//    public subscript<T>(dynamicMember keyPath: KeyPath<Value, T>) -> T {
+//      self.value[keyPath: keyPath]
+//    }
 }
 
 extension Tracked: Mergeable where Value: Mergeable {

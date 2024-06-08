@@ -23,7 +23,7 @@ public struct EntryNotesEditor {
         @Presents var destination: Destination.State?
         
         var notes: [Note] {
-            db.notes(for: entryID).map(\.value)
+            db.notes(for: entryID)
         }
         
         mutating func commitTextField() -> EffectOf<EntryNotesEditor> {
@@ -42,14 +42,14 @@ public struct EntryNotesEditor {
                     return .none
                 }
                 
-                guard var tracked = db[note: editing] else {
+                guard var note = db[note: editing] else {
                     assertionFailure()
                     return .none
                 }
                 
-                tracked.value.value = value
+                note.value = value
                     
-                db.update(.note(tracked.value))
+                db.update(.note(note))
                 
             } else {
                 guard !value.isEmpty else {

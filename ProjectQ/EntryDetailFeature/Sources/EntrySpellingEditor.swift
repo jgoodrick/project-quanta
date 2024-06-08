@@ -39,7 +39,7 @@ public struct EntrySpellingEditor {
 
             if let match = db.firstEntry(where: \.spelling, is: text) {
 
-                destination = .confirmationDialog(.addOrMergeWithExisting(entry: match.value))
+                destination = .confirmationDialog(.addOrMergeWithExisting(entry: match))
 
             } else {
                 
@@ -59,14 +59,14 @@ public struct EntrySpellingEditor {
                 return
             }
 
-            guard var tracked = db[entry: entryID] else {
+            guard var value = db[entry: entryID] else {
                 assertionFailure()
                 return
             }
             
-            tracked.value.spelling = text
+            value.spelling = text
             
-            db.update(.entry(tracked.value))
+            db.update(.entry(value))
 
         }
 
@@ -101,7 +101,7 @@ public struct EntrySpellingEditor {
             switch action {
             case .editSpellingButtonTapped:
 
-                state.textField.text = state.db[entry: state.entryID]?.value.spelling ?? ""
+                state.textField.text = state.db[entry: state.entryID]?.spelling ?? ""
                 state.textField.collapsed = false
 
                 return .none

@@ -22,14 +22,14 @@ public struct EntryTranslationsEditor {
         @Presents var destination: Destination.State?
         
         var translations: [Entry] {
-            db.translations(for: entryID).map(\.value)
+            db.translations(for: entryID)
         }
 
         mutating func submitCurrentFieldValueAsTranslation() -> EffectOf<EntryTranslationsEditor> {
             defer { textField.reset() }
             let translationSpelling = textField.text
             guard !translationSpelling.isEmpty else { return .none }
-            let matches = db.entries(where: \.value.spelling, is: translationSpelling)
+            let matches = db.entries(where: \.spelling, is: translationSpelling)
             if let first = matches.first {
                 
                 if matches.count > 1 {

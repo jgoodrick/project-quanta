@@ -36,7 +36,7 @@ public struct EntryDetail {
         @Presents var destination: Destination.State?
 
         var entry: Entry? {
-            db[entry: entryID]?.value
+            db[entry: entryID]
         }
 
     }
