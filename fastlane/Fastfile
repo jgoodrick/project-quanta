@@ -1,3 +1,9 @@
+fastlane_require "dotenv"
+
+before_all do
+  Dotenv.load ".env.secret"
+end
+
 platform :ios do
   before_all do
     Dotenv.load ".env.ios"
@@ -15,10 +21,11 @@ platform :ios do
     build_ios_app(scheme: "App_Main")
   end
 
-  desc "Build Binary"
-  lane :release_beta do
+  desc "Release to TestFlight"
+  lane :release_testflight do
     build
-    # upload_to_testflight
+
+    upload_to_testflight
   end
 
 end
@@ -35,7 +42,7 @@ platform :mac do
     signing
   end
 
-  desc "Build Binary"
+  desc "Release to TestFlight"
   lane :release_beta do
     build
   end

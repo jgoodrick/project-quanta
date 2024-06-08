@@ -32,11 +32,19 @@ enum TargetID: String, CaseIterable, SnakeCased {
     var snake_cased: String { rawValue }
     
     case App_Main
-    case App_Main_Tests
     case App_Root
-    case App_Root_Tests
-    case Model
-    case Model_Tests
+    case Entry_Detail_Feature
+    case Feature_Core
+    case Home_Feature
+    case Settings_Feature
+
+    case Functional_Core
+    case Layout_Core
+    case Model_Core
+    case Relational_Core
+
+    case Feature_Core_Tests
+    case Relational_Core_Tests
 
 }
 
@@ -50,21 +58,52 @@ extension TargetID {
     var dependencies: [TargetDependency] {
         switch self {
         case .App_Main:
-            return [
-                .target(.App_Root),
-            ]
+            return [.target(.App_Root)]
         case .App_Root:
             return [
-                .target(.Model),
+                .target(.Home_Feature),
+                .target(.Entry_Detail_Feature),
             ]
-        case .Model:
+        case .Relational_Core:
+            return [
+                .target(.Model_Core),
+            ]
+        case .Entry_Detail_Feature:
+            return [
+                .target(.Feature_Core),
+            ]
+        case .Feature_Core:
             return [
                 .external(name: "ComposableArchitecture", condition: .none),
+                .target(.Relational_Core),
+                .target(.Layout_Core),
             ]
-        case _ where isTestTarget:
-            return testedTarget.map({[.target($0)]}) ?? []
-        default:
-            return []
+        case .Functional_Core:
+            return [
+                
+            ]
+        case .Home_Feature:
+            return [
+                .target(.Entry_Detail_Feature),
+                .target(.Feature_Core),
+                .target(.Settings_Feature),
+            ]
+        case .Layout_Core:
+            return [
+                .target(.Model_Core),
+            ]
+        case .Settings_Feature:
+            return [
+                .target(.Feature_Core),
+            ]
+        case .Model_Core:
+            return [
+                
+            ]
+        case .Feature_Core_Tests:
+            return [ .target(.Feature_Core) ]
+        case .Relational_Core_Tests:
+            return [ .target(.Relational_Core) ]
         }
     }
 
@@ -79,7 +118,7 @@ extension TargetID {
     
     var settings: Settings {
         switch self {
-        default:
+        case .App_Main:
             Settings.settings(
                 base: [
                     // module verifier
@@ -93,11 +132,21 @@ extension TargetID {
                     "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "AccentColor"
                 ],
                 configurations: [
-                    .debug(name: .debug, settings: [:], xcconfig: configFilePath),
-                    .release(name: .release, settings: [:], xcconfig: configFilePath),
+                    .debug(
+                        name: .debug,
+                        settings: [:],
+                        xcconfig: "\(relativeRootPath)/Config/Config.xcconfig"
+                    ),
+                    .release(
+                        name: .release,
+                        settings: [:], 
+                        xcconfig: "\(relativeRootPath)/Config/Config.xcconfig"
+                    ),
                 ],
                 defaultSettings: .recommended
             )
+        default:
+            Settings.settings()
         }
     }
         
@@ -111,7 +160,7 @@ extension TargetID {
         switch self {
         case .App_Main:
             additional = [
-                "CFBundleDisplayName": "ProjectQ",
+                "CFBundleDisplayName": "Project Q",
                 "NSCameraUsageDescription": "If you would like to include photos with your entries, we will need access to your camera to capture them.",
                 "UILaunchStoryboardName": "LaunchScreen.storyboard",
                 "UIRequiredDeviceCapabilities": [
@@ -157,13 +206,21 @@ extension TargetID {
             .iOS
         }
     }
+    
+    var relativeRootPath: String {
+        if let associatedTestTargetIDDefinedByNaming {
+            associatedTestTargetIDDefinedByNaming.relativeRootPath
+        } else {
+            compacted
+        }
+    }
 
     var sources: SourceFilesList? {
         switch self {
         case _ where isTestTarget:
-            "\(allButLastComponent)/Tests/**"
+            "\(relativeRootPath)/Tests/**"
         default:
-            "\(snake_cased)/Sources/**"
+            "\(relativeRootPath)/Sources/**"
         }
     }
     
@@ -171,7 +228,7 @@ extension TargetID {
         switch self {
         case _ where isApp:
             ResourceFileElements.resources(
-                ["\(snake_cased)/Resources/**"],
+                ["\(relativeRootPath)/Resources/**"],
                 privacyManifest: PrivacyManifest.appPrivacyManifest
             )
         default:
@@ -182,7 +239,7 @@ extension TargetID {
     var entitlements: Entitlements? {
         switch self {
         case _ where isApp || isAppExtension:
-            "\(snake_cased)/Config/Entitlements.entitlements"
+            "\(relativeRootPath)/Config/Entitlements.entitlements"
         default:
             .none
         }
@@ -203,10 +260,17 @@ extension TargetID {
         }
     }
     
+    var targetName: String {
+        switch self {
+        default:
+            compacted
+        }
+    }
+
     var productName: String? {
         switch self {
         default:
-            snake_cased
+            compacted
         }
     }
     
@@ -224,12 +288,12 @@ protocol SnakeCased {
 }
 
 extension SnakeCased {
+    var compacted: String { snake_cased.replacingOccurrences(of: "_", with: "") }
     var spaced: String { snake_cased.replacingOccurrences(of: "_", with: " ") }
     var dotted: String { snake_cased.replacingOccurrences(of: "_", with: ".") }
     var dashed: String { snake_cased.replacingOccurrences(of: "_", with: "-") }
     var rawComponents: [String] { snake_cased.components(separatedBy: "_") }
     var allButLastComponent: String { rawComponents.dropLast().joined(separator: "_") }
-    var targetName: String { snake_cased }
 }
 
 enum TargetNameComponent: String {
@@ -258,32 +322,7 @@ extension TargetID {
             $0 != TargetNameComponent.Tests.rawValue
         }).joined(separator: "_"))
     }
-    
-    var configFilePath: Path? {
-        switch self {
-        default:
-            buildSettingsTarget?.configFilePath ?? "Config.xcconfig"
-        }
-    }
-    
-    var buildSettingsTarget: TargetID? {
-        switch self {
-        case _ where isExtensionKitExtension:
-            .App_Main
-        case _ where isTestTarget:
-            testedTarget
-        default:
-            .none
-        }
-    }
-    
-    var testedTarget: TargetID? {
-        switch self {
-        default:
-            associatedTestTargetIDDefinedByNaming
-        }
-    }
-    
+        
 }
 
 extension PrivacyManifest {
