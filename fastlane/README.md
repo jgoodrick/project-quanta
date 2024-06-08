@@ -31,13 +31,13 @@ Sync signing
 
 Build Binary
 
-### ios release_beta
+### ios release_testflight
 
 ```sh
-[bundle exec] fastlane ios release_beta
+[bundle exec] fastlane ios release_testflight
 ```
 
-Build Binary
+Release to TestFlight
 
 ----
 
@@ -66,7 +66,7 @@ Build Binary
 [bundle exec] fastlane mac release_beta
 ```
 
-Build Binary
+Release to TestFlight
 
 ----
 
