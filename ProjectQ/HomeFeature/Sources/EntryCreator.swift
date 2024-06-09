@@ -95,7 +95,7 @@ public struct EntryCreator {
                         return .none
                     }
                     
-                    if let match = state.db.firstEntry(where: \.spelling, is: spelling) {
+                    if let match = state.db.firstEntry(where: { $0.spelling == spelling }) {
 
                         state.destination = .confirmationDialog(.addOrEditExisting(entry: match))
 

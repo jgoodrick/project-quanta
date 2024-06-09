@@ -15,7 +15,7 @@ public struct UsageDetail {
         @Shared(.db) var db
         @Shared(.settings) var settings
         
-        let id: Entry.ID
+        let id: Usage.ID
         var languageEditor: LanguageEditor.State
 
         @Presents var destination: Destination.State?

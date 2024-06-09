@@ -22,14 +22,14 @@ public struct EntryTranslationsEditor {
         @Presents var destination: Destination.State?
         
         var translations: [Entry] {
-            db.translations(for: entryID)
+            db.translations(forEntry: entryID)
         }
 
         mutating func submitCurrentFieldValueAsTranslation() -> EffectOf<EntryTranslationsEditor> {
             defer { textField.reset() }
             let translationSpelling = textField.text
             guard !translationSpelling.isEmpty else { return .none }
-            let matches = db.entries(where: \.spelling, is: translationSpelling)
+            let matches = db.entries(where: { $0.spelling == translationSpelling })
             if let first = matches.first {
                 
                 if matches.count > 1 {
@@ -127,7 +127,7 @@ public struct EntryTranslationsEditor {
                 
             case .destructiveSwipeButtonTapped(let translation):
 
-                state.db.disconnect(translation: translation.id, from: state.entryID)
+                state.db.disconnect(translation: translation.id, fromEntry: state.entryID)
                 
                 return .none
 

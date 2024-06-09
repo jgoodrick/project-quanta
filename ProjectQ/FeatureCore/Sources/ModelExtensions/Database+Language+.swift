@@ -24,9 +24,9 @@ extension Language {
         var copy = settings.languageSelectionList
         copy[id: id] = nil
         if copy.contains(where: { $0.primaryLanguage == primaryLanguage }) {
-            return locale.localizedString(forIdentifier: bcp47) ?? id
+            return locale.localizedString(forIdentifier: bcp47.rawValue) ?? id.rawValue
         } else {
-            return primaryLanguage.flatMap({ locale.localizedString(forLanguageCode: $0) }) ?? id
+            return primaryLanguage.flatMap({ locale.localizedString(forLanguageCode: $0) }) ?? id.rawValue
         }
     }
     
