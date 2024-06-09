@@ -14,7 +14,7 @@ extension Database {
         relationships.entries[id: entry].languages.move(fromOffsets: fromOffsets, toOffset: toOffset)
     }
     
-    public mutating func moveLanguages(onUsage usage: Entry.ID, fromOffsets: IndexSet, toOffset: Int) {
+    public mutating func moveLanguages(onUsage usage: Usage.ID, fromOffsets: IndexSet, toOffset: Int) {
         precondition(stored.usages[usage] != nil)
         relationships.usages[id: usage].languages.move(fromOffsets: fromOffsets, toOffset: toOffset)
     }

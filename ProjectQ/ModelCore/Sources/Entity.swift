@@ -24,14 +24,13 @@ public enum Entity: Identifiable, Equatable, Codable, Sendable {
         case .usage(let entity): return .usage(entity.id)
         }
     }
-    public enum Model: Hashable, Equatable, Codable, Sendable {
+    public enum Model: Hashable, Equatable, Codable, Sendable, CaseIterable {
         case entry
         case entryCollection
         case keyword
         case language
         case note
         case usage
-        case user
     }
     public var model: Model {
         switch self {

@@ -34,28 +34,39 @@ extension Database.Relationships {
     mutating func removeAllReferences(to entity: Entity.ID) {
         switch entity {
         case .entry(let entryID):
-            entries[entryID] = nil
-            entries.mutateAll {
-                $0.roots.removeAll(where: { $0 == entryID })
-                $0.derived.remove(entryID)
-                $0.translations.removeAll(where: { $0 == entryID })
-                $0.backTranslations.remove(entryID)
-                $0.seeAlso.removeAll(where: { $0 == entryID })
-            }
-            keywords.mutateAll {
-                $0.matches.removeAll(where: { $0 == entryID })
-            }
-            languages.mutateAll {
-                $0.entries.remove(entryID)
-            }
-            notes.mutateAll {
-                $0.targets.remove(.entry(entryID))
-            }
-            usages.mutateAll {
-                $0.uses.remove(entryID)
-            }
-            entryCollections.mutateAll {
-                $0.entries.removeAll(where: { $0 == entryID })
+            // if we add a new model, this will give us compile time checking that we are removing references of this entity from all other model types
+            for model in Entity.Model.allCases {
+                switch model {
+                case .entry:
+                    entries[entryID] = nil
+                    entries.mutateAll {
+                        $0.roots.removeAll(where: { $0 == entryID })
+                        $0.derived.remove(entryID)
+                        $0.translations.removeAll(where: { $0 == entryID })
+                        $0.backTranslations.remove(entryID)
+                        $0.seeAlso.removeAll(where: { $0 == entryID })
+                    }
+                case .entryCollection:
+                    entryCollections.mutateAll {
+                        $0.entries.removeAll(where: { $0 == entryID })
+                    }
+                case .keyword:
+                    keywords.mutateAll {
+                        $0.matches.removeAll(where: { $0 == entryID })
+                    }
+                case .language:
+                    languages.mutateAll {
+                        $0.entries.remove(entryID)
+                    }
+                case .note:
+                    notes.mutateAll {
+                        $0.entryTargets.remove(entryID)
+                    }
+                case .usage:
+                    usages.mutateAll {
+                        $0.uses.remove(entryID)
+                    }
+                }
             }
         case .entryCollection(let entryCollectionID):
             entryCollections[entryCollectionID] = nil
@@ -84,6 +95,9 @@ extension Database.Relationships {
             usages[usageID] = nil
             entries.mutateAll {
                 $0.usages.removeAll(where: { $0 == usageID })
+            }
+            notes.mutateAll {
+                $0.usageTargets.remove(usageID)
             }
         }
     }
