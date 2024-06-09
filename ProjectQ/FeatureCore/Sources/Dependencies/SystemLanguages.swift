@@ -16,10 +16,23 @@ public struct SystemLanguages: DependencyKey {
     }
     
     public var allConfiguredTextInputModeLanguages: () -> IdentifiedArrayOf<Language> = {
-        UITextInputMode.activeInputModes.compactMap(\.primaryLanguage).compactMap({ try? Language(bcp47: $0) }).reduce(into: [], { $0.append($1) })
+        defaultConfiguredTextInputModeLanguages
     }
     
 }
+
+fileprivate var defaultConfiguredTextInputModeLanguages: IdentifiedArrayOf<Language> {
+    #if os(iOS)
+    UITextInputMode
+        .activeInputModes
+        .compactMap(\.primaryLanguage)
+        .compactMap({ try? Language(bcp47: $0) })
+        .reduce(into: [], { $0.append($1) })
+    #else
+    IdentifiedArrayOf<Language>()
+    #endif
+}
+
 
 extension DependencyValues {
     public var systemLanguages: SystemLanguages {

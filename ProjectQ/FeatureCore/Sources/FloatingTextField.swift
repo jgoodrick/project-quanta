@@ -100,18 +100,8 @@ public struct FloatingTextFieldView: View {
         public var customHeight: Double? = .none
         public var font: Font = .title2
         public var background: Color = .gray
-        public var autocapitalization: UITextAutocapitalizationType = .none
+        public var autocapitalization: Autocapitalization = .none
         public var autocorrectionDisabled: Bool = true
-        public var implementation: Implementation = .uiKit
-        public enum Implementation {
-            case uiKit
-            case swiftUI
-        }
-        public var entryStyle: EntryStyle = .field
-        public enum EntryStyle {
-            case field
-            case editor
-        }
     }
     
     @Environment(\.floatingTextField) var style
@@ -125,51 +115,15 @@ public struct FloatingTextFieldView: View {
                     .fill(.background)
                 
                 HStack(spacing: 0) {
-                    Group {
-                        switch style.implementation {
-                        case .uiKit:
-                            Group {
-                                switch style.entryStyle {
-                                case .field:
-                                    ConfigurableTextField(text: $store.text) { config in
-                                        config.autocapitalization = style.autocapitalization
-                                        config.autocorrection = style.autocorrectionDisabled ? .no : .yes
-                                        config.isFirstResponder = !store.collapsed
-                                        config.onCommit = { store.send(.delegate(.fieldCommitted)) }
-                                        config.placeholder = placeholder
-                                        config.preferredLanguage = store.language.bcp47.rawValue
-                                        config.onLanguageUnavailable = {
-                                            print("Could not resolve language with identifier: \($0)")
-                                        }
-                                    }
-                                case .editor:
-                                    ConfigurableTextView(text: $store.text) { config in
-                                        config.autocapitalization = style.autocapitalization
-                                        config.autocorrection = style.autocorrectionDisabled ? .no : .yes
-                                        config.isFirstResponder = !store.collapsed
-                                        config.onCommit = { store.send(.delegate(.fieldCommitted)) }
-                                        config.preferredLanguage = store.language.bcp47.rawValue
-                                        config.onLanguageUnavailable = {
-                                            print("Could not resolve language with identifier: \($0)")
-                                        }
-                                    }
-                                    .multilineTextAlignment(.leading)
-                                }
-                            }
-                        case .swiftUI:
-                            Group {
-                                switch style.entryStyle {
-                                case .field:
-                                    TextField(placeholder, text: $store.text)
-                                case .editor:
-                                    TextEditor(text: $store.text)
-                                }
-                            }
-                            .onSubmit {
-                                store.send(.delegate(.fieldCommitted))
-                            }
-                            .autocapitalization(style.autocapitalization)
-                            .autocorrectionDisabled(style.autocorrectionDisabled)
+                    ConfigurableTextField(text: $store.text) { config in
+                        config.autocapitalization = style.autocapitalization
+                        config.autocorrectionDisabled = style.autocorrectionDisabled
+                        config.isFirstResponder = !store.collapsed
+                        config.onCommit = { store.send(.delegate(.fieldCommitted)) }
+                        config.placeholder = placeholder
+                        config.preferredLanguage = store.language.bcp47.rawValue
+                        config.onLanguageUnavailable = {
+                            print("Could not resolve language with identifier: \($0)")
                         }
                     }
                     .id(store.language.id)
@@ -228,9 +182,10 @@ extension EnvironmentValues {
     }
 }
 
-//#Preview { Preview }
-//private var Preview: some View {
-//    FloatingTextFieldView(
-//        store: .init(initialState: .init(trackedLanguages: Shared([Language.ID]())), reducer: { FloatingTextField() })
-//    )
-//}
+#Preview { Preview }
+private var Preview: some View {
+    FloatingTextFieldView(
+        store: .init(initialState: .init(), reducer: { FloatingTextField() }),
+        placeholder: "placeholder text"
+    )
+}
