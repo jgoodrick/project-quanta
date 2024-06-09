@@ -23,7 +23,7 @@ public struct EntryNotesEditor {
         @Presents var destination: Destination.State?
         
         var notes: [Note] {
-            db.notes(for: entryID)
+            db.notes(forEntry: entryID)
         }
         
         mutating func commitTextField() -> EffectOf<EntryNotesEditor> {

@@ -137,7 +137,7 @@ public struct FloatingTextFieldView: View {
                                         config.isFirstResponder = !store.collapsed
                                         config.onCommit = { store.send(.delegate(.fieldCommitted)) }
                                         config.placeholder = placeholder
-                                        config.preferredLanguage = store.language.bcp47
+                                        config.preferredLanguage = store.language.bcp47.rawValue
                                         config.onLanguageUnavailable = {
                                             print("Could not resolve language with identifier: \($0)")
                                         }
@@ -148,7 +148,7 @@ public struct FloatingTextFieldView: View {
                                         config.autocorrection = style.autocorrectionDisabled ? .no : .yes
                                         config.isFirstResponder = !store.collapsed
                                         config.onCommit = { store.send(.delegate(.fieldCommitted)) }
-                                        config.preferredLanguage = store.language.bcp47
+                                        config.preferredLanguage = store.language.bcp47.rawValue
                                         config.onLanguageUnavailable = {
                                             print("Could not resolve language with identifier: \($0)")
                                         }

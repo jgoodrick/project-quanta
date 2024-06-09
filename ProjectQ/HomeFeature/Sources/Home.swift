@@ -26,10 +26,10 @@ public struct Home {
         @Presents var destination: Destination.State?
         
         var displayedEntries: [Item] {
-            db.entries(forLanguage: settings.focusedLanguage).map({
+            db.entries(forLanguage: settings.focusedLanguage.id).map({
                 Item(
                     entry: $0,
-                    topTranslation: db.translations(for: $0.id).first
+                    topTranslation: db.translations(forEntry: $0.id).first
                 )
             })
         }
