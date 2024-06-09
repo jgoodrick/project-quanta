@@ -6,12 +6,14 @@ public struct Language: Identifiable, Equatable, Codable, Sendable {
         struct AttemptedToCreateLanguageWithEmptyLanguageCode: Error {}
         guard !bcp47.isEmpty else { throw AttemptedToCreateLanguageWithEmptyLanguageCode() }
         // dashes are required in order for UITextField to parse and use it
-        self.bcp47 = bcp47.replacingOccurrences(of: "_", with: "-")
+        self.bcp47 = .init(rawValue: bcp47.replacingOccurrences(of: "_", with: "-"))
     }
 
-    public var id: String { bcp47 }
+    public var id: TaggedString<BCP47> { bcp47 }
     
-    public let bcp47: String
+    public let bcp47: ID
+    
+    public enum BCP47 {}
     
 }
 
@@ -46,19 +48,19 @@ extension Language {
     }
     
     var extensions: [String] {
-        return tagComponents.filter { $0.starts(with: "u-") }
+        tagComponents.filter { $0.starts(with: "u-") }
     }
     
     var privateUse: String? {
-        return tagComponents.first(where: { $0.starts(with: "x-") })
+        tagComponents.first(where: { $0.starts(with: "x-") })
     }
     
     private var tagComponents: [String] {
-        return bcp47.split(separator: "-").map(String.init)
+        bcp47.rawValue.split(separator: "-").map(String.init)
     }
     
     private func parseComponent(at index: Int) -> String? {
-        return tagComponents.indices.contains(index) ? tagComponents[index] : nil
+        tagComponents.indices.contains(index) ? tagComponents[index] : nil
     }
     
     private func isScriptComponent(at index: Int) -> Bool {

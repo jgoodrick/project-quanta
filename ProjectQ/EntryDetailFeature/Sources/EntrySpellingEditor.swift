@@ -37,7 +37,7 @@ public struct EntrySpellingEditor {
                 return .none
             }
 
-            if let match = db.firstEntry(where: \.spelling, is: text) {
+            if let match = db.firstEntry(where: { $0.spelling == text }) {
 
                 destination = .confirmationDialog(.addOrMergeWithExisting(entry: match))
 

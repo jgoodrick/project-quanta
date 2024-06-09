@@ -47,6 +47,12 @@ extension Database {
         relationships.connect(note: note, toEntry: entry)
     }
     
+    public mutating func connect(note: Note.ID, toUsage usage: Usage.ID) {
+        precondition(stored.usages[usage] != nil)
+        precondition(stored.notes[note] != nil)
+        relationships.connect(note: note, toUsage: usage)
+    }
+    
     public mutating func connect(usage: Usage.ID, toEntry entry: Entry.ID) {
         precondition(stored.entries[entry] != nil)
         precondition(stored.usages[usage] != nil)
@@ -77,6 +83,12 @@ extension Database {
         relationships.connect(root: root, toEntry: entry, bidirectional: true)
     }
     
+    public mutating func connect(seeAlso: Entry.ID, toEntry entry: Entry.ID) {
+        precondition(stored.entries[seeAlso] != nil)
+        precondition(stored.entries[entry] != nil)
+        relationships.connect(seeAlso: seeAlso, toEntry: entry, bidirectional: true)
+    }
+
 }
 
 extension Database.Relationships {
@@ -93,10 +105,8 @@ extension Database.Relationships {
     
     mutating func connect(root: Entry.ID, toEntry derived: Entry.ID, bidirectional: Bool) {
         entries[id: derived].roots.append(root)
-        entries[id: root].backTranslations.insert(derived)
         if bidirectional {
-            entries[id: root].roots.append(derived)
-            entries[id: derived].backTranslations.insert(root)
+            entries[id: root].derived.insert(derived)
         }
     }
     
@@ -109,9 +119,11 @@ extension Database.Relationships {
         }
     }
     
-    mutating func connect(seeAlso: Entry.ID, toEntry entry: Entry.ID) {
+    mutating func connect(seeAlso: Entry.ID, toEntry entry: Entry.ID, bidirectional: Bool) {
         entries[id: entry].seeAlso.append(seeAlso)
-        entries[id: seeAlso].seeAlso.append(entry)
+        if bidirectional {
+            entries[id: seeAlso].seeAlso.append(entry)
+        }
     }
     
     mutating func connect(usage: Usage.ID, toEntry entry: Entry.ID) {
@@ -126,12 +138,12 @@ extension Database.Relationships {
     
     mutating func connect(note: Note.ID, toEntry entry: Entry.ID) {
         entries[id: entry].notes.append(note)
-        notes[id: note].targets.insert(.entry(entry))
+        notes[id: note].entryTargets.insert(entry)
     }
     
     mutating func connect(note: Note.ID, toUsage usage: Usage.ID) {
         usages[id: usage].notes.append(note)
-        notes[id: note].targets.insert(.usage(usage))
+        notes[id: note].usageTargets.insert(usage)
     }
     
     mutating func connect(entry: Entry.ID, toEntryCollection entryCollection: EntryCollection.ID) {
@@ -144,7 +156,7 @@ extension Database.Relationships {
 
 extension Database {
     
-    public mutating func disconnect(translation: Entry.ID, from translated: Entry.ID, bidirectional: Bool = true, deleteIfOrphaned: Bool = false) {
+    public mutating func disconnect(translation: Entry.ID, fromEntry translated: Entry.ID, bidirectional: Bool = true, deleteIfOrphaned: Bool = false) {
         precondition(stored.entries[translated] != nil)
         precondition(stored.entries[translation] != nil)
         relationships.disconnect(
@@ -157,25 +169,31 @@ extension Database {
         }
     }
     
-    public mutating func disconnect(keyword: Keyword.ID, from entry: Entry.ID) {
+    public mutating func disconnect(keyword: Keyword.ID, fromEntry entry: Entry.ID) {
         precondition(stored.entries[entry] != nil)
         precondition(stored.keywords[keyword] != nil)
         relationships.disconnect(keyword: keyword, fromEntry: entry)
     }
     
-    public mutating func disconnect(note: Note.ID, from entry: Entry.ID) {
+    public mutating func disconnect(note: Note.ID, fromEntry entry: Entry.ID) {
         precondition(stored.entries[entry] != nil)
         precondition(stored.notes[note] != nil)
         relationships.disconnect(note: note, fromEntry: entry)
     }
     
-    public mutating func disconnect(usage: Usage.ID, from entry: Entry.ID) {
+    public mutating func disconnect(note: Note.ID, fromUsage usage: Usage.ID) {
+        precondition(stored.usages[usage] != nil)
+        precondition(stored.notes[note] != nil)
+        relationships.disconnect(note: note, fromUsage: usage)
+    }
+    
+    public mutating func disconnect(usage: Usage.ID, fromEntry entry: Entry.ID) {
         precondition(stored.entries[entry] != nil)
         precondition(stored.usages[usage] != nil)
         relationships.disconnect(usage: usage, fromEntry: entry)
     }
     
-    public mutating func disconnect(entry: Entry.ID, from entryCollection: EntryCollection.ID) {
+    public mutating func disconnect(entry: Entry.ID, fromEntryCollection entryCollection: EntryCollection.ID) {
         precondition(stored.entries[entry] != nil)
         precondition(stored.entryCollections[entryCollection] != nil)
         relationships.disconnect(entry: entry, fromEntryCollection: entryCollection)
@@ -201,6 +219,12 @@ extension Database {
         relationships.disconnect(root: root, fromEntry: entry, bidirectional: true)
     }
 
+    public mutating func disconnect(seeAlso: Entry.ID, fromEntry entry: Entry.ID) {
+        precondition(stored.entries[seeAlso] != nil)
+        precondition(stored.entries[entry] != nil)
+        relationships.disconnect(seeAlso: seeAlso, fromEntry: entry, bidirectional: true)
+    }
+
 }
 
 extension Database.Relationships {
@@ -217,10 +241,10 @@ extension Database.Relationships {
     
     mutating func disconnect(root: Entry.ID, fromEntry derived: Entry.ID, bidirectional: Bool) {
         entries[id: derived].roots.removeAll(where: { $0 == root })
-        entries[id: root].backTranslations.remove(derived)
+        entries[id: root].derived.remove(derived)
         if bidirectional {
             entries[id: root].roots.removeAll(where: { $0 == derived })
-            entries[id: derived].backTranslations.remove(root)
+            entries[id: derived].derived.remove(root)
         }
     }
     
@@ -233,9 +257,11 @@ extension Database.Relationships {
         }
     }
     
-    mutating func disconnect(seeAlso: Entry.ID, fromEntry entry: Entry.ID) {
+    mutating func disconnect(seeAlso: Entry.ID, fromEntry entry: Entry.ID, bidirectional: Bool) {
         entries[id: entry].seeAlso.removeAll(where: { $0 == seeAlso })
-        entries[id: seeAlso].seeAlso.removeAll(where: { $0 == seeAlso })
+        if bidirectional {
+            entries[id: seeAlso].seeAlso.removeAll(where: { $0 == entry })
+        }
     }
     
     mutating func disconnect(usage: Usage.ID, fromEntry entry: Entry.ID) {
@@ -250,12 +276,12 @@ extension Database.Relationships {
     
     mutating func disconnect(note: Note.ID, fromEntry entry: Entry.ID) {
         entries[id: entry].notes.removeAll(where: { $0 == note })
-        notes[id: note].targets.remove(.entry(entry))
+        notes[id: note].entryTargets.remove(entry)
     }
     
     mutating func disconnect(note: Note.ID, fromUsage usage: Usage.ID) {
         usages[id: usage].notes.removeAll(where: { $0 == note })
-        notes[id: note].targets.remove(.usage(usage))
+        notes[id: note].usageTargets.remove(usage)
     }
         
     mutating func disconnect(entry: Entry.ID, fromEntryCollection entryCollection: EntryCollection.ID) {

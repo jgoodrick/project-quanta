@@ -2,11 +2,11 @@
 import Foundation
 
 public struct Keyword: Identifiable, Equatable, Codable, Sendable {
-    public init(id: UUID, title: String = "") {
+    public init(id: ID, title: String = "") {
         self.id = id
         self.title = title
     }
     
-    public let id: UUID
+    public let id: TaggedID<Self>
     public var title: String = ""
 }
