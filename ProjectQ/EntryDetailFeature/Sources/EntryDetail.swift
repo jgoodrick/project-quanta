@@ -1,6 +1,7 @@
 
 import ComposableArchitecture
 import Foundation
+import LayoutCore
 import ModelCore
 import RelationalCore
 import SwiftUI
@@ -187,7 +188,7 @@ public struct EntryDetailView: View {
                     }
                 }
                 .navigationTitle(entry.spelling.capitalized)
-                .navigationBarTitleDisplayMode(.inline)
+                .modifier(InlineNavigationBar_iOS())
             } else {
                 ContentUnavailableView("Missing Entry", systemImage: "nosign")
             }

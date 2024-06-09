@@ -71,6 +71,7 @@ extension TargetID {
         case .Entry_Detail_Feature:
             return [
                 .target(.Feature_Core),
+                .target(.Layout_Core),
             ]
         case .Feature_Core:
             return [
@@ -202,10 +203,9 @@ extension TargetID {
     
     var destinations: Destinations {
         switch self {
-        case .Model_Core, .Relational_Core, .Relational_Core_Tests:
-            [.iPhone, .iPad, .mac]
+        case .App_Main: .iOS
         default:
-            .iOS
+            [.iPhone, .iPad, .mac]
         }
     }
     

@@ -1,14 +1,14 @@
 
 import ComposableArchitecture
 import FeatureCore
+import LayoutCore
 import SwiftUI
 
 struct FloatingTextFieldInset: ViewModifier {
     
     let store: StoreOf<FloatingTextField>
     let placeholder: String
-    var autocapitalization: UITextAutocapitalizationType = .none
-    var entryStyle: FloatingTextFieldView.Style.EntryStyle = .field
+    var autocapitalization: Autocapitalization = .none
 
     func body(content: Content) -> some View {
         content
@@ -21,7 +21,6 @@ struct FloatingTextFieldInset: ViewModifier {
                     .padding()
                     .transformEnvironment(\.floatingTextField) {
                         $0.autocapitalization = autocapitalization
-                        $0.entryStyle = entryStyle
                     }
                 }
             }
