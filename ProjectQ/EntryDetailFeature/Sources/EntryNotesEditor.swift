@@ -145,7 +145,7 @@ extension Note: TextEditableItem {}
 
 struct EntryNotesEditorView: View {
     
-    @SwiftUI.Bindable var store: StoreOf<EntryNotesEditor>
+    @Bindable var store: StoreOf<EntryNotesEditor>
     
     var body: some View {
         TextEditableItemsSection(

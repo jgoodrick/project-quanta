@@ -176,7 +176,7 @@ extension Language: CategorizedItemsSectionCategory {
 
 struct EntryUsagesEditorView: View {
     
-    @SwiftUI.Bindable var store: StoreOf<EntryUsagesEditor>
+    @Bindable var store: StoreOf<EntryUsagesEditor>
     
     var body: some View {
         CategorizedItemsSection(
