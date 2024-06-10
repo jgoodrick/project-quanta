@@ -151,6 +151,7 @@ struct HomeListView: View {
                     .frame(maxWidth: .infinity, minHeight: 40)
                     .contentShape(Rectangle())
                 }
+                #if !os(tvOS)
                 .swipeActions {
                     Button(
                         role: .destructive,
@@ -171,8 +172,11 @@ struct HomeListView: View {
                     )
                     .tint(.yellow)
                 }
+                #endif
             }
+            #if !os(tvOS) && !os(watchOS)
             .listRowSeparator(.hidden)
+            #endif
         }
         .listStyle(.plain)
         .navigationDestination(item: $store.scope(state: \.destination?.entryDetail, action: \.destination.entryDetail)) { store in

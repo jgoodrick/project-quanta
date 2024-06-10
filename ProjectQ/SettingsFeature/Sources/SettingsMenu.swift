@@ -62,6 +62,7 @@ public struct PresentsSettingsMenuInToolbar: ViewModifier {
     
     public func body(content: Content) -> some View {
         content
+            #if !os(watchOS)
             .toolbar {
                 ToolbarItem {
                     Menu {
@@ -83,6 +84,7 @@ public struct PresentsSettingsMenuInToolbar: ViewModifier {
                     }
                 }
             }
+            #endif
             .navigationDestination(item: $store.scope(state: \.destination?.settingsEditor, action: \.destination.settingsEditor)) { store in
                 SettingsEditorView(store: store)
             }

@@ -53,13 +53,9 @@ public struct SettingsEditor {
                 
             case .addLanguageMenuItemSelected(let selected):
                 
-                do {
-                    try state.db.ensureExistenceOf(language: selected)
-                    state.settings.languageSelectionList.append(selected)
-                    state.settings.focusedLanguage = selected
-                } catch {
-                    state.destination = .alert(.failedToAddLanguage(selected))
-                }
+                state.db.ensureExistenceOf(language: selected)
+                state.settings.languageSelectionList.append(selected)
+                state.settings.focusedLanguage = selected
 
                 return .none
 
@@ -108,6 +104,7 @@ struct SettingsEditorView: View {
                         Spacer()
                         Image(systemName: "line.3.horizontal").foregroundStyle(.secondary)
                     }
+                    #if !os(tvOS)
                     .swipeActions {
                         Button(
                             role: .destructive,
@@ -119,6 +116,7 @@ struct SettingsEditorView: View {
                             }
                         )
                     }
+                    #endif
                 }
                 .onMove { from, to in
                     store.send(.moved(fromOffsets: from, toOffset: to))
@@ -131,6 +129,7 @@ struct SettingsEditorView: View {
                     
                     Spacer()
                     
+                    #if !os(watchOS)
                     Menu {
                         ForEach(store.settings.additionalLanguagesAvailable) { availableLanguage in
                             Button(action: { store.send(.addLanguageMenuItemSelected(availableLanguage)) }) {
@@ -147,7 +146,7 @@ struct SettingsEditorView: View {
                             .font(.callout)
                             .textCase(.lowercase)
                     }
-                    
+                    #endif
                 }
                 
             }

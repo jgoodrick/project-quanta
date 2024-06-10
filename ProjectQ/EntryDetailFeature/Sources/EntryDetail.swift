@@ -177,6 +177,7 @@ public struct EntryDetailView: View {
                         autocapitalization: .sentences
                     )
                 )
+                #if !os(tvOS) && !os(watchOS)
                 .toolbar {
                     ToolbarItemGroup(placement: .keyboard) {
                         Spacer()
@@ -187,6 +188,7 @@ public struct EntryDetailView: View {
                         }
                     }
                 }
+                #endif
                 .navigationTitle(entry.spelling.capitalized)
                 .modifier(InlineNavigationBar_iOS())
             } else {

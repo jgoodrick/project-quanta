@@ -64,7 +64,7 @@ extension ConfigurableTextField {
         public var autocapitalization: Autocapitalization = .none
         public var autocorrectionDisabled: Bool = false
 
-        #if canImport(UIKit)
+        #if os(iOS)
         public var borderStyle: UITextField.BorderStyle = .none
         public var uiFont: UIFont?
         public var keyboardType: UIKeyboardType = .default
@@ -84,7 +84,7 @@ public enum Autocapitalization {
     case none
 }
 
-#if canImport(UIKit)
+#if os(iOS)
 extension ConfigurableTextField: UIViewRepresentable {
     
     public class Coordinator: NSObject, UITextFieldDelegate {
@@ -180,9 +180,14 @@ extension ConfigurableTextField: UIViewRepresentable {
         uiView.editingRect = configuration.editingRect
         uiView.clearButtonRect = configuration.clearButtonRect
         
-        uiView.autocapitalizationType = configuration.autocapitalization
+        switch configuration.autocapitalization {
+        case .all: uiView.autocapitalizationType = .allCharacters
+        case .none: uiView.autocapitalizationType = .none
+        case .words: uiView.autocapitalizationType = .words
+        case .sentences: uiView.autocapitalizationType = .sentences
+        }
         
-        uiView.autocorrectionType = configuration.autocorrection
+        uiView.autocorrectionType = configuration.autocorrectionDisabled ? .no : .default
         
         uiView.borderStyle = configuration.borderStyle
                 
@@ -773,4 +778,10 @@ private extension Font {
     }
 }
 
+#else
+extension ConfigurableTextField: View {
+    public var body: some View {
+        Text("<ConfigurableTextField>")
+    }
+}
 #endif

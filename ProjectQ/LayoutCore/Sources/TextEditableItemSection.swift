@@ -43,6 +43,7 @@ public struct TextEditableItemsSection<Item: TextEditableItem>: View {
                     }
                     Spacer()
                 }
+                #if !os(tvOS)
                 .swipeActions {
                     Button(
                         role: .destructive,
@@ -54,6 +55,7 @@ public struct TextEditableItemsSection<Item: TextEditableItem>: View {
                         }
                     )
                 }
+                #endif
             }
             .onMove { from, to in
                 onMoved(from, to)

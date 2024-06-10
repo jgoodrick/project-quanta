@@ -235,6 +235,7 @@ struct AddCustomLanguageView: View {
                             }
                         } else {
                             HStack {
+                                #if !os(watchOS)
                                 Menu(locale.localizedString(forLanguageCode: store.languageCode) ?? "Language") {
                                     Button("Custom") {
                                         store.send(.tappedCommonLanguageMenuItem(.none))
@@ -245,6 +246,7 @@ struct AddCustomLanguageView: View {
                                         }
                                     }
                                 }
+                                #endif
                                 if !store.languageCode.isEmpty {
                                     Button(action: { store.send(.clearCustomLanguageCodeButtonTapped) }) {
                                         Image(systemName: "xmark.circle.fill")
@@ -293,6 +295,7 @@ struct AddCustomLanguageView: View {
                             }
                         } else {
                             HStack {
+                                #if !os(watchOS)
                                 Menu(locale.localizedString(forRegionCode: store.regionCode) ?? "Region") {
                                     Button("Custom") {
                                         store.send(.tappedCommonRegionMenuItem(.none))
@@ -303,6 +306,7 @@ struct AddCustomLanguageView: View {
                                         }
                                     }
                                 }
+                                #endif
                                 if !store.regionCode.isEmpty {
                                     Button(action: { store.send(.clearCustomRegionCodeButtonTapped) }) {
                                         Image(systemName: "xmark.circle.fill")
@@ -349,6 +353,7 @@ struct AddCustomLanguageView: View {
                     }
                 }
             } else if !store.isShowingCustomNameField {
+                #if !os(watchOS)
                 Menu("+ Add Localized Name") {
                     ForEach(CommonLanguageCode.allCases) { code in
                         Button(code.displayName(for: locale)) {
@@ -356,6 +361,7 @@ struct AddCustomLanguageView: View {
                         }
                     }
                 }
+                #endif
             }
 
 
@@ -368,7 +374,11 @@ struct AddCustomLanguageView: View {
             
         }
         .presentationDetents([.medium])
+        #if os(tvOS)
+        .textFieldStyle(.automatic)
+        #elseif !os(watchOS)
         .textFieldStyle(.roundedBorder)
+        #endif
         .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
     }
 }

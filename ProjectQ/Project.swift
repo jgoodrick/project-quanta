@@ -31,7 +31,10 @@ enum TargetID: String, CaseIterable, SnakeCased {
     
     var snake_cased: String { rawValue }
     
-    case App_Main
+    case App_Main_iOS
+    case App_Main_macOS
+    case App_Main_tvOS
+    case App_Main_watchOS
     case App_Root
     case Entry_Detail_Feature
     case Feature_Core
@@ -57,7 +60,13 @@ extension TargetDependency {
 extension TargetID {
     var dependencies: [TargetDependency] {
         switch self {
-        case .App_Main:
+        case .App_Main_iOS:
+            return [.target(.App_Root)]
+        case .App_Main_macOS:
+            return [.target(.App_Root)]
+        case .App_Main_tvOS:
+            return [.target(.App_Root)]
+        case .App_Main_watchOS:
             return [.target(.App_Root)]
         case .App_Root:
             return [
@@ -111,7 +120,7 @@ extension TargetID {
     var bundleId: String {
         switch self {
         case _ where isAppExtension || isExtensionKitExtension:
-            "\(TargetID.App_Main.bundleId).\(dashed.lowercased())"
+            "\(TargetID.App_Main_iOS.bundleId).\(dashed.lowercased())"
         default:
             "\(reverseDomain).\(dotted.lowercased())"
         }
@@ -119,8 +128,8 @@ extension TargetID {
     
     var settings: Settings {
         switch self {
-        case .App_Main:
-            Settings.settings(
+        case _ where isApp:
+            var result = Settings.settings(
                 base: [
                     // module verifier
                     "MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS": "gnu11 gnu++14",
@@ -146,8 +155,12 @@ extension TargetID {
                 ],
                 defaultSettings: .recommended
             )
+            if case .App_Main_tvOS = self {
+                result.base["ASSETCATALOG_COMPILER_APPICON_NAME"] = "Brand Assets"
+            }
+            return result
         default:
-            Settings.settings()
+            return Settings.settings()
         }
     }
         
@@ -159,7 +172,7 @@ extension TargetID {
         
         let additional: [String: Plist.Value]
         switch self {
-        case .App_Main:
+        case .App_Main_iOS:
             additional = [
                 "CFBundleDisplayName": "Project Q",
                 "NSCameraUsageDescription": "If you would like to include photos with your entries, we will need access to your camera to capture them.",
@@ -171,6 +184,24 @@ extension TargetID {
                 "ITSAppUsesNonExemptEncryption": false,
                 "UISupportedInterfaceOrientations": DeviceOrientations.vertical.plistValue,
                 "UISupportedInterfaceOrientations~ipad": DeviceOrientations.vertical.plistValue,
+            ]
+        case .App_Main_macOS:
+            additional = [
+                "CFBundleDisplayName": "Project Q",
+                "NSCameraUsageDescription": "If you would like to include photos with your entries, we will need access to your camera to capture them.",
+                "ITSAppUsesNonExemptEncryption": false,
+                "UISupportedInterfaceOrientations": DeviceOrientations.vertical.plistValue,
+                "UISupportedInterfaceOrientations~ipad": DeviceOrientations.vertical.plistValue,
+            ]
+        case .App_Main_tvOS:
+            additional = [
+                "CFBundleDisplayName": "Project Q",
+                "ITSAppUsesNonExemptEncryption": false,
+            ]
+        case .App_Main_watchOS:
+            additional = [
+                "CFBundleDisplayName": "Project Q",
+                "ITSAppUsesNonExemptEncryption": false,
             ]
         case _ where isAppExtension:
             additional = [
@@ -203,15 +234,20 @@ extension TargetID {
     
     var destinations: Destinations {
         switch self {
-        case .App_Main: .iOS
+        case .App_Main_iOS: [.iPhone, .iPad]
+        case .App_Main_macOS: [.mac]
+        case .App_Main_tvOS: [.appleTv]
+        case .App_Main_watchOS: [.appleWatch]
         default:
-            [.iPhone, .iPad, .mac]
+            [.iPhone, .iPad, .mac, .appleWatch, .appleTv]
         }
     }
     
     var relativeRootPath: String {
         if let associatedTestTargetIDDefinedByNaming {
             associatedTestTargetIDDefinedByNaming.relativeRootPath
+        } else if isApp {
+            compactedExceptLast
         } else {
             compacted
         }
@@ -264,6 +300,8 @@ extension TargetID {
     
     var targetName: String {
         switch self {
+        case _ where isApp:
+            compactedExceptLast
         default:
             compacted
         }
@@ -271,6 +309,8 @@ extension TargetID {
 
     var productName: String? {
         switch self {
+        case _ where isApp:
+            compactedExceptLast
         default:
             compacted
         }
@@ -278,8 +318,16 @@ extension TargetID {
     
     var deploymentTargets: DeploymentTargets {
         switch self {
-        default:
+        case .App_Main_iOS:
             .iOS("17.0")
+        case .App_Main_macOS:
+            .macOS("14.0")
+        case .App_Main_tvOS:
+            .tvOS("17.0")
+        case .App_Main_watchOS:
+            .watchOS("10.0")
+        default:
+            .multiplatform(iOS: "17.0", macOS: "14.0", watchOS: "10.0", tvOS: "17.0")
         }
     }
 
@@ -295,7 +343,10 @@ extension SnakeCased {
     var dotted: String { snake_cased.replacingOccurrences(of: "_", with: ".") }
     var dashed: String { snake_cased.replacingOccurrences(of: "_", with: "-") }
     var rawComponents: [String] { snake_cased.components(separatedBy: "_") }
-    var allButLastComponent: String { rawComponents.dropLast().joined(separator: "_") }
+    var allButLastRawComponent: String { rawComponents.dropLast().joined(separator: "_") }
+    var compactedExceptLast: String {
+        rawComponents.last.map({ "\(rawComponents.dropLast().joined())_\($0)" }) ?? compacted
+    }
 }
 
 enum TargetNameComponent: String {
@@ -307,7 +358,7 @@ extension TargetID {
         rawComponents.compactMap(TargetNameComponent.init(rawValue:))
     }
     var isApp: Bool {
-        components.suffix(2) == [.App, .Main]
+        components.prefix(2) == [.App, .Main]
     }
     var isTestTarget: Bool {
         self.rawComponents.last == TargetNameComponent.Tests.rawValue
