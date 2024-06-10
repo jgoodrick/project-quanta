@@ -4,9 +4,9 @@ import FeatureCore
 import LayoutCore
 import SwiftUI
 
-struct FloatingTextFieldInset: ViewModifier {
+struct ToolbarTextFieldInset: ViewModifier {
     
-    let store: StoreOf<FloatingTextField>
+    let store: StoreOf<ToolbarTextField>
     let placeholder: String
     var autocapitalization: Autocapitalization = .none
 
@@ -14,12 +14,12 @@ struct FloatingTextFieldInset: ViewModifier {
         content
             .safeAreaInset(edge: .bottom) {
                 if !store.collapsed {
-                    FloatingTextFieldView(
+                    ToolbarTextFieldView(
                         store: store,
                         placeholder: placeholder
                     )
                     .padding()
-                    .transformEnvironment(\.floatingTextField) {
+                    .transformEnvironment(\.toolbarTextField) {
                         $0.autocapitalization = autocapitalization
                     }
                 }

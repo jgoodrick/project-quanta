@@ -21,7 +21,7 @@ public struct EntrySpellingEditor {
         @Shared(.settings) var settings
         
         @Shared var entryID: Entry.ID
-        var textField: FloatingTextField.State
+        var textField: ToolbarTextField.State
         
         @Presents var destination: Destination.State?
         
@@ -86,7 +86,7 @@ public struct EntrySpellingEditor {
 
     public enum Action {
         case destination(PresentationAction<Destination.Action>)
-        case textField(FloatingTextField.Action)
+        case textField(ToolbarTextField.Action)
         
         case editSpellingButtonTapped
     }
@@ -94,7 +94,7 @@ public struct EntrySpellingEditor {
     public var body: some ReducerOf<Self> {
         
         Scope(state: \.textField, action: \.textField) {
-            FloatingTextField()
+            ToolbarTextField()
         }
         
         Reduce<State, Action> { state, action in
@@ -181,7 +181,7 @@ struct EntrySpellingEditorViewModifier: ViewModifier {
                 }
             }
             .modifier(
-                FloatingTextFieldInset(
+                ToolbarTextFieldInset(
                     store: store.scope(state: \.textField, action: \.textField),
                     placeholder: placeholder
                 )

@@ -17,7 +17,7 @@ public struct EntryTranslationsEditor {
         @Shared(.settings) var settings
         
         @Shared var entryID: Entry.ID
-        var textField: FloatingTextField.State = .init()
+        var textField: ToolbarTextField.State = .init()
         
         @Presents var destination: Destination.State?
         
@@ -80,7 +80,7 @@ public struct EntryTranslationsEditor {
     public enum Action: BindableAction {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
-        case textField(FloatingTextField.Action)
+        case textField(ToolbarTextField.Action)
         
         case task
         case addButtonTapped
@@ -99,7 +99,7 @@ public struct EntryTranslationsEditor {
         BindingReducer()
         
         Scope(state: \.textField, action: \.textField) {
-            FloatingTextField()
+            ToolbarTextField()
         }
         
         Reduce<State, Action> { state, action in

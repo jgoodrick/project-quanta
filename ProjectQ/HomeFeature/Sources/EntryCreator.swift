@@ -15,7 +15,7 @@ public struct EntryCreator {
         
         @Shared(.db) var db
         @Shared(.settings) var settings
-        public var spelling: FloatingTextField.State = .init()
+        public var spelling: ToolbarTextField.State = .init()
         
         @Presents public var destination: Destination.State?
         
@@ -63,7 +63,7 @@ public struct EntryCreator {
     public enum Action: BindableAction {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
-        case spelling(FloatingTextField.Action)
+        case spelling(ToolbarTextField.Action)
         case shouldPushDetail(of: Entry.ID, translationsEditorFocused: Bool)
     }
     
@@ -72,7 +72,7 @@ public struct EntryCreator {
         BindingReducer()
         
         Scope(state: \.spelling, action: \.spelling) {
-            FloatingTextField()
+            ToolbarTextField()
         }
         
         Reduce<State, Action> { state, action in
@@ -160,7 +160,7 @@ public struct EntryCreatorView: View {
             
             Spacer()
                     
-            FloatingTextFieldView(
+            ToolbarTextFieldView(
                 store: store.scope(state: \.spelling, action: \.spelling),
                 placeholder: "New Entry"
             )
