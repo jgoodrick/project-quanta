@@ -6,7 +6,7 @@ import RelationalCore
 import SwiftUI
 
 @Reducer
-public struct FloatingTextField {
+public struct ToolbarTextField {
     
     public init() {}
     
@@ -85,14 +85,15 @@ public struct FloatingTextField {
     }
 }
 
-public struct FloatingTextFieldView: View {
+public struct ToolbarTextFieldView: View {
     
-    public init(store: StoreOf<FloatingTextField>, placeholder: String) {
+    public init(store: StoreOf<ToolbarTextField>, placeholder: String) {
         self.store = store
         self.placeholder = placeholder
     }
     
-    @Bindable var store: StoreOf<FloatingTextField>
+    @Namespace var toolbarTextField
+    @Bindable var store: StoreOf<ToolbarTextField>
     let placeholder: String
 
     public struct Style: EnvironmentKey {
@@ -104,7 +105,7 @@ public struct FloatingTextFieldView: View {
         public var autocorrectionDisabled: Bool = true
     }
     
-    @Environment(\.floatingTextField) var style
+    @Environment(\.toolbarTextField) var style
 
     public var body: some View {
         GeometryReader { proxy in
@@ -178,16 +179,16 @@ struct SaveEntryButton: View {
 }
 
 extension EnvironmentValues {
-    public var floatingTextField: FloatingTextFieldView.Style {
-        get { self[FloatingTextFieldView.Style.self] }
-        set { self[FloatingTextFieldView.Style.self] = newValue}
+    public var toolbarTextField: ToolbarTextFieldView.Style {
+        get { self[ToolbarTextFieldView.Style.self] }
+        set { self[ToolbarTextFieldView.Style.self] = newValue}
     }
 }
 
 #Preview { Preview }
 private var Preview: some View {
-    FloatingTextFieldView(
-        store: .init(initialState: .init(), reducer: { FloatingTextField() }),
+    ToolbarTextFieldView(
+        store: .init(initialState: .init(), reducer: { ToolbarTextField() }),
         placeholder: "placeholder text"
     )
 }

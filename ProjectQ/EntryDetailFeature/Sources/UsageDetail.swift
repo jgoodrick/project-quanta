@@ -87,8 +87,8 @@ public struct UsageDetailView: View {
                     
                 }
 //                .modifier(EntrySpellingEditorViewModifier(store: store.scope(state: \.spellingEditor, action: \.spellingEditor)))
-//                .modifier(FloatingTextFieldInset(store: store.scope(state: \.translationsEditor.textField, action: \.translationsEditor.textField)))
-//                .modifier(FloatingTextFieldInset(store: store.scope(state: \.translationsEditor.textField, action: \.translationsEditor.textField)))
+//                .modifier(ToolbarTextFieldInset(store: store.scope(state: \.translationsEditor.textField, action: \.translationsEditor.textField)))
+//                .modifier(ToolbarTextFieldInset(store: store.scope(state: \.translationsEditor.textField, action: \.translationsEditor.textField)))
                 .navigationTitle(usage.value)
             } else {
                 ContentUnavailableView("Missing Usage", systemImage: "nosign")

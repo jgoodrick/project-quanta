@@ -178,20 +178,20 @@ public struct EntryDetailView: View {
                     )
                 )
                 .modifier(
-                    FloatingTextFieldInset(
+                    ToolbarTextFieldInset(
                         store: store.scope(state: \.translationsEditor.textField, action: \.translationsEditor.textField),
                         placeholder: "Add a \(store.translationsEditor.textField.language.displayName) translation"
                     )
                 )
                 .modifier(
-                    FloatingTextFieldInset(
+                    ToolbarTextFieldInset(
                         store: store.scope(state: \.usagesEditor.textField, action: \.usagesEditor.textField),
                         placeholder: "Add an example sentence",
                         autocapitalization: .sentences
                     )
                 )
                 .modifier(
-                    FloatingTextFieldInset(
+                    ToolbarTextFieldInset(
                         store: store.scope(state: \.notesEditor.textField, action: \.notesEditor.textField),
                         placeholder: "Add a note about this word",
                         autocapitalization: .sentences
