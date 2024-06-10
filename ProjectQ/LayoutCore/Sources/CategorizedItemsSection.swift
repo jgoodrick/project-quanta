@@ -54,6 +54,7 @@ public struct CategorizedItemsSection<Item: CategorizedItem, Category: Categoriz
                     Spacer()
 //                    Image(systemName: "line.3.horizontal").foregroundStyle(.secondary)
                 }
+                #if !os(tvOS)
                 .swipeActions {
                     Button(
                         role: .destructive,
@@ -65,6 +66,7 @@ public struct CategorizedItemsSection<Item: CategorizedItem, Category: Categoriz
                         }
                     )
                 }
+                #endif
             }
             .onMove { from, to in
                 onMoved(from, to)
@@ -76,6 +78,7 @@ public struct CategorizedItemsSection<Item: CategorizedItem, Category: Categoriz
                 
                 Spacer()
                 
+                #if !os(watchOS)
                 if let onMenuShortPressed {
                     Menu(content: {
                         // long press
@@ -109,6 +112,13 @@ public struct CategorizedItemsSection<Item: CategorizedItem, Category: Categoriz
                             .textCase(.lowercase)
                     }
                 }
+                #else
+                Button(action: { }) {
+                    Text("+ Add")
+                        .font(.callout)
+                        .textCase(.lowercase)
+                }
+                #endif
             }
         }
     }

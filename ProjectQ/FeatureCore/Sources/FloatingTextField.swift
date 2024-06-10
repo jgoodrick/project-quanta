@@ -126,12 +126,14 @@ public struct FloatingTextFieldView: View {
                             print("Could not resolve language with identifier: \($0)")
                         }
                     }
+                    #if !os(watchOS)
                     .id(store.language.id)
                     .font(style.font)
                     .transition(.move(edge: .leading).combined(with: .opacity))
                     .padding(.leading)
                     .frame(maxWidth: store.collapsed ? 0 : .infinity, maxHeight: .infinity)
-                    /* 
+                    #endif
+                    /*
                      Note: You can't use a conditional for the ConfigurableTextField, because
                      the delays associated with installing and uninstalling the UIView make the
                      interface while simultaneously dismissing and pushing egregious. Thus
