@@ -55,7 +55,7 @@ public struct UsageDetail {
 
 public struct UsageDetailView: View {
     
-    @SwiftUI.Bindable var store: StoreOf<UsageDetail>
+    @Bindable var store: StoreOf<UsageDetail>
     
     public struct Style: EnvironmentKey {
         public static var defaultValue: Self = .init()

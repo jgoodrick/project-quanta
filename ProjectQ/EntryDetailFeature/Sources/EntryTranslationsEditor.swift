@@ -24,6 +24,11 @@ public struct EntryTranslationsEditor {
         var translations: [Entry] {
             db.translations(forEntry: entryID)
         }
+        
+        mutating func setToSystemLanguage() {
+            @Dependency(\.systemLanguages) var systemLanguages
+            textField.languageOverride = systemLanguages.current().id
+        }
 
         mutating func submitCurrentFieldValueAsTranslation() -> EffectOf<EntryTranslationsEditor> {
             defer { textField.reset() }
@@ -77,6 +82,7 @@ public struct EntryTranslationsEditor {
         case destination(PresentationAction<Destination.Action>)
         case textField(FloatingTextField.Action)
         
+        case task
         case addButtonTapped
         case addLongPressMenuButtonTapped(Language)
         case destructiveSwipeButtonTapped(Entry)
@@ -101,12 +107,16 @@ public struct EntryTranslationsEditor {
             case .delegate: return .none
             case .binding: return .none
             case .destination: return .none
-
+                
+            case .task:
+                
+                state.setToSystemLanguage()
+                
+                return .none
+                
             case .addButtonTapped:
 
-                @Dependency(\.systemLanguages) var systemLanguages
-
-                state.textField.languageOverride = systemLanguages.current().id
+                state.setToSystemLanguage()
                 state.textField.collapsed = false
                 
                 return .none
@@ -172,7 +182,7 @@ extension Entry: CategorizedItem {
 
 struct EntryTranslationsEditorView: View {
     
-    @SwiftUI.Bindable var store: StoreOf<EntryTranslationsEditor>
+    @Bindable var store: StoreOf<EntryTranslationsEditor>
     
     var body: some View {
         CategorizedItemsSection(
@@ -185,5 +195,6 @@ struct EntryTranslationsEditorView: View {
             onMenuItemTapped: { store.send(.addLongPressMenuButtonTapped($0)) },
             onMenuShortPressed: { store.send(.addButtonTapped) }
         )
+        .task { await store.send(.task).finish() }
     }
 }

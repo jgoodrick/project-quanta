@@ -100,7 +100,10 @@ public struct Home {
                 
                 state.entryCreator = .init()
                 
-                state.destination = .entryDetail(.init(entry: entry.id))
+                state.destination = .entryDetail(.init(
+                    entry: entry.id,
+                    translationsEditorFocused: false
+                ))
                 
                 return .none
                 
@@ -136,7 +139,7 @@ fileprivate extension String {
 
 struct HomeListView: View {
     
-    @SwiftUI.Bindable var store: StoreOf<Home>
+    @Bindable var store: StoreOf<Home>
             
     public var body: some View {
         List {
@@ -188,7 +191,7 @@ struct HomeListView: View {
 
 struct HomeStackRootView: View {
     
-    @SwiftUI.Bindable var store: StoreOf<Home>
+    @Bindable var store: StoreOf<Home>
 
     @Environment(\.isSearching) var isSearching
 
@@ -229,7 +232,7 @@ public struct HomeStackView: View {
         self.store = store
     }
     
-    @SwiftUI.Bindable var store: StoreOf<Home>
+    @Bindable var store: StoreOf<Home>
 
     public var body: some View {
         NavigationStack {

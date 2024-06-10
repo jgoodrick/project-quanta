@@ -92,7 +92,7 @@ public struct FloatingTextFieldView: View {
         self.placeholder = placeholder
     }
     
-    @SwiftUI.Bindable var store: StoreOf<FloatingTextField>
+    @Bindable var store: StoreOf<FloatingTextField>
     let placeholder: String
 
     public struct Style: EnvironmentKey {

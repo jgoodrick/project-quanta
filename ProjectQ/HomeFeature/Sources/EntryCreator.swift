@@ -28,11 +28,11 @@ public struct EntryCreator {
                 $0.spelling = spelling
             }
             
-            return resetSpellingAndPush(entry: newEntry.id)
+            return resetSpellingAndPush(entry: newEntry.id, translationsEditorFocused: true)
 
         }
         
-        mutating func resetSpellingAndPush(entry: Entry.ID) -> EffectOf<EntryCreator> {
+        mutating func resetSpellingAndPush(entry: Entry.ID, translationsEditorFocused: Bool) -> EffectOf<EntryCreator> {
             
             spelling.reset()
             
@@ -41,7 +41,7 @@ public struct EntryCreator {
                 @Dependency(\.continuousClock) var clock
                 try await clock.sleep(for: .seconds(0.3))
                 
-                await send(.shouldPushDetail(of: entry))
+                await send(.shouldPushDetail(of: entry, translationsEditorFocused: translationsEditorFocused))
             }
 
         }
@@ -64,7 +64,7 @@ public struct EntryCreator {
         case binding(BindingAction<State>)
         case destination(PresentationAction<Destination.Action>)
         case spelling(FloatingTextField.Action)
-        case shouldPushDetail(of: Entry.ID)
+        case shouldPushDetail(of: Entry.ID, translationsEditorFocused: Bool)
     }
     
     public var body: some Reducer<State, Action> {
@@ -78,9 +78,12 @@ public struct EntryCreator {
         Reduce<State, Action> { state, action in
             switch action {
             case .binding: return .none
-            case .shouldPushDetail(let id):
+            case .shouldPushDetail(let id, let translationsEditorFocused):
                 
-                state.destination = .entryDetail(.init(entry: id))
+                state.destination = .entryDetail(.init(
+                    entry: id,
+                    translationsEditorFocused: translationsEditorFocused
+                ))
                 
                 return .none
                 
@@ -115,7 +118,7 @@ public struct EntryCreator {
 
             case .destination(.presented(.confirmationDialog(.editExisting(let existing)))):
                                 
-                return state.resetSpellingAndPush(entry: existing.id)
+                return state.resetSpellingAndPush(entry: existing.id, translationsEditorFocused: false)
 
             case .destination: return .none
             }
@@ -150,7 +153,7 @@ extension ConfirmationDialogState {
 
 public struct EntryCreatorView: View {
     
-    @SwiftUI.Bindable var store: StoreOf<EntryCreator>
+    @Bindable var store: StoreOf<EntryCreator>
     
     public var body: some View {
         VStack {

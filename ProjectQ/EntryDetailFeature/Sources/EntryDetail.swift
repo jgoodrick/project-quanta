@@ -14,7 +14,7 @@ public struct EntryDetail {
     @ObservableState
     public struct State: Equatable {
         
-        public init(entry entryID: Entry.ID) {
+        public init(entry entryID: Entry.ID, translationsEditorFocused: Bool) {
             let shared = Shared(entryID)
             self._entryID = shared
             self.spellingEditor = .init(entryID: shared)
@@ -22,6 +22,7 @@ public struct EntryDetail {
             self.translationsEditor = .init(entryID: shared)
             self.usagesEditor = .init(entryID: shared)
             self.notesEditor = .init(entryID: shared)
+            self.shouldLaunchTranslationsEditorImmediately = translationsEditorFocused
         }
         
         @Shared(.db) var db
@@ -33,6 +34,7 @@ public struct EntryDetail {
         var translationsEditor: EntryTranslationsEditor.State
         var usagesEditor: EntryUsagesEditor.State
         var notesEditor: EntryNotesEditor.State
+        var shouldLaunchTranslationsEditorImmediately: Bool = false
         
         @Presents var destination: Destination.State?
 
@@ -56,6 +58,8 @@ public struct EntryDetail {
         case translationsEditor(EntryTranslationsEditor.Action)
         case usagesEditor(EntryUsagesEditor.Action)
         case notesEditor(EntryNotesEditor.Action)
+        case task
+        case shouldLaunchTranslationsEditor
     }
 
     public var body: some ReducerOf<Self> {
@@ -92,7 +96,10 @@ public struct EntryDetail {
                 switch delegateAction {
                 case .selected(let translation):
 
-                    state.destination = .translationDetail(.init(entry: translation.id))
+                    state.destination = .translationDetail(.init(
+                        entry: translation.id,
+                        translationsEditorFocused: false
+                    ))
 
                     return .none
 
@@ -109,6 +116,19 @@ public struct EntryDetail {
                 }
             case .usagesEditor: return .none
             case .notesEditor: return .none
+            case .task:
+                
+                return .run { send in
+                    @Dependency(\.continuousClock) var clock
+                    try await clock.sleep(for: .seconds(0.5))
+                    await send(.shouldLaunchTranslationsEditor)
+                }
+                
+            case .shouldLaunchTranslationsEditor:
+                
+                state.translationsEditor.textField.collapsed = false
+                
+                return .none
             }
         }
         .ifLet(\.$destination, action: \.destination)
@@ -121,7 +141,7 @@ public struct EntryDetailView: View {
         self.store = store
     }
     
-    @SwiftUI.Bindable var store: StoreOf<EntryDetail>
+    @Bindable var store: StoreOf<EntryDetail>
     
     public struct Style: EnvironmentKey {
         public static var defaultValue: Self = .init()
@@ -200,6 +220,7 @@ public struct EntryDetailView: View {
             EntryDetailView(store: store)
         }
         .safeAreaPadding(.bottom, 12)
+        .task { await store.send(.task).finish() }
     }
 }
 
