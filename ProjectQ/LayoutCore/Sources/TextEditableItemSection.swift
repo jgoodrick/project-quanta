@@ -43,19 +43,9 @@ public struct TextEditableItemsSection<Item: TextEditableItem>: View {
                     }
                     Spacer()
                 }
-                #if !os(tvOS)
-                .swipeActions {
-                    Button(
-                        role: .destructive,
-                        action: {
-                            onDeleted(item)
-                        },
-                        label: {
-                            Label(title: { Text("Delete") }, icon: { Image(systemName: "trash") })
-                        }
-                    )
-                }
-                #endif
+                .modifier(DeleteSwipeAction_tvOSexcluded {
+                    onDeleted(item)
+                })
             }
             .onMove { from, to in
                 onMoved(from, to)

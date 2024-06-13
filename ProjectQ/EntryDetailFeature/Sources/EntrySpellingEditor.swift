@@ -166,7 +166,7 @@ extension ConfirmationDialogState {
     }
 }
 
-struct EntrySpellingEditorViewModifier: ViewModifier {
+struct EntrySpellingEditorInstaller: ViewModifier {
     
     let store: StoreOf<EntrySpellingEditor>
     let placeholder: String
@@ -180,12 +180,14 @@ struct EntrySpellingEditorViewModifier: ViewModifier {
                     }
                 }
             }
+            #if os(iOS)
             .modifier(
-                ToolbarTextFieldInset(
+                ToolbarTextFieldInstaller(
                     store: store.scope(state: \.textField, action: \.textField),
                     placeholder: placeholder
                 )
             )
+            #endif
     }
 }
 
