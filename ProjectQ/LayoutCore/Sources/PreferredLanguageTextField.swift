@@ -109,6 +109,15 @@ extension PreferredLanguageTextField: UIViewRepresentable {
             return true
         }
         
+        // This updates the text binding's wrappedValue so that it reflects the underlying UITextField's `text` property
+        public func textFieldDidChangeSelection(_ textField: UITextField) {
+            guard textField.markedTextRange == nil, parent.text != textField.text else {
+                return
+            }
+            
+            parent.text = textField.text ?? ""
+        }
+
     }
     
     public func makeCoordinator() -> Coordinator {
