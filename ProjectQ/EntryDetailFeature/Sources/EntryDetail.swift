@@ -1,6 +1,7 @@
 
 import ComposableArchitecture
 import Foundation
+import FeatureCore
 import LayoutCore
 import ModelCore
 import RelationalCore
@@ -118,6 +119,10 @@ public struct EntryDetail {
             case .notesEditor: return .none
             case .task:
                 
+                guard state.shouldLaunchTranslationsEditorImmediately else {
+                    return .none
+                }
+                
                 return .run { send in
                     @Dependency(\.continuousClock) var clock
                     try await clock.sleep(for: .seconds(0.5))
@@ -172,45 +177,45 @@ public struct EntryDetailView: View {
 
                 }
                 .modifier(
-                    EntrySpellingEditorViewModifier(
+                    EntrySpellingEditorInstaller(
                         store: store.scope(state: \.spellingEditor, action: \.spellingEditor),
                         placeholder: "Provide the spelling"
                     )
                 )
+                #if os(iOS)
                 .modifier(
-                    ToolbarTextFieldInset(
+                    ToolbarTextFieldInstaller(
                         store: store.scope(state: \.translationsEditor.textField, action: \.translationsEditor.textField),
                         placeholder: "Add a \(store.translationsEditor.textField.language.displayName) translation"
                     )
                 )
                 .modifier(
-                    ToolbarTextFieldInset(
+                    ToolbarTextFieldInstaller(
                         store: store.scope(state: \.usagesEditor.textField, action: \.usagesEditor.textField),
                         placeholder: "Add an example sentence",
                         autocapitalization: .sentences
                     )
                 )
                 .modifier(
-                    ToolbarTextFieldInset(
+                    ToolbarTextFieldInstaller(
                         store: store.scope(state: \.notesEditor.textField, action: \.notesEditor.textField),
                         placeholder: "Add a note about this word",
                         autocapitalization: .sentences
                     )
                 )
-                #if !os(tvOS) && !os(watchOS)
                 .toolbar {
                     ToolbarItemGroup(placement: .keyboard) {
                         Spacer()
                         
-                        // this toolbar has to live here due to a SwiftUI bug that only allows one toolbar modifier for a form
+                        // this toolbar has to live here due to a SwiftUI bug that only allows one keyboard toolbar modifier for a form
                         Button("Done") {
                             store.send(.notesEditor(.doneButtonTapped))
                         }
                     }
                 }
+                .navigationBarTitleDisplayMode(.inline)
                 #endif
                 .navigationTitle(entry.spelling.capitalized)
-                .modifier(InlineNavigationBar_iOS())
             } else {
                 ContentUnavailableView("Missing Entry", systemImage: "nosign")
             }

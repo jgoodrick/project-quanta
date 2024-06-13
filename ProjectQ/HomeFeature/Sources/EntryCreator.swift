@@ -7,7 +7,7 @@ import RelationalCore
 import SwiftUI
 
 @Reducer
-public struct EntryCreator {
+public struct EntryCreationEditor {
     
     @ObservableState
     public struct State: Equatable {
@@ -19,7 +19,11 @@ public struct EntryCreator {
         
         @Presents public var destination: Destination.State?
         
-        mutating func addAndPushNewEntry() -> EffectOf<EntryCreator> {
+        public mutating func reset() {
+            spelling.reset()
+        }
+        
+        mutating func addAndPushNewEntry() -> EffectOf<EntryCreationEditor> {
             
             let spelling = spelling.text
             let language = settings.focusedLanguage
@@ -32,7 +36,7 @@ public struct EntryCreator {
 
         }
         
-        mutating func resetSpellingAndPush(entry: Entry.ID, translationsEditorFocused: Bool) -> EffectOf<EntryCreator> {
+        mutating func resetSpellingAndPush(entry: Entry.ID, translationsEditorFocused: Bool) -> EffectOf<EntryCreationEditor> {
             
             spelling.reset()
             
@@ -50,7 +54,7 @@ public struct EntryCreator {
     @Reducer(state: .equatable)
     public enum Destination {
         case alert(AlertState<Never>)
-        case confirmationDialog(ConfirmationDialogState<EntryCreator.ConfirmationDialog>)
+        case confirmationDialog(ConfirmationDialogState<EntryCreationEditor.ConfirmationDialog>)
         case entryDetail(EntryDetail)
     }
 
@@ -128,19 +132,19 @@ public struct EntryCreator {
 }
 
 extension ConfirmationDialogState {
-    static func addOrEditExisting(entry: Entry) -> Self where Action == EntryCreator.ConfirmationDialog {
+    static func addOrEditExisting(entry: Entry) -> Self where Action == EntryCreationEditor.ConfirmationDialog {
         .init(
             title: {
                 .init("A word spelled '\(entry.spelling)' has already been added")
             },
             actions: {
-                ButtonState<EntryCreator.ConfirmationDialog>.init(
+                ButtonState<EntryCreationEditor.ConfirmationDialog>.init(
                     action: .cancel, label: { .init("Cancel") }
                 )
-                ButtonState<EntryCreator.ConfirmationDialog>.init(
+                ButtonState<EntryCreationEditor.ConfirmationDialog>.init(
                     action: .addNew, label: { .init("Add New") }
                 )
-                ButtonState<EntryCreator.ConfirmationDialog>.init(
+                ButtonState<EntryCreationEditor.ConfirmationDialog>.init(
                     action: .editExisting(entry), label: { .init("Edit Existing") }
                 )
             },
@@ -151,31 +155,37 @@ extension ConfirmationDialogState {
     }
 }
 
-public struct EntryCreatorView: View {
+public struct EntryCreationEditorInstaller: ViewModifier {
     
-    @Bindable var store: StoreOf<EntryCreator>
+    @Bindable var store: StoreOf<EntryCreationEditor>
     
-    public var body: some View {
-        VStack {
-            
-            Spacer()
-                    
-            ToolbarTextFieldView(
-                store: store.scope(state: \.spelling, action: \.spelling),
-                placeholder: "New Entry"
-            )
-            
-        }
-        .padding()
-        .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
-        .confirmationDialog($store.scope(state: \.destination?.confirmationDialog, action: \.destination.confirmationDialog))
-        .navigationDestination(item: $store.scope(state: \.destination?.entryDetail, action: \.destination.entryDetail)) {
-            EntryDetailView(store: $0)
-        }
+    @Environment(\.isSearching) var isSearching
+    
+    public func body(content: Content) -> some View {
+        content
+            #if os(iOS)
+            .safeAreaInset(edge: .bottom) {
+                if !isSearching {
+                    ToolbarTextFieldView(
+                        store: store.scope(state: \.spelling, action: \.spelling),
+                        placeholder: "New Entry"
+                    )
+                    .padding()
+                    .padding()
+                }
+            }
+            #endif
+            .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
+            .confirmationDialog($store.scope(state: \.destination?.confirmationDialog, action: \.destination.confirmationDialog))
+            .navigationDestination(item: $store.scope(state: \.destination?.entryDetail, action: \.destination.entryDetail)) {
+                EntryDetailView(store: $0)
+            }
     }
 }
 
 #Preview { Preview }
 private var Preview: some View {
-    EntryCreatorView(store: .init(initialState: .init(), reducer: { EntryCreator() }))
+    Color.red.modifier(
+        EntryCreationEditorInstaller(store: .init(initialState: .init(), reducer: { EntryCreationEditor() }))
+    )
 }

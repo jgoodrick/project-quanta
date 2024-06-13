@@ -20,7 +20,7 @@ public struct Home {
         
         var searchField: String = ""
         var settingsMenu: SettingsMenu.State = .init()
-        var entryCreator: EntryCreator.State = .init()
+        var entryCreator: EntryCreationEditor.State = .init()
         var languageContextMenuIsShowing: Bool = false
         
         @Presents var destination: Destination.State?
@@ -53,7 +53,7 @@ public struct Home {
     public enum Action: BindableAction {
         case binding(BindingAction<State>)
         case settingsMenu(SettingsMenu.Action)
-        case entryCreator(EntryCreator.Action)
+        case entryCreator(EntryCreationEditor.Action)
         case destination(PresentationAction<Destination.Action>)
                 
         case searchFieldCommitted
@@ -80,7 +80,7 @@ public struct Home {
         }
         
         Scope(state: \.entryCreator, action: \.entryCreator) {
-            EntryCreator()
+            EntryCreationEditor()
         }
         
         Reduce<State, Action> { state, action in
@@ -92,13 +92,13 @@ public struct Home {
             case .searchingEnded: return .none
             case .searchingStarted:
                 
-                state.entryCreator = .init()
+                state.entryCreator.reset()
                 
                 return .none
                 
             case .entryTapped(let entry):
                 
-                state.entryCreator = .init()
+                state.entryCreator.reset()
                 
                 state.destination = .entryDetail(.init(
                     entry: entry.id,
@@ -113,11 +113,21 @@ public struct Home {
                 
                 return .none
                 
-            case .editSwipeButtonTapped(_): return .none
+            case .editSwipeButtonTapped(let entry):
+                
+                state.entryCreator.reset()
+                
+                state.destination = .entryDetail(.init(
+                    entry: entry.id,
+                    translationsEditorFocused: false
+                ))
+
+                return .none
+                
             case .dialog(_): return .none
             case .settingsMenu(.allSettingsMenuButtonTapped):
                 
-                state.entryCreator = .init()
+                state.entryCreator.reset()
                 
                 return .none
                 
@@ -154,32 +164,14 @@ struct HomeListView: View {
                     .frame(maxWidth: .infinity, minHeight: 40)
                     .contentShape(Rectangle())
                 }
-                #if !os(tvOS)
-                .swipeActions {
-                    Button(
-                        role: .destructive,
-                        action: {
-                            store.send(.destructiveSwipeButtonTapped(item.entry))
-                        },
-                        label: {
-                            Label(title: { Text("Delete") }, icon: { Image(systemName: "trash") })
-                        }
-                    )
-                    Button(
-                        action: {
-                            store.send(.editSwipeButtonTapped(item.entry))
-                        },
-                        label: {
-                            Label(title: { Text("Edit") }, icon: { Image(systemName: "pencil") })
-                        }
-                    )
-                    .tint(.yellow)
-                }
-                #endif
+                .modifier(DeleteSwipeAction_tvOSexcluded {
+                    store.send(.destructiveSwipeButtonTapped(item.entry))
+                })
+                .modifier(EditSwipeAction_tvOSexcluded {
+                    store.send(.editSwipeButtonTapped(item.entry))
+                })
             }
-            #if !os(tvOS) && !os(watchOS)
-            .listRowSeparator(.hidden)
-            #endif
+            .modifier(HideListRowSeparators())
         }
         .listStyle(.plain)
         .navigationDestination(item: $store.scope(state: \.destination?.entryDetail, action: \.destination.entryDetail)) { store in
@@ -206,11 +198,7 @@ struct HomeStackRootView: View {
             }
         }
         .modifier(PresentsSettingsMenuInToolbar(store: store.scope(state: \.settingsMenu, action: \.settingsMenu)))
-        .safeAreaInset(edge: .bottom) {
-            if !isSearching {
-                EntryCreatorView(store: store.scope(state: \.entryCreator, action: \.entryCreator))
-            }
-        }
+        .modifier(EntryCreationEditorInstaller(store: store.scope(state: \.entryCreator, action: \.entryCreator)))
         .navigationTitle(store.settings.focusedLanguage.displayName.capitalized)
         .onSubmit(of: .search) {
             store.send(.searchFieldCommitted)

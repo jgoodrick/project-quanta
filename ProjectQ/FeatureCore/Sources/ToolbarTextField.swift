@@ -32,6 +32,10 @@ public struct ToolbarTextField {
         public var languageOverride: Language.ID?
         public var text: String = ""
         public var collapsed: Bool = true
+        public var focused: Bool {
+            get { !collapsed }
+            set { collapsed = !newValue }
+        }
         
         var overriddenLanguage: Language.ID? {
             @Dependency(\.systemLanguages) var systemLanguages
@@ -54,6 +58,8 @@ public struct ToolbarTextField {
         case binding(BindingAction<State>)
         
         case rotatingButtonTapped
+        case tappedViewBehindActiveToolbarTextField
+        case couldNotResolveLanguageIdentifier(preferredLanguage: String)
         
         case delegate(Delegate)
         public enum Delegate {
@@ -70,7 +76,15 @@ public struct ToolbarTextField {
             switch action {
             case .binding, .delegate: return .none
                 
-            case .rotatingButtonTapped:
+            case .couldNotResolveLanguageIdentifier(let identifier):
+                
+                // TODO: show alert to user directing them to Settings
+                
+                print("Could not resolve preferred language with identifier: \(identifier). Store language was currently set to: \(state.language)")
+
+                return .none
+                
+            case .rotatingButtonTapped, .tappedViewBehindActiveToolbarTextField:
                 
                 if !state.collapsed {
                     state.reset()
@@ -85,6 +99,8 @@ public struct ToolbarTextField {
     }
 }
 
+#if os(iOS)
+
 public struct ToolbarTextFieldView: View {
     
     public init(store: StoreOf<ToolbarTextField>, placeholder: String) {
@@ -92,7 +108,6 @@ public struct ToolbarTextFieldView: View {
         self.placeholder = placeholder
     }
     
-    @Namespace var toolbarTextField
     @Bindable var store: StoreOf<ToolbarTextField>
     let placeholder: String
 
@@ -102,79 +117,116 @@ public struct ToolbarTextFieldView: View {
         public var font: Font = .title2
         public var background: Color = .gray
         public var autocapitalization: Autocapitalization = .none
-        public var autocorrectionDisabled: Bool = true
+        public var autocorrection: Autocorrection = .default
     }
     
     @Environment(\.toolbarTextField) var style
+    @FocusState private var focused: Bool
+
+    var languageIdentifier: String { store.language.bcp47.rawValue }
 
     public var body: some View {
-        GeometryReader { proxy in
+        HStack(spacing: 0) {
+            PreferredLanguageTextField.init(
+                placeholder: placeholder,
+                text: $store.text,
+                isFocused: $store.focused,
+                preferredLanguage: languageIdentifier,
+                autocapitalization: style.autocapitalization,
+                autocorrection: style.autocorrection,
+                adjustsFontSizeToFitWidth: true,
+                onLanguageUnavailable: {
+                    store.send(.couldNotResolveLanguageIdentifier(preferredLanguage: $0))
+                },
+                onSubmit: { store.send(.delegate(.fieldCommitted)) }
+            )
+            .id(store.language.id)
+            .font(style.font)
+            .padding(.leading)
+            .frame(maxWidth: store.collapsed ? 0 : .infinity, maxHeight: .infinity)
+            /*
+             Note: You can't use a conditional for the ConfigurableTextField, because
+             the delays associated with installing and uninstalling the UIView make the
+             interface while simultaneously dismissing and pushing egregious. Thus
+             we are using the frame to make it collapse (and the 0 spacing on the HStack)
+             */
             
-            ZStack(alignment: .trailing) {
-                
-                Capsule()
-                    .fill(.background)
-                
-                HStack(spacing: 0) {
-                    ConfigurableTextField(text: $store.text) { config in
-                        config.autocapitalization = style.autocapitalization
-                        config.autocorrectionDisabled = style.autocorrectionDisabled
-                        config.isFirstResponder = !store.collapsed
-                        config.onCommit = { store.send(.delegate(.fieldCommitted)) }
-                        config.placeholder = placeholder
-                        config.preferredLanguage = store.language.bcp47.rawValue
-                        config.onLanguageUnavailable = {
-                            print("Could not resolve language with identifier: \($0)")
-                        }
-                    }
-                    #if !os(watchOS)
-                    .id(store.language.id)
-                    .font(style.font)
-                    .transition(.move(edge: .leading).combined(with: .opacity))
-                    .padding(.leading)
-                    .frame(maxWidth: store.collapsed ? 0 : .infinity, maxHeight: .infinity)
-                    #endif
-                    /*
-                     Note: You can't use a conditional for the ConfigurableTextField, because
-                     the delays associated with installing and uninstalling the UIView make the
-                     interface while simultaneously dismissing and pushing egregious. Thus
-                     we are using the frame to make it collapse (and the 0 spacing on the HStack)
-                     */
-                    
-                    AddOrClearButton(rotated: !store.collapsed)  {
-                        store.send(.rotatingButtonTapped)
-                    }
-                    
-                    if !store.collapsed {
-                        SaveEntryButton {
-                            store.send(.delegate(.saveEntryButtonTapped))
-                        }
-                    }
-                    
-                }
-                .padding()
+            AddOrClearButton(rotated: !store.collapsed)  {
+                store.send(.rotatingButtonTapped)
             }
-            .frame(width: store.collapsed ? proxy.size.height : proxy.size.width)
+            
+            SaveEntryButton {
+                store.send(.delegate(.saveEntryButtonTapped))
+            }
+            .opacity(store.collapsed ? 0 : 1.0)
+            .frame(width: store.collapsed ? 0 : .none)
+            .geometryGroup() // allows the geometry of this view's animations to be resolved at each step of the parent's frame changes
+
+        }
+        .padding()
+        .background {
+            Capsule()
+                .fill(.background)
         }
         .animation(.default, value: store.collapsed)
         .compositingGroup()
         .shadow(radius: 2, x: 1, y: 2)
+        .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: style.customHeight ?? 70)
+        .synchronize($store.focused, $focused)
     }
 }
 
 struct SaveEntryButton: View {
-
+    
     let onTap: () -> Void
     
     var body: some View {
         Image(systemName: "checkmark.circle")
             .resizable()
-            .aspectRatio(contentMode: .fit)
+            .aspectRatio(1.0, contentMode: .fit)
+            .frame(minWidth: 1) // this line prevents a bug where the image disappears immediately instead of animating away
+            .padding(.leading, 4)
             .contentShape(Circle())
             .onTapGesture(perform: onTap)
-            .padding(.leading, 4)
-            .transition(.scale)
+    }
+}
+
+public struct ToolbarTextFieldInstaller: ViewModifier {
+    
+    public init(
+        store: StoreOf<ToolbarTextField>,
+        placeholder: String,
+        autocapitalization: Autocapitalization = .none
+    ) {
+        self.store = store
+        self.placeholder = placeholder
+        self.autocapitalization = autocapitalization
+    }
+    
+    let store: StoreOf<ToolbarTextField>
+    let placeholder: String
+    var autocapitalization: Autocapitalization = .none
+
+    public func body(content: Content) -> some View {
+        ZStack(alignment: .bottom) {
+            content
+//                .safeAreaInset(edge: .bottom, alignment: .leading) {
+                    if !store.collapsed {
+                        Rectangle().fill(.background).opacity(0.4).onTapGesture {
+                            store.send(.tappedViewBehindActiveToolbarTextField)
+                        }
+                        ToolbarTextFieldView(
+                            store: store,
+                            placeholder: placeholder
+                        )
+                        .padding()
+                        .transformEnvironment(\.toolbarTextField) {
+                            $0.autocapitalization = autocapitalization
+                        }
+                    }
+//                }
+        }
     }
 }
 
@@ -192,3 +244,6 @@ private var Preview: some View {
         placeholder: "placeholder text"
     )
 }
+
+#endif
+
