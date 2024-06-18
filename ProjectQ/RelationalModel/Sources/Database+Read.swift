@@ -1,0 +1,97 @@
+
+import StructuralModel
+
+extension Database {
+    
+    public func contains(_ entity: Entity.ID) -> Bool {
+        switch entity {
+        case .entry(let entry):
+            stored.entries[entry] != nil
+        case .language(let language):
+            stored.languages[language] != nil
+        case .keyword(let keyword):
+            stored.keywords[keyword] != nil
+        case .note(let note):
+            stored.notes[note] != nil
+        case .usage(let usage):
+            stored.usages[usage] != nil
+        case .entryCollection(let entryCollection):
+            stored.entryCollections[entryCollection] != nil
+        }
+    }
+    
+    public func containsRelationships(for entity: Entity.ID) -> Bool {
+        switch entity {
+        case .entry(let entry):
+            relationships.entries[entry]?.areEmpty ?? false
+        case .entryCollection(let entryCollection):
+            relationships.entryCollections[entryCollection]?.areEmpty ?? false
+        case .keyword(let keyword):
+            relationships.keywords[keyword]?.areEmpty ?? false
+        case .language(let language):
+            relationships.languages[language]?.areEmpty ?? false
+        case .note(let note):
+            relationships.notes[note]?.areEmpty ?? false
+        case .usage(let usage):
+            relationships.usages[usage]?.areEmpty ?? false
+        }
+    }
+    
+}
+
+extension Database {
+    
+    public subscript(entry id: Entry.ID) -> Entry? {
+        stored.entries[id]?.value
+    }
+    
+    public subscript(entryCollection id: EntryCollection.ID) -> EntryCollection? {
+        stored.entryCollections[id]?.value
+    }
+    
+    public subscript(keyword id: Keyword.ID) -> Keyword? {
+        stored.keywords[id]?.value
+    }
+    
+    public subscript(language id: Language.ID) -> Language? {
+        stored.languages[id]?.value
+    }
+    
+    public subscript(note id: Note.ID) -> Note? {
+        stored.notes[id]?.value
+    }
+
+    public subscript(usage id: Usage.ID) -> Usage? {
+        stored.usages[id]?.value
+    }
+        
+}
+
+extension Database {
+    
+    public func tracked(entry id: Entry.ID) -> Tracked<Entry>? {
+        stored.entries[id]
+    }
+    
+    public func tracked(entryCollection id: EntryCollection.ID) -> Tracked<EntryCollection>? {
+        stored.entryCollections[id]
+    }
+    
+    public func tracked(keyword id: Keyword.ID) -> Tracked<Keyword>? {
+        stored.keywords[id]
+    }
+    
+    public func tracked(language id: Language.ID) -> Tracked<Language>? {
+        stored.languages[id]
+    }
+    
+    public func tracked(note id: Note.ID) -> Tracked<Note>? {
+        stored.notes[id]
+    }
+
+    public func tracked(usage id: Usage.ID) -> Tracked<Usage>? {
+        stored.usages[id]
+    }
+        
+}
+
