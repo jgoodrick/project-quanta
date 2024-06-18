@@ -4,9 +4,33 @@ import ProjectDescriptionHelpers
 
 let reverseDomain: String = "com.josephgoodrick.projectq"
 
+enum TargetID: String, CaseIterable, SnakeCased {
+    
+    var snake_cased: String { rawValue }
+    
+//    case App_Main
+//    case App_Root
+//    case Entry_Detail_Feature
+//    case Home_Feature
+//    case Settings_Feature
+
+//    case Functional_Core
+    case Layout_Core
+    
+    case Headless_Core
+    case Headless_Core_Tests
+
+    case App_Model
+    case App_Model_Tests
+    case Relational_Model
+    case Relational_Model_Tests
+    case Structural_Model
+
+}
+
 let project: Project = Project.init(
     name: "ProjectQ",
-    targets: TargetID.allCases.map({ 
+    targets: TargetID.allCases.map({
         switch $0 {
         default:
             Target.target(
@@ -27,30 +51,6 @@ let project: Project = Project.init(
     })
 )
 
-enum TargetID: String, CaseIterable, SnakeCased {
-    
-    var snake_cased: String { rawValue }
-    
-    case App_Main_iOS
-    case App_Main_macOS
-    case App_Main_tvOS
-    case App_Main_watchOS
-    case App_Root
-    case Entry_Detail_Feature
-    case Feature_Core
-    case Home_Feature
-    case Settings_Feature
-
-    case Functional_Core
-    case Layout_Core
-    case Model_Core
-    case Relational_Core
-
-    case Feature_Core_Tests
-    case Relational_Core_Tests
-
-}
-
 extension TargetDependency {
     static func target(_ id: TargetID) -> Self {
         .target(name: id.targetName, condition: .none)
@@ -60,67 +60,71 @@ extension TargetDependency {
 extension TargetID {
     var dependencies: [TargetDependency] {
         switch self {
-        case .App_Main_iOS:
-            return [.target(.App_Root)]
-        case .App_Main_macOS:
-            return [.target(.App_Root)]
-        case .App_Main_tvOS:
-            return [.target(.App_Root)]
-        case .App_Main_watchOS:
-            return [.target(.App_Root)]
-        case .App_Root:
-            return [
-                .target(.Home_Feature),
-                .target(.Entry_Detail_Feature),
-            ]
-        case .Relational_Core:
-            return [
-                .target(.Model_Core),
-            ]
-        case .Entry_Detail_Feature:
-            return [
-                .target(.Feature_Core),
-                .target(.Layout_Core),
-            ]
-        case .Feature_Core:
+//        case .App_Main_iOS:
+//            return [.target(.App_Root)]
+//        case .App_Main_macOS:
+//            return [.target(.App_Root)]
+//        case .App_Main_tvOS:
+//            return [.target(.App_Root)]
+//        case .App_Main_watchOS:
+//            return [.target(.App_Root)]
+//        case .App_Root:
+//            return [
+//                .target(.Home_Feature),
+//                .target(.Entry_Detail_Feature),
+//            ]
+//        case .Entry_Detail_Feature:
+//            return [
+//                .target(.Headless_Core),
+//                .target(.Layout_Core),
+//            ]
+//        case .Home_Feature:
+//            return [
+//                .target(.Entry_Detail_Feature),
+//                .target(.Headless_Core),
+//                .target(.Settings_Feature),
+//            ]
+//        case .Settings_Feature:
+//            return [
+//                .target(.Headless_Core),
+//            ]
+
+        case .App_Model:
             return [
                 .external(name: "ComposableArchitecture", condition: .none),
-                .target(.Relational_Core),
+                .target(.Relational_Model),
+            ]
+        case .App_Model_Tests:
+            return [ .target(.App_Model) ]
+        case .Headless_Core:
+            return [
+                .target(.App_Model),
+                .target(.Structural_Model),
                 .target(.Layout_Core),
             ]
-        case .Functional_Core:
-            return [
-                
-            ]
-        case .Home_Feature:
-            return [
-                .target(.Entry_Detail_Feature),
-                .target(.Feature_Core),
-                .target(.Settings_Feature),
-            ]
+        case .Headless_Core_Tests:
+            return [ .target(.Headless_Core) ]
         case .Layout_Core:
             return [
-                .target(.Model_Core),
+                .target(.Structural_Model),
             ]
-        case .Settings_Feature:
+        case .Relational_Model:
             return [
-                .target(.Feature_Core),
+                .target(.Structural_Model),
             ]
-        case .Model_Core:
+        case .Relational_Model_Tests:
+            return [ .target(.Relational_Model) ]
+        case .Structural_Model:
             return [
-                
+                // pure data structures
             ]
-        case .Feature_Core_Tests:
-            return [ .target(.Feature_Core) ]
-        case .Relational_Core_Tests:
-            return [ .target(.Relational_Core) ]
         }
     }
 
     var bundleId: String {
         switch self {
-        case _ where isAppExtension || isExtensionKitExtension:
-            "\(TargetID.App_Main_iOS.bundleId).\(dashed.lowercased())"
+//        case _ where isAppExtension || isExtensionKitExtension:
+//            "\(TargetID.App_Main_iOS.bundleId).\(dashed.lowercased())"
         default:
             "\(reverseDomain).\(dotted.lowercased())"
         }
@@ -129,7 +133,7 @@ extension TargetID {
     var settings: Settings {
         switch self {
         case _ where isApp:
-            var result = Settings.settings(
+            let result = Settings.settings(
                 base: [
                     // module verifier
                     "MODULE_VERIFIER_SUPPORTED_LANGUAGE_STANDARDS": "gnu11 gnu++14",
@@ -155,9 +159,9 @@ extension TargetID {
                 ],
                 defaultSettings: .recommended
             )
-            if case .App_Main_tvOS = self {
-                result.base["ASSETCATALOG_COMPILER_APPICON_NAME"] = "Brand Assets"
-            }
+//            if case .App_Main_tvOS = self {
+//                result.base["ASSETCATALOG_COMPILER_APPICON_NAME"] = "Brand Assets"
+//            }
             return result
         default:
             return Settings.settings()
@@ -172,37 +176,37 @@ extension TargetID {
         
         let additional: [String: Plist.Value]
         switch self {
-        case .App_Main_iOS:
-            additional = [
-                "CFBundleDisplayName": "Project Q",
-                "NSCameraUsageDescription": "If you would like to include photos with your entries, we will need access to your camera to capture them.",
-                "UILaunchStoryboardName": "LaunchScreen.storyboard",
-                "UIRequiredDeviceCapabilities": [
-                    "armv7",
-                ],
-                "UIRequiresFullScreen": "YES",
-                "ITSAppUsesNonExemptEncryption": false,
-                "UISupportedInterfaceOrientations": DeviceOrientations.vertical.plistValue,
-                "UISupportedInterfaceOrientations~ipad": DeviceOrientations.vertical.plistValue,
-            ]
-        case .App_Main_macOS:
-            additional = [
-                "CFBundleDisplayName": "Project Q",
-                "NSCameraUsageDescription": "If you would like to include photos with your entries, we will need access to your camera to capture them.",
-                "ITSAppUsesNonExemptEncryption": false,
-                "UISupportedInterfaceOrientations": DeviceOrientations.vertical.plistValue,
-                "UISupportedInterfaceOrientations~ipad": DeviceOrientations.vertical.plistValue,
-            ]
-        case .App_Main_tvOS:
-            additional = [
-                "CFBundleDisplayName": "Project Q",
-                "ITSAppUsesNonExemptEncryption": false,
-            ]
-        case .App_Main_watchOS:
-            additional = [
-                "CFBundleDisplayName": "Project Q",
-                "ITSAppUsesNonExemptEncryption": false,
-            ]
+//        case .App_Main_iOS:
+//            additional = [
+//                "CFBundleDisplayName": "Project Q",
+//                "NSCameraUsageDescription": "If you would like to include photos with your entries, we will need access to your camera to capture them.",
+//                "UILaunchStoryboardName": "LaunchScreen.storyboard",
+//                "UIRequiredDeviceCapabilities": [
+//                    "armv7",
+//                ],
+//                "UIRequiresFullScreen": "YES",
+//                "ITSAppUsesNonExemptEncryption": false,
+//                "UISupportedInterfaceOrientations": DeviceOrientations.vertical.plistValue,
+//                "UISupportedInterfaceOrientations~ipad": DeviceOrientations.vertical.plistValue,
+//            ]
+//        case .App_Main_macOS:
+//            additional = [
+//                "CFBundleDisplayName": "Project Q",
+//                "NSCameraUsageDescription": "If you would like to include photos with your entries, we will need access to your camera to capture them.",
+//                "ITSAppUsesNonExemptEncryption": false,
+//                "UISupportedInterfaceOrientations": DeviceOrientations.vertical.plistValue,
+//                "UISupportedInterfaceOrientations~ipad": DeviceOrientations.vertical.plistValue,
+//            ]
+//        case .App_Main_tvOS:
+//            additional = [
+//                "CFBundleDisplayName": "Project Q",
+//                "ITSAppUsesNonExemptEncryption": false,
+//            ]
+//        case .App_Main_watchOS:
+//            additional = [
+//                "CFBundleDisplayName": "Project Q",
+//                "ITSAppUsesNonExemptEncryption": false,
+//            ]
         case _ where isAppExtension:
             additional = [
                 "CFBundleDisplayName": "\(spaced)",
@@ -234,10 +238,10 @@ extension TargetID {
     
     var destinations: Destinations {
         switch self {
-        case .App_Main_iOS: [.iPhone, .iPad]
-        case .App_Main_macOS: [.mac]
-        case .App_Main_tvOS: [.appleTv]
-        case .App_Main_watchOS: [.appleWatch]
+//        case .App_Main_iOS: [.iPhone, .iPad]
+//        case .App_Main_macOS: [.mac]
+//        case .App_Main_tvOS: [.appleTv]
+//        case .App_Main_watchOS: [.appleWatch]
         default:
             [.iPhone, .iPad, .mac, .appleWatch, .appleTv]
         }
@@ -318,14 +322,14 @@ extension TargetID {
     
     var deploymentTargets: DeploymentTargets {
         switch self {
-        case .App_Main_iOS:
-            .iOS("17.0")
-        case .App_Main_macOS:
-            .macOS("14.0")
-        case .App_Main_tvOS:
-            .tvOS("17.0")
-        case .App_Main_watchOS:
-            .watchOS("10.0")
+//        case .App_Main_iOS:
+//            .iOS("17.0")
+//        case .App_Main_macOS:
+//            .macOS("14.0")
+//        case .App_Main_tvOS:
+//            .tvOS("17.0")
+//        case .App_Main_watchOS:
+//            .watchOS("10.0")
         default:
             .multiplatform(iOS: "17.0", macOS: "14.0", watchOS: "10.0", tvOS: "17.0")
         }
