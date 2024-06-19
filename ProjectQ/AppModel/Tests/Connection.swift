@@ -25,6 +25,7 @@ final class AppModel_Connection_Tests: AppModelTestCase {
         XCTAssertEqual(model.entries(.thatAre(.derived(from: entry.id))), [])
     }
     
+    @MainActor
     func test_connection_of_entry_to_new_root() async {
         var model = AppModel.init()
         let entry = model.createNewEntry {
@@ -33,7 +34,7 @@ final class AppModel_Connection_Tests: AppModelTestCase {
         let root = await model.addNewRoot(
             fromSpelling: "new_root_spelling",
             toEntry: entry.id,
-            ifRootSpellingIsNotUnique: { _ in .createNew }
+            ifSpellingIsNotUnique: { _ in .createNew }
         )
         XCTAssertEqual(model.entries(.thatAre(.roots(of: entry.id))), [root])
         XCTAssertEqual(model.entries(.thatAre(.derived(from: root.id))), [entry])
@@ -56,7 +57,7 @@ final class AppModel_Connection_Tests: AppModelTestCase {
         let returnedRoot = await model.addNewRoot(
             fromSpelling: "new_root_spelling",
             toEntry: entry.id,
-            ifRootSpellingIsNotUnique: { .useExisting($0.first!) }
+            ifSpellingIsNotUnique: { .useExisting($0.first!) }
         )
         XCTAssertEqual(returnedRoot, existingRoot)
         XCTAssertEqual(model.entries(.thatAre(.roots(of: entry.id))), [existingRoot])

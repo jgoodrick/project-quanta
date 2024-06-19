@@ -3,6 +3,7 @@ import ComposableArchitecture
 import Foundation
 import RelationalModel
 import StructuralModel
+import OSLog
 
 /**
  AppModel
@@ -14,24 +15,36 @@ import StructuralModel
  * Establish the source of truth for cross-platform business logic and implementation details
  
  */
-public struct AppModel {
+public struct AppModel: Equatable {
         
     // Storage
     @Shared(.db) var db
-    @Shared(.settings) var settings
+    @Shared(.settings) public var settings
     @Shared(.config) var config
-    @Dependency(\.date) var date
-    @Dependency(\.uuid) var uuid
-    @Dependency(\.locale) var locale
-    @Dependency(\.logger["\(Self.self)"]) var log
     
-}
-
-extension AppModel {
-    public init(db: Shared<Database>? = nil, settings: Shared<Settings>? = nil, config: Shared<Config>? = nil) {
-        if let db { self._db = db }
-        if let settings { self._settings = settings }
-        if let config { self._config = config }
+    public var date: DateGenerator {
+        @Dependency(\.date) var date; return date
+    }
+    public var uuid: UUIDGenerator {
+        @Dependency(\.uuid) var uuid; return uuid
+    }
+    public var locale: Locale {
+        @Dependency(\.locale) var locale; return locale
+    }
+    public var log: Logger {
+        @Dependency(\.logger["\(Self.self)"]) var log; return log
+    }
+    
+    public init(db injectedDB: Shared<Database>? = nil, settings injectedSettings: Shared<Settings>? = nil, config injectedConfig: Shared<Config>? = nil) {
+        if let injectedDB { self._db = injectedDB }
+        if let injectedSettings { self._settings = injectedSettings }
+        if let injectedConfig { self._config = injectedConfig }
+        seedWithSystemLanguages()
+    }
+    
+    private mutating func seedWithSystemLanguages() {
+        ensureExistenceOf(language: settings.defaultNewEntryLanguage)
+        ensureExistenceOf(language: settings.defaultTranslationLanguage)
     }
 }
 

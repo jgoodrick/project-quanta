@@ -15,7 +15,7 @@ final class AppModel_Create_Tests: AppModelTestCase {
     
     func test_create_new_language() throws {
         var model = AppModel()
-        let new = try Language.init(bcp47: "en_US")
+        let new = try Language.init(bcp47: "some_mock")
         model.ensureExistenceOf(language: new)
         XCTAssertEqual(model[language: new.id], new)
     }
@@ -51,5 +51,35 @@ final class AppModel_Create_Tests: AppModelTestCase {
         }
         XCTAssertEqual(model[entryCollection: new.id], new)
     }
+    
+}
+
+final class AppModel_Add_Tests: AppModelTestCase {
+
+    @MainActor
+    func test_addNewEntry_and_addNewTranslation_adopt_settingsDefaultLanguages() async throws {
+        var model = AppModel()
+        let translationLanguage: Language = try .init(bcp47: "mock_language")
+        model.ensureExistenceOf(language: translationLanguage)
+        model.settings.defaultTranslationLanguage = translationLanguage
+        
+        let new = try await model.addNewEntry(
+            fromSpelling: "spelling",
+            ifSpellingIsNotUnique: { _ in throw NSError()  }
+        )
+        
+        XCTAssertEqual(new.id, .mock(0)) // due to incrementing UUIDGenerator
+        XCTAssertEqual(model.languages(for: .entry(new.id)), [model.settings.defaultNewEntryLanguage])
+
+        let newTranslation = try await model.addNewTranslation(
+            fromSpelling: "translation",
+            forEntry: .mock(0),
+            ifSpellingIsNotUnique: { _ in throw NSError()  }
+        )
+        
+        XCTAssertEqual(newTranslation.id, .mock(1)) // due to incrementing UUIDGenerator
+        XCTAssertEqual(model.languages(for: .entry(newTranslation.id)), [translationLanguage])
+    }
+    
     
 }

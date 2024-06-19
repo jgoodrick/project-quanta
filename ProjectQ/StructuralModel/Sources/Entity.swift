@@ -43,3 +43,14 @@ public enum Entity: Identifiable, Equatable, Codable, Sendable {
         }
     }
 }
+
+public enum TranslatableEntity: Identifiable, Equatable, Codable, Sendable {
+    public var id: Entity.ID {
+        switch self {
+        case .entry(let id): .entry(id)
+        case .usage(let id): .usage(id)
+        }
+    }
+    case entry(Entry.ID)
+    case usage(Usage.ID)
+}
