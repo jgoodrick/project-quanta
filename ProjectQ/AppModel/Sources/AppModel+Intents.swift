@@ -76,23 +76,23 @@ extension AppModel {
     
     
     
-    public enum NewValueAddAttemptResult<Value> {
-        case canceled
+    public enum ConflictsResult<Value> {
         case success(Value)
         case conflicts([Value])
+        case canceled
     }
     
     public enum AutoConflictResolution {
+        case maintainDistinction
+        case mergeWithFirstMatch
         case cancel
-        case useFirstMatch
-        case createNew
     }
     
     public mutating func addNewEntry(
         fromSpelling spelling: String,
         in language: Language.ID? = nil,
         spellingConflictResolution: AutoConflictResolution? = nil
-    ) -> NewValueAddAttemptResult<Entry> {
+    ) -> ConflictsResult<Entry> {
         let entry: Entry
         let matches = db.entries(where: { $0.spelling == spelling })
         if let firstMatch = matches.first {
@@ -101,9 +101,9 @@ extension AppModel {
                 return .conflicts(matches)
             case .cancel:
                 return .canceled
-            case .useFirstMatch:
+            case .mergeWithFirstMatch:
                 entry = firstMatch
-            case .createNew:
+            case .maintainDistinction:
                 entry = createNewEntry {
                     $0.spelling = spelling
                 }
@@ -122,10 +122,10 @@ extension AppModel {
         in language: Language.ID? = nil,
         forEntry translated: Entry.ID,
         spellingConflictResolution: AutoConflictResolution? = nil
-    ) -> NewValueAddAttemptResult<Entry> {
-        let result = addNewEntry(fromSpelling: spelling, in: language, spellingConflictResolution: spellingConflictResolution)
+    ) -> ConflictsResult<Entry> {
+        let translationLanguage = language ?? settings.defaultTranslationLanguage.id
+        let result = addNewEntry(fromSpelling: spelling, in: translationLanguage, spellingConflictResolution: spellingConflictResolution)
         if case .success(let translation) = result {
-            addExisting(language: language ?? settings.defaultTranslationLanguage.id, toEntry: translation.id)
             addExisting(translation: translation.id, toEntry: translated)
         }
         return result
@@ -143,7 +143,7 @@ extension AppModel {
         title: String,
         toEntry referenced: Entry.ID,
         titleConflictResolution: AutoConflictResolution? = nil
-    ) -> NewValueAddAttemptResult<Keyword> {
+    ) -> ConflictsResult<Keyword> {
         let keyword: Keyword
         let matches = db.keywords(where: { $0.title == title })
         if let firstMatch = matches.first {
@@ -152,9 +152,9 @@ extension AppModel {
                 return .conflicts(matches)
             case .cancel:
                 return .canceled
-            case .useFirstMatch:
+            case .mergeWithFirstMatch:
                 keyword = firstMatch
-            case .createNew:
+            case .maintainDistinction:
                 keyword = createNewKeyword {
                     $0.title = title
                 }
@@ -207,7 +207,7 @@ extension AppModel {
         content value: String,
         toEntry referenced: Entry.ID,
         valueConflictResolution: AutoConflictResolution? = nil
-    ) -> NewValueAddAttemptResult<Usage> {
+    ) -> ConflictsResult<Usage> {
         let usage: Usage
         let matches = db.usages(where: { $0.value == value })
         if let firstMatch = matches.first {
@@ -216,9 +216,9 @@ extension AppModel {
                 return .conflicts(matches)
             case .cancel:
                 return .canceled
-            case .useFirstMatch:
+            case .mergeWithFirstMatch:
                 usage = firstMatch
-            case .createNew:
+            case .maintainDistinction:
                 usage = createNewUsage {
                     $0.value = value
                 }
@@ -242,7 +242,7 @@ extension AppModel {
         toEntryCollection collection: EntryCollection.ID,
         atOffset: Int? = nil,
         spellingConflictResolution: AutoConflictResolution? = nil
-    ) -> NewValueAddAttemptResult<Entry> {
+    ) -> ConflictsResult<Entry> {
         let result = addNewEntry(fromSpelling: spelling, in: language, spellingConflictResolution: spellingConflictResolution)
         switch result {
         case .success(let entry):
@@ -269,7 +269,7 @@ extension AppModel {
         language: Language.ID? = nil,
         toEntry derived: Entry.ID,
         spellingConflictResolution: AutoConflictResolution? = nil
-    ) -> NewValueAddAttemptResult<Entry> {
+    ) -> ConflictsResult<Entry> {
         let languageOfDerivedEntry = languages(.of(.entry(derived))).first?.id
         let result = addNewEntry(fromSpelling: spelling, in: language ?? languageOfDerivedEntry, spellingConflictResolution: spellingConflictResolution)
         if case .success(let root) = result {
@@ -287,7 +287,7 @@ extension AppModel {
         language: Language.ID? = nil,
         toEntry target: Entry.ID,
         spellingConflictResolution: AutoConflictResolution? = nil
-    ) -> NewValueAddAttemptResult<Entry> {
+    ) -> ConflictsResult<Entry> {
         let languageOfTargetEntry = languages(.of(.entry(target))).first?.id
         let result = addNewEntry(fromSpelling: spelling, in: language ?? languageOfTargetEntry, spellingConflictResolution: spellingConflictResolution)
         if case .success(let seeAlso) = result {
@@ -385,30 +385,95 @@ extension AppModel {
         db.moveEntries(in: entryCollection, fromOffsets: fromOffsets, toOffset: toOffset)
     }
 
-        
-    public mutating func updateEntry<T>(_ keyPath: WritableKeyPath<Entry, T>, of entry: Entry.ID, to newValue: T) {
-        guard var copy = db[entry: entry] else { preconditionFailure() }
-        copy[keyPath: keyPath] = newValue
-        db.update(.entry(copy))
+    
+    // The following methods specify the field to update in the signature, because we expect these fields to generally be unique
+    
+    public mutating func updateEntrySpelling(
+        of entry: Entry.ID,
+        to newValue: String,
+        spellingConflictResolution: AutoConflictResolution? = nil
+    ) -> ConflictsResult<Entry> {
+        guard let existing = db[entry: entry] else { preconditionFailure() }
+        var result: Entry
+        let matches = db.entries(where: { $0.spelling == newValue })
+        if let firstMatch = matches.first {
+            switch spellingConflictResolution {
+            case .none:
+                return .conflicts(matches)
+            case .cancel:
+                return .canceled
+            case .mergeWithFirstMatch:
+                result = firstMatch
+                db.merge(entry: existing.id, into: firstMatch.id)
+            case .maintainDistinction:
+                result = existing
+            }
+        } else {
+            result = existing
+        }
+        result.spelling = newValue
+        db.update(.entry(result))
+        return .success(result)
     }
 
-    public mutating func updateEntryCollection<T>(_ keyPath: WritableKeyPath<EntryCollection, T>, of entryCollection: EntryCollection.ID, to newValue: T) {
-        guard var copy = db[entryCollection: entryCollection] else { preconditionFailure() }
-        copy[keyPath: keyPath] = newValue
-        db.update(.entryCollection(copy))
+    public mutating func updateEntryCollectionTitle(
+        of entryCollection: EntryCollection.ID,
+        to newValue: String,
+        titleConflictResolution: AutoConflictResolution? = nil
+    ) -> ConflictsResult<EntryCollection> {
+        guard let existing = db[entryCollection: entryCollection] else { preconditionFailure() }
+        var result: EntryCollection
+        let matches = db.entryCollections(where: { $0.title == newValue })
+        if let firstMatch = matches.first {
+            switch titleConflictResolution {
+            case .none:
+                return .conflicts(matches)
+            case .cancel:
+                return .canceled
+            case .mergeWithFirstMatch:
+                result = firstMatch
+                db.merge(entryCollection: existing.id, into: firstMatch.id)
+            case .maintainDistinction:
+                result = existing
+            }
+        } else {
+            result = existing
+        }
+        result.title = newValue
+        db.update(.entryCollection(result))
+        return .success(result)
     }
 
-    public mutating func updateKeyword<T>(_ keyPath: WritableKeyPath<Keyword, T>, of keyword: Keyword.ID, to newValue: T) {
-        guard var copy = db[keyword: keyword] else { preconditionFailure() }
-        copy[keyPath: keyPath] = newValue
-        db.update(.keyword(copy))
+    public mutating func updateKeywordTitle(
+        of keyword: Keyword.ID,
+        to newValue: String,
+        titleConflictResolution: AutoConflictResolution? = nil
+    ) -> ConflictsResult<Keyword> {
+        guard let existing = db[keyword: keyword] else { preconditionFailure() }
+        var result: Keyword
+        let matches = db.keywords(where: { $0.title == newValue })
+        if let firstMatch = matches.first {
+            switch titleConflictResolution {
+            case .none:
+                return .conflicts(matches)
+            case .cancel:
+                return .canceled
+            case .mergeWithFirstMatch:
+                result = firstMatch
+                db.merge(keyword: existing.id, into: firstMatch.id)
+            case .maintainDistinction:
+                result = existing
+            }
+        } else {
+            result = existing
+        }
+        result.title = newValue
+        db.update(.keyword(result))
+        return .success(result)
     }
 
-    public mutating func updateLanguage<T>(_ keyPath: WritableKeyPath<Language, T>, of language: Language.ID, to newValue: T) {
-        guard var copy = db[language: language] else { preconditionFailure() }
-        copy[keyPath: keyPath] = newValue
-        db.update(.language(copy))
-    }
+    
+    // The following methods do not specify the field, because we do not care if other entities have the same values
 
     public mutating func updateNote<T>(_ keyPath: WritableKeyPath<Note, T>, of note: Note.ID, to newValue: T) {
         guard var copy = db[note: note] else { preconditionFailure() }
@@ -423,6 +488,24 @@ extension AppModel {
     }
 
 
+    
+    public mutating func merge(entry incomingID: Entry.ID, into remainingID: Entry.ID) {
+        db.merge(entry: incomingID, into: remainingID)
+    }
+    
+    public mutating func merge(entryCollection incomingID: EntryCollection.ID, into remainingID: EntryCollection.ID) {
+        db.merge(entryCollection: incomingID, into: remainingID)
+    }
+    
+    public mutating func merge(keyword incomingID: Keyword.ID, into remainingID: Keyword.ID) {
+        db.merge(keyword: incomingID, into: remainingID)
+    }
+    
+    public mutating func merge(language incomingID: Language.ID, into remainingID: Language.ID) {
+        db.merge(language: incomingID, into: remainingID)
+    }
+    
+    
     
             
     public mutating func delete(_ entity: Entity.ID) {
