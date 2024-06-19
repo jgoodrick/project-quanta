@@ -45,11 +45,6 @@ fileprivate extension Database {
 // translatable entities
 extension Database {
     
-    public enum TranslatableEntity: Equatable {
-        case entry(Entry.ID)
-        case usage(Usage.ID)
-    }
-
     public func languages(
         for translatableEntity: TranslatableEntity,
         where additionalPredicate: ((Language) -> Bool)? = nil,

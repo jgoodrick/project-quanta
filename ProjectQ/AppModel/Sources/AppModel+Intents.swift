@@ -70,40 +70,65 @@ extension AppModel {
         }
     }
     
+    public var displayNameForDefaultNewEntryLanguage: String {
+        displayName(for: settings.defaultNewEntryLanguage)
+    }
     
     
     
-    public enum ConflictDecision<Entity> {
-        case useExisting(Entity)
+    public enum NewValueAddAttemptResult<Value> {
+        case canceled
+        case success(Value)
+        case conflicts([Value])
+    }
+    
+    public enum AutoConflictResolution {
+        case cancel
+        case useFirstMatch
         case createNew
     }
     
-    public typealias DeferredUserDecision<Entity> = ([Entity]) async throws -> ConflictDecision<Entity>
-    
-    @discardableResult
-    public mutating func addNewTranslation(
+    public mutating func addNewEntry(
         fromSpelling spelling: String,
-        forEntry translated: Entry.ID,
-        ifTranslationSpellingIsNotUnique userDecision: DeferredUserDecision<Entry>
-    ) async rethrows -> Entry {
-        let translation: Entry
+        in language: Language.ID? = nil,
+        spellingConflictResolution: AutoConflictResolution? = nil
+    ) -> NewValueAddAttemptResult<Entry> {
+        let entry: Entry
         let matches = db.entries(where: { $0.spelling == spelling })
-        if !matches.isEmpty {
-            switch try await userDecision(matches) {
-            case .useExisting(let existing):
-                translation = existing
+        if let firstMatch = matches.first {
+            switch spellingConflictResolution {
+            case .none:
+                return .conflicts(matches)
+            case .cancel:
+                return .canceled
+            case .useFirstMatch:
+                entry = firstMatch
             case .createNew:
-                translation = createNewEntry {
+                entry = createNewEntry {
                     $0.spelling = spelling
                 }
             }
         } else {
-            translation = createNewEntry {
+            entry = createNewEntry {
                 $0.spelling = spelling
             }
         }
-        addExisting(translation: translation.id, toEntry: translated)
-        return translation
+        addExisting(language: language ?? settings.defaultNewEntryLanguage.id, toEntry: entry.id)
+        return .success(entry)
+    }
+    
+    public mutating func addNewTranslation(
+        fromSpelling spelling: String,
+        in language: Language.ID? = nil,
+        forEntry translated: Entry.ID,
+        spellingConflictResolution: AutoConflictResolution? = nil
+    ) -> NewValueAddAttemptResult<Entry> {
+        let result = addNewEntry(fromSpelling: spelling, in: language, spellingConflictResolution: spellingConflictResolution)
+        if case .success(let translation) = result {
+            addExisting(language: language ?? settings.defaultTranslationLanguage.id, toEntry: translation.id)
+            addExisting(translation: translation.id, toEntry: translated)
+        }
+        return result
     }
     
     public mutating func addExisting(translation: Entry.ID, toEntry translated: Entry.ID, bidirectional: Bool = true) {
@@ -114,18 +139,21 @@ extension AppModel {
         )
     }
     
-    @discardableResult
     public mutating func addNewKeyword(
         title: String,
         toEntry referenced: Entry.ID,
-        ifKeywordTitleIsNotUnique userDecision: DeferredUserDecision<Keyword>
-    ) async rethrows -> Keyword {
+        titleConflictResolution: AutoConflictResolution? = nil
+    ) -> NewValueAddAttemptResult<Keyword> {
         let keyword: Keyword
         let matches = db.keywords(where: { $0.title == title })
-        if !matches.isEmpty {
-            switch try await userDecision(matches) {
-            case .useExisting(let existing):
-                keyword = existing
+        if let firstMatch = matches.first {
+            switch titleConflictResolution {
+            case .none:
+                return .conflicts(matches)
+            case .cancel:
+                return .canceled
+            case .useFirstMatch:
+                keyword = firstMatch
             case .createNew:
                 keyword = createNewKeyword {
                     $0.title = title
@@ -137,7 +165,7 @@ extension AppModel {
             }
         }
         addExisting(keyword: keyword.id, toEntry: referenced)
-        return keyword
+        return .success(keyword)
     }
     
     public mutating func addExisting(keyword: Keyword.ID, toEntry entry: Entry.ID) {
@@ -145,7 +173,6 @@ extension AppModel {
     }
     
     
-    @discardableResult
     public mutating func addNewNote(
         content value: String,
         toEntry referenced: Entry.ID
@@ -161,7 +188,6 @@ extension AppModel {
         db.connect(note: note, toEntry: entry)
     }
     
-    @discardableResult
     public mutating func addNewNote(
         content value: String,
         toUsage referenced: Usage.ID
@@ -177,18 +203,21 @@ extension AppModel {
         db.connect(note: note, toUsage: usage)
     }
     
-    @discardableResult
     public mutating func addNewUsage(
         content value: String,
         toEntry referenced: Entry.ID,
-        ifUsageTitleIsNotUnique userDecision: DeferredUserDecision<Usage>
-    ) async rethrows -> Usage {
+        valueConflictResolution: AutoConflictResolution? = nil
+    ) -> NewValueAddAttemptResult<Usage> {
         let usage: Usage
         let matches = db.usages(where: { $0.value == value })
-        if !matches.isEmpty {
-            switch try await userDecision(matches) {
-            case .useExisting(let existing):
-                usage = existing
+        if let firstMatch = matches.first {
+            switch valueConflictResolution {
+            case .none:
+                return .conflicts(matches)
+            case .cancel:
+                return .canceled
+            case .useFirstMatch:
+                usage = firstMatch
             case .createNew:
                 usage = createNewUsage {
                     $0.value = value
@@ -200,38 +229,27 @@ extension AppModel {
             }
         }
         addExisting(usage: usage.id, toEntry: referenced)
-        return usage
+        return .success(usage)
     }
     
     public mutating func addExisting(usage: Usage.ID, toEntry entry: Entry.ID) {
         db.connect(usage: usage, toEntry: entry)
     }
     
-    @discardableResult
     public mutating func addNewEntry(
-        spelling: String,
+        fromSpelling spelling: String,
+        in language: Language.ID? = nil,
         toEntryCollection collection: EntryCollection.ID,
         atOffset: Int? = nil,
-        ifSpellingIsNotUnique userDecision: DeferredUserDecision<Entry>
-    ) async rethrows -> Entry {
-        let entry: Entry
-        let matches = db.entries(where: { $0.spelling == spelling })
-        if !matches.isEmpty {
-            switch try await userDecision(matches) {
-            case .useExisting(let existing):
-                entry = existing
-            case .createNew:
-                entry = createNewEntry {
-                    $0.spelling = spelling
-                }
-            }
-        } else {
-            entry = createNewEntry {
-                $0.spelling = spelling
-            }
+        spellingConflictResolution: AutoConflictResolution? = nil
+    ) -> NewValueAddAttemptResult<Entry> {
+        let result = addNewEntry(fromSpelling: spelling, in: language, spellingConflictResolution: spellingConflictResolution)
+        switch result {
+        case .success(let entry):
+            addExisting(entry: entry.id, toEntryCollection: collection, atOffset: atOffset)
+            return .success(entry)
+        default: return result
         }
-        addExisting(entry: entry.id, toEntryCollection: collection, atOffset: atOffset)
-        return entry
     }
     
     public mutating func addExisting(entry: Entry.ID, toEntryCollection entryCollection: EntryCollection.ID, atOffset: Int? = nil) {
@@ -246,60 +264,36 @@ extension AppModel {
         db.connect(language: language, toUsage: usage)
     }
     
-    @discardableResult
     public mutating func addNewRoot(
         fromSpelling spelling: String,
+        language: Language.ID? = nil,
         toEntry derived: Entry.ID,
-        ifRootSpellingIsNotUnique userDecision: DeferredUserDecision<Entry>
-    ) async rethrows -> Entry {
-        let root: Entry
-        let matches = db.entries(where: { $0.spelling == spelling })
-        if !matches.isEmpty {
-            switch try await userDecision(matches) {
-            case .useExisting(let existing):
-                root = existing
-            case .createNew:
-                root = createNewEntry {
-                    $0.spelling = spelling
-                }
-            }
-        } else {
-            root = createNewEntry {
-                $0.spelling = spelling
-            }
+        spellingConflictResolution: AutoConflictResolution? = nil
+    ) -> NewValueAddAttemptResult<Entry> {
+        let languageOfDerivedEntry = languages(.of(.entry(derived))).first?.id
+        let result = addNewEntry(fromSpelling: spelling, in: language ?? languageOfDerivedEntry, spellingConflictResolution: spellingConflictResolution)
+        if case .success(let root) = result {
+            addExisting(root: root.id, toEntry: derived)
         }
-        addExisting(root: root.id, toEntry: derived)
-        return root
+        return result
     }
     
     public mutating func addExisting(root: Entry.ID, toEntry entry: Entry.ID) {
         db.connect(root: root, toEntry: entry)
     }
     
-    @discardableResult
     public mutating func addNewSeeAlso(
         spelling: String,
+        language: Language.ID? = nil,
         toEntry target: Entry.ID,
-        ifSeeAlsoSpellingIsNotUnique userDecision: DeferredUserDecision<Entry>
-    ) async rethrows -> Entry {
-        let seeAlso: Entry
-        let matches = db.entries(where: { $0.spelling == spelling })
-        if !matches.isEmpty {
-            switch try await userDecision(matches) {
-            case .useExisting(let existing):
-                seeAlso = existing
-            case .createNew:
-                seeAlso = createNewEntry {
-                    $0.spelling = spelling
-                }
-            }
-        } else {
-            seeAlso = createNewEntry {
-                $0.spelling = spelling
-            }
+        spellingConflictResolution: AutoConflictResolution? = nil
+    ) -> NewValueAddAttemptResult<Entry> {
+        let languageOfTargetEntry = languages(.of(.entry(target))).first?.id
+        let result = addNewEntry(fromSpelling: spelling, in: language ?? languageOfTargetEntry, spellingConflictResolution: spellingConflictResolution)
+        if case .success(let seeAlso) = result {
+            addExisting(seeAlso: seeAlso.id, toEntry: target)
         }
-        addExisting(seeAlso: seeAlso.id, toEntry: target)
-        return seeAlso
+        return result
     }
     
     public mutating func addExisting(seeAlso: Entry.ID, toEntry entry: Entry.ID) {

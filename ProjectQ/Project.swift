@@ -8,17 +8,11 @@ enum TargetID: String, CaseIterable, SnakeCased {
     
     var snake_cased: String { rawValue }
     
-//    case App_Main
-//    case App_Root
-//    case Entry_Detail_Feature
-//    case Home_Feature
-//    case Settings_Feature
-
-//    case Functional_Core
+    case ProjectQ_iOS
     case Layout_Core
     
-    case Headless_Core
-    case Headless_Core_Tests
+    case Multiplatform_Core
+    case Multiplatform_Core_Tests
 
     case App_Model
     case App_Model_Tests
@@ -45,7 +39,8 @@ let project: Project = Project.init(
                 resources: $0.resources,
                 entitlements: $0.entitlements,
                 dependencies: $0.dependencies,
-                settings: $0.settings
+                settings: $0.settings,
+                additionalFiles: $0.additionalFiles
             )
         }
     })
@@ -60,35 +55,6 @@ extension TargetDependency {
 extension TargetID {
     var dependencies: [TargetDependency] {
         switch self {
-//        case .App_Main_iOS:
-//            return [.target(.App_Root)]
-//        case .App_Main_macOS:
-//            return [.target(.App_Root)]
-//        case .App_Main_tvOS:
-//            return [.target(.App_Root)]
-//        case .App_Main_watchOS:
-//            return [.target(.App_Root)]
-//        case .App_Root:
-//            return [
-//                .target(.Home_Feature),
-//                .target(.Entry_Detail_Feature),
-//            ]
-//        case .Entry_Detail_Feature:
-//            return [
-//                .target(.Headless_Core),
-//                .target(.Layout_Core),
-//            ]
-//        case .Home_Feature:
-//            return [
-//                .target(.Entry_Detail_Feature),
-//                .target(.Headless_Core),
-//                .target(.Settings_Feature),
-//            ]
-//        case .Settings_Feature:
-//            return [
-//                .target(.Headless_Core),
-//            ]
-
         case .App_Model:
             return [
                 .external(name: "ComposableArchitecture", condition: .none),
@@ -96,17 +62,21 @@ extension TargetID {
             ]
         case .App_Model_Tests:
             return [ .target(.App_Model) ]
-        case .Headless_Core:
+        case .Multiplatform_Core:
             return [
                 .target(.App_Model),
                 .target(.Structural_Model),
                 .target(.Layout_Core),
             ]
-        case .Headless_Core_Tests:
-            return [ .target(.Headless_Core) ]
+        case .Multiplatform_Core_Tests:
+            return [ .target(.Multiplatform_Core) ]
         case .Layout_Core:
             return [
                 .target(.Structural_Model),
+            ]
+        case .ProjectQ_iOS:
+            return [
+                .target(.Multiplatform_Core),
             ]
         case .Relational_Model:
             return [
@@ -124,7 +94,7 @@ extension TargetID {
     var bundleId: String {
         switch self {
 //        case _ where isAppExtension || isExtensionKitExtension:
-//            "\(TargetID.App_Main_iOS.bundleId).\(dashed.lowercased())"
+//            "\(TargetID.ProjectQ_iOS.bundleId).\(dashed.lowercased())"
         default:
             "\(reverseDomain).\(dotted.lowercased())"
         }
@@ -159,7 +129,7 @@ extension TargetID {
                 ],
                 defaultSettings: .recommended
             )
-//            if case .App_Main_tvOS = self {
+//            if case .ProjectQ_tvOS = self {
 //                result.base["ASSETCATALOG_COMPILER_APPICON_NAME"] = "Brand Assets"
 //            }
             return result
@@ -176,37 +146,19 @@ extension TargetID {
         
         let additional: [String: Plist.Value]
         switch self {
-//        case .App_Main_iOS:
-//            additional = [
-//                "CFBundleDisplayName": "Project Q",
-//                "NSCameraUsageDescription": "If you would like to include photos with your entries, we will need access to your camera to capture them.",
-//                "UILaunchStoryboardName": "LaunchScreen.storyboard",
-//                "UIRequiredDeviceCapabilities": [
-//                    "armv7",
-//                ],
-//                "UIRequiresFullScreen": "YES",
-//                "ITSAppUsesNonExemptEncryption": false,
-//                "UISupportedInterfaceOrientations": DeviceOrientations.vertical.plistValue,
-//                "UISupportedInterfaceOrientations~ipad": DeviceOrientations.vertical.plistValue,
-//            ]
-//        case .App_Main_macOS:
-//            additional = [
-//                "CFBundleDisplayName": "Project Q",
-//                "NSCameraUsageDescription": "If you would like to include photos with your entries, we will need access to your camera to capture them.",
-//                "ITSAppUsesNonExemptEncryption": false,
-//                "UISupportedInterfaceOrientations": DeviceOrientations.vertical.plistValue,
-//                "UISupportedInterfaceOrientations~ipad": DeviceOrientations.vertical.plistValue,
-//            ]
-//        case .App_Main_tvOS:
-//            additional = [
-//                "CFBundleDisplayName": "Project Q",
-//                "ITSAppUsesNonExemptEncryption": false,
-//            ]
-//        case .App_Main_watchOS:
-//            additional = [
-//                "CFBundleDisplayName": "Project Q",
-//                "ITSAppUsesNonExemptEncryption": false,
-//            ]
+        case .ProjectQ_iOS:
+            additional = [
+                "CFBundleDisplayName": "Project Q",
+                "NSCameraUsageDescription": "If you would like to include photos with your entries, we will need access to your camera to capture them.",
+                "UILaunchStoryboardName": "LaunchScreen.storyboard",
+                "UIRequiredDeviceCapabilities": [
+                    "armv7",
+                ],
+                "UIRequiresFullScreen": "YES",
+                "ITSAppUsesNonExemptEncryption": false,
+                "UISupportedInterfaceOrientations": DeviceOrientations.vertical.plistValue,
+                "UISupportedInterfaceOrientations~ipad": DeviceOrientations.vertical.plistValue,
+            ]
         case _ where isAppExtension:
             additional = [
                 "CFBundleDisplayName": "\(spaced)",
@@ -238,10 +190,10 @@ extension TargetID {
     
     var destinations: Destinations {
         switch self {
-//        case .App_Main_iOS: [.iPhone, .iPad]
-//        case .App_Main_macOS: [.mac]
-//        case .App_Main_tvOS: [.appleTv]
-//        case .App_Main_watchOS: [.appleWatch]
+        case .ProjectQ_iOS: [.iPhone, .iPad]
+//        case .ProjectQ_macOS: [.mac]
+//        case .ProjectQ_tvOS: [.appleTv]
+//        case .ProjectQ_watchOS: [.appleWatch]
         default:
             [.iPhone, .iPad, .mac, .appleWatch, .appleTv]
         }
@@ -263,6 +215,16 @@ extension TargetID {
             "\(relativeRootPath)/Tests/**"
         default:
             "\(relativeRootPath)/Sources/**"
+        }
+    }
+    
+    var additionalFiles: [FileElement] {
+        switch self {
+        case .ProjectQ_iOS:
+            [
+                "\(relativeRootPath)/Documentation/**"
+            ]
+        default: []
         }
     }
     
@@ -322,13 +284,13 @@ extension TargetID {
     
     var deploymentTargets: DeploymentTargets {
         switch self {
-//        case .App_Main_iOS:
-//            .iOS("17.0")
-//        case .App_Main_macOS:
+        case .ProjectQ_iOS:
+            .iOS("17.0")
+//        case .ProjectQ_macOS:
 //            .macOS("14.0")
-//        case .App_Main_tvOS:
+//        case .ProjectQ_tvOS:
 //            .tvOS("17.0")
-//        case .App_Main_watchOS:
+//        case .ProjectQ_watchOS:
 //            .watchOS("10.0")
         default:
             .multiplatform(iOS: "17.0", macOS: "14.0", watchOS: "10.0", tvOS: "17.0")
@@ -362,7 +324,10 @@ extension TargetID {
         rawComponents.compactMap(TargetNameComponent.init(rawValue:))
     }
     var isApp: Bool {
-        components.prefix(2) == [.App, .Main]
+        switch self {
+        case .ProjectQ_iOS: true
+        default: false
+        }
     }
     var isTestTarget: Bool {
         self.rawComponents.last == TargetNameComponent.Tests.rawValue

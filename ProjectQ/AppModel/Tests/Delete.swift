@@ -17,9 +17,9 @@ final class AppModel_Delete_Tests: AppModelTestCase {
     
     func test_delete_language() {
         var model = AppModel.mock(languages: 0..<10, created: .now)
-        XCTAssertEqual(model.languages(.all).count, 10)
+        XCTAssertEqual(model.languages(.all).count, 11) // system language is auto-added at AppModel.init
         model.delete(.language(.mock(0)))
-        XCTAssertEqual(model.languages(.all).count, 9)
+        XCTAssertEqual(model.languages(.all).count, 10)
         XCTAssertNil(model[language: .mock(0)])
         XCTAssertNotNil(model[language: .mock(1)])
     }
