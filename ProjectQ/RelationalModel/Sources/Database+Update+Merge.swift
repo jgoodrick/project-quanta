@@ -11,6 +11,14 @@ extension Database {
         delete(.entry(incomingID))
     }
     
+    public mutating func merge(entryCollection incomingID: EntryCollection.ID, into existing: EntryCollection.ID) {
+        precondition(stored.entryCollections[incomingID] != nil)
+        precondition(stored.entryCollections[existing] != nil)
+        stored.entryCollections[existing]!.merge(with: stored.entryCollections[incomingID]!)
+        relationships.entryCollections[id: existing].merge(with: relationships.entryCollections[id: incomingID])
+        delete(.entryCollection(incomingID))
+    }
+    
     public mutating func merge(language incomingID: Language.ID, into existing: Language.ID) {
         precondition(stored.languages[incomingID] != nil)
         precondition(stored.languages[existing] != nil)

@@ -31,19 +31,26 @@ final class AppModel_Connection_Tests: AppModelTestCase {
         let entry = model.createNewEntry {
             $0.spelling = "derived_spelling"
         }
-        let root = await model.addNewRoot(
+        let rootResult = model.addNewRoot(
             fromSpelling: "new_root_spelling",
             toEntry: entry.id,
-            ifSpellingIsNotUnique: { _ in .createNew }
+            spellingConflictResolution: .maintainDistinction
         )
-        XCTAssertEqual(model.entries(.thatAre(.roots(of: entry.id))), [root])
-        XCTAssertEqual(model.entries(.thatAre(.derived(from: root.id))), [entry])
-        XCTAssertEqual(model.entries(.thatAre(.derived(from: entry.id))), [])
-        model.remove(root: root.id, fromEntry: entry.id)
-        XCTAssertEqual(model.entries(.thatAre(.roots(of: entry.id))), [])
-        XCTAssertEqual(model.entries(.thatAre(.derived(from: root.id))), [])
-        XCTAssertEqual(model.entries(.thatAre(.roots(of: root.id))), [])
-        XCTAssertEqual(model.entries(.thatAre(.derived(from: entry.id))), [])
+        switch rootResult {
+        case .success(let root):
+            XCTAssertEqual(model.entries(.thatAre(.roots(of: entry.id))), [root])
+            XCTAssertEqual(model.entries(.thatAre(.derived(from: root.id))), [entry])
+            XCTAssertEqual(model.entries(.thatAre(.derived(from: entry.id))), [])
+            model.remove(root: root.id, fromEntry: entry.id)
+            XCTAssertEqual(model.entries(.thatAre(.roots(of: entry.id))), [])
+            XCTAssertEqual(model.entries(.thatAre(.derived(from: root.id))), [])
+            XCTAssertEqual(model.entries(.thatAre(.roots(of: root.id))), [])
+            XCTAssertEqual(model.entries(.thatAre(.derived(from: entry.id))), [])
+        case .conflicts(let conflicts):
+            XCTFail("Expected to successfully insert new entry, but encountered conflicts instead: \(conflicts)")
+        case .canceled:
+            XCTFail("Expected to successfully insert new entry, but canceled instead")
+        }
     }
     
     func test_connection_of_entry_to_existing_root_after_conflict() async {
@@ -54,20 +61,27 @@ final class AppModel_Connection_Tests: AppModelTestCase {
         let existingRoot = model.createNewEntry {
             $0.spelling = "new_root_spelling"
         }
-        let returnedRoot = await model.addNewRoot(
+        let returnedRootResult = model.addNewRoot(
             fromSpelling: "new_root_spelling",
             toEntry: entry.id,
-            ifSpellingIsNotUnique: { .useExisting($0.first!) }
+            spellingConflictResolution: .mergeWithFirstMatch
         )
-        XCTAssertEqual(returnedRoot, existingRoot)
-        XCTAssertEqual(model.entries(.thatAre(.roots(of: entry.id))), [existingRoot])
-        XCTAssertEqual(model.entries(.thatAre(.derived(from: existingRoot.id))), [entry])
-        XCTAssertEqual(model.entries(.thatAre(.derived(from: entry.id))), [])
-        model.remove(root: existingRoot.id, fromEntry: entry.id)
-        XCTAssertEqual(model.entries(.thatAre(.roots(of: entry.id))), [])
-        XCTAssertEqual(model.entries(.thatAre(.derived(from: existingRoot.id))), [])
-        XCTAssertEqual(model.entries(.thatAre(.roots(of: existingRoot.id))), [])
-        XCTAssertEqual(model.entries(.thatAre(.derived(from: entry.id))), [])
+        switch returnedRootResult {
+        case .success(let returnedRoot):
+            XCTAssertEqual(returnedRoot, existingRoot)
+            XCTAssertEqual(model.entries(.thatAre(.roots(of: entry.id))), [existingRoot])
+            XCTAssertEqual(model.entries(.thatAre(.derived(from: existingRoot.id))), [entry])
+            XCTAssertEqual(model.entries(.thatAre(.derived(from: entry.id))), [])
+            model.remove(root: existingRoot.id, fromEntry: entry.id)
+            XCTAssertEqual(model.entries(.thatAre(.roots(of: entry.id))), [])
+            XCTAssertEqual(model.entries(.thatAre(.derived(from: existingRoot.id))), [])
+            XCTAssertEqual(model.entries(.thatAre(.roots(of: existingRoot.id))), [])
+            XCTAssertEqual(model.entries(.thatAre(.derived(from: entry.id))), [])
+        case .conflicts(let conflicts):
+            XCTFail("Expected to successfully insert new entry, but encountered conflicts instead: \(conflicts)")
+        case .canceled:
+            XCTFail("Expected to successfully insert new entry, but canceled instead")
+        }
     }
     
     func test_connection_of_entry_to_seeAlso() {

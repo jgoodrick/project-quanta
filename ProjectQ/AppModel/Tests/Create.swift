@@ -63,22 +63,38 @@ final class AppModel_Add_Tests: AppModelTestCase {
         model.ensureExistenceOf(language: translationLanguage)
         model.settings.defaultTranslationLanguage = translationLanguage
         
-        let new = try await model.addNewEntry(
+        let newEntryResult = model.addNewEntry(
             fromSpelling: "spelling",
-            ifSpellingIsNotUnique: { _ in throw NSError()  }
+            spellingConflictResolution: .none
         )
         
-        XCTAssertEqual(new.id, .mock(0)) // due to incrementing UUIDGenerator
-        XCTAssertEqual(model.languages(for: .entry(new.id)), [model.settings.defaultNewEntryLanguage])
+        switch newEntryResult {
+        case .success(let new):
+            XCTAssertEqual(new.id, .mock(0)) // due to incrementing UUIDGenerator
+            XCTAssertEqual(model.languages(for: .entry(new.id)), [model.settings.defaultNewEntryLanguage])
+        case .conflicts(let conflicts):
+            XCTFail("Expected to successfully insert new entry, but encountered conflicts instead: \(conflicts)")
+        case .canceled:
+            XCTFail("Expected to successfully insert new entry, but canceled instead")
+        }
+        
 
-        let newTranslation = try await model.addNewTranslation(
+        let newTranslationResult = model.addNewTranslation(
             fromSpelling: "translation",
             forEntry: .mock(0),
-            ifSpellingIsNotUnique: { _ in throw NSError()  }
+            spellingConflictResolution: .none
         )
         
-        XCTAssertEqual(newTranslation.id, .mock(1)) // due to incrementing UUIDGenerator
-        XCTAssertEqual(model.languages(for: .entry(newTranslation.id)), [translationLanguage])
+        switch newTranslationResult {
+        case .success(let newTranslation):
+            XCTAssertEqual(newTranslation.id, .mock(1)) // due to incrementing UUIDGenerator
+            XCTAssertEqual(model.languages(for: .entry(newTranslation.id)), [translationLanguage])
+        case .conflicts(let conflicts):
+            XCTFail("Expected to successfully insert new translation, but encountered conflicts instead: \(conflicts)")
+        case .canceled:
+            XCTFail("Expected to successfully insert new translation, but canceled instead")
+        }
+        
     }
     
     
