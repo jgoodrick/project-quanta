@@ -12,3 +12,10 @@ public struct Entry: Identifiable, Equatable, Codable, Sendable {
     public var spelling: String = ""
     public var alternateSpellings: [String] = []
 }
+
+extension TaggedID<Entry> {
+    public var entityID: Entity.ID {
+        .entry(self)
+    }
+}
+

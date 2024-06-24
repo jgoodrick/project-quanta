@@ -65,6 +65,7 @@ public struct TextEditableItemsSection<Item: TextEditableItem>: View {
                         .textCase(.lowercase)
                 }
             }
+            .textCase(.none)
         }
     }
 

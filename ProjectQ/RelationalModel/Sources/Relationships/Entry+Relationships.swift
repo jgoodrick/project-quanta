@@ -19,6 +19,20 @@ extension Entry: Mergeable {
         var keywords: Set<Keyword.ID> = []
         var notes: [Note.ID] = []
         var entryCollections: Set<EntryCollection.ID> = []
+        var connectedEntities: Set<Entity.ID> {
+            var result = Set<Entity.ID>()
+            result.formUnion(languages.map(\.entityID))
+            result.formUnion(roots.map(\.entityID))
+            result.formUnion(derived.map(\.entityID))
+            result.formUnion(translations.map(\.entityID))
+            result.formUnion(backTranslations.map(\.entityID))
+            result.formUnion(seeAlso.map(\.entityID))
+            result.formUnion(usages.map(\.entityID))
+            result.formUnion(keywords.map(\.entityID))
+            result.formUnion(notes.map(\.entityID))
+            result.formUnion(entryCollections.map(\.entityID))
+            return result
+        }
         mutating func merge(with incoming: Self) {
             languages.merge(with: incoming.languages)
             roots.merge(with: incoming.roots)

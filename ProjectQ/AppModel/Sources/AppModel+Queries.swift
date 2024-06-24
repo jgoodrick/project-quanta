@@ -151,29 +151,3 @@ extension AppModel {
 
 }
 
-extension AppModel {
-    
-    public func languages(
-        for translatableEntity: TranslatableEntity,
-        where additionalPredicate: ((Language) -> Bool)? = nil,
-        sortedBy sort: SortField<Language>? = nil
-    ) -> [Language] {
-        switch translatableEntity {
-        case .entry(let id):
-            db.languages(forEntry: id, where: additionalPredicate, sortedBy: sort)
-        case .usage(let id):
-            db.languages(forUsage: id, where: additionalPredicate, sortedBy: sort)
-        }
-    }
-
-    public func keyboardLanguageID(for entity: TranslatableEntity) -> Language.ID? {
-        nil
-//        switch entity {
-//        case .entry(let entryID):
-//            languages(for: entity).first.flatMap(\.bcp47)
-//        case .usage(let usageID):
-//            languages(for: usageID).first.flatMap(\.bcp47)
-//        }
-    }
-
-}

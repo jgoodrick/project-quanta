@@ -1,6 +1,4 @@
 
-#if !os(watchOS)
-
 import SwiftUI
 
 public protocol CategorizedItemsSectionCategory: Identifiable {
@@ -42,6 +40,12 @@ public struct CategorizedItemsSection<Item: CategorizedItem, Category: Categoriz
     let onMenuItemTapped: (Category) -> Void
     let onMenuShortPressed: (() -> Void)?
     
+    var addLabel: some View {
+        Text("+ Add")
+            .font(.callout)
+            .textCase(.lowercase)
+    }
+    
     public var body: some View {
         Section {
             ForEach(items) { item in
@@ -77,36 +81,57 @@ public struct CategorizedItemsSection<Item: CategorizedItem, Category: Categoriz
                             Button(action: {
                                 onMenuItemTapped(menuItem)
                             }) {
-                                Label(menuItem.title.capitalized, systemImage: "flag")
+                                Label(menuItem.title, systemImage: "flag")
                             }
                         }
                     }, label: {
-                        Text("+ Add")
-                            .font(.callout)
-                            .textCase(.lowercase)
+                        addLabel
                     }, primaryAction: {
                         // on tap
                         onMenuShortPressed()
                     })
-                } else {
+                } else if !availableCategories.isEmpty {
                     Menu {
                         ForEach(availableCategories) { menuItem in
                             Button(action: {
                                 onMenuItemTapped(menuItem)
                             }) {
-                                Label(menuItem.title.capitalized, systemImage: "flag")
+                                Label(menuItem.title, systemImage: "flag")
                             }
                         }
                     } label: {
-                        Text("+ Add")
-                            .font(.callout)
-                            .textCase(.lowercase)
+                        addLabel
                     }
                 }
             }
+            .textCase(.none)
         }
     }
 
 }
 
-#endif
+#Preview {
+    struct MockItem: CategorizedItem {
+        var id: UUID = .init()
+        var value: String { "Ukrainian" }
+    }
+    struct MockCategory: CategorizedItemsSectionCategory {
+        var id: UUID = .init()
+        var title: String
+    }
+    return Form {
+        CategorizedItemsSection(
+            title: "title",
+            items: [MockItem()],
+            availableCategories: [
+                MockCategory(title: "Ukrainian"),
+                MockCategory(title: "English"),
+            ],
+            onSelected: { _ in },
+            onDeleted: { _ in },
+            onMoved: { _, _ in },
+            onMenuItemTapped: { _ in },
+            onMenuShortPressed: .none
+        )
+    }
+}

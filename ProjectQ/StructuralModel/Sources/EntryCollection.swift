@@ -13,3 +13,9 @@ public struct EntryCollection: Identifiable, Equatable, Codable, Sendable {
     public var description: String = ""
 }
 
+extension TaggedID<EntryCollection> {
+    public var entityID: Entity.ID {
+        .entryCollection(self)
+    }
+}
+

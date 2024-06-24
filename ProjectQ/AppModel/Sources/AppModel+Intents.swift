@@ -63,11 +63,13 @@ extension AppModel {
         // we only want to show the additional (region) information if the primary language is not unique
         var copy = settings.languageSelectionList
         copy.removeAll(where: { $0.id == language.id })
+        let result: String?
         if copy.contains(where: { $0.primaryLanguage == language.primaryLanguage }) {
-            return locale.localizedString(forIdentifier: language.bcp47.rawValue) ?? language.id.rawValue
+            result = locale.localizedString(forIdentifier: language.bcp47.rawValue)
         } else {
-            return language.primaryLanguage.flatMap({ locale.localizedString(forLanguageCode: $0) }) ?? language.id.rawValue
+            result = language.primaryLanguage.flatMap({ locale.localizedString(forLanguageCode: $0) })
         }
+        return result ?? language.id.rawValue
     }
     
     public var displayNameForDefaultNewEntryLanguage: String {
@@ -88,15 +90,15 @@ extension AppModel {
         case cancel
     }
     
-    public mutating func addNewEntry(
+    public mutating func attemptToAddNewEntry(
         fromSpelling spelling: String,
         in language: Language.ID? = nil,
-        spellingConflictResolution: AutoConflictResolution? = nil
+        autoAppliedSpellingConflictResolution: AutoConflictResolution? = nil
     ) -> ConflictsResult<Entry> {
         let entry: Entry
         let matches = db.entries(where: { $0.spelling == spelling })
         if let firstMatch = matches.first {
-            switch spellingConflictResolution {
+            switch autoAppliedSpellingConflictResolution {
             case .none:
                 return .conflicts(matches)
             case .cancel:
@@ -117,14 +119,14 @@ extension AppModel {
         return .success(entry)
     }
     
-    public mutating func addNewTranslation(
+    public mutating func attemptToAddNewTranslation(
         fromSpelling spelling: String,
         in language: Language.ID? = nil,
         forEntry translated: Entry.ID,
-        spellingConflictResolution: AutoConflictResolution? = nil
+        autoAppliedSpellingConflictResolution: AutoConflictResolution? = nil
     ) -> ConflictsResult<Entry> {
         let translationLanguage = language ?? settings.defaultTranslationLanguage.id
-        let result = addNewEntry(fromSpelling: spelling, in: translationLanguage, spellingConflictResolution: spellingConflictResolution)
+        let result = attemptToAddNewEntry(fromSpelling: spelling, in: translationLanguage, autoAppliedSpellingConflictResolution: autoAppliedSpellingConflictResolution)
         if case .success(let translation) = result {
             addExisting(translation: translation.id, toEntry: translated)
         }
@@ -139,15 +141,15 @@ extension AppModel {
         )
     }
     
-    public mutating func addNewKeyword(
+    public mutating func attemptToAddNewKeyword(
         title: String,
         toEntry referenced: Entry.ID,
-        titleConflictResolution: AutoConflictResolution? = nil
+        autoAppliedTitleConflictResolution: AutoConflictResolution? = nil
     ) -> ConflictsResult<Keyword> {
         let keyword: Keyword
         let matches = db.keywords(where: { $0.title == title })
         if let firstMatch = matches.first {
-            switch titleConflictResolution {
+            switch autoAppliedTitleConflictResolution {
             case .none:
                 return .conflicts(matches)
             case .cancel:
@@ -173,7 +175,7 @@ extension AppModel {
     }
     
     
-    public mutating func addNewNote(
+    public mutating func attemptToAddNewNote(
         content value: String,
         toEntry referenced: Entry.ID
     ) -> Note {
@@ -188,7 +190,7 @@ extension AppModel {
         db.connect(note: note, toEntry: entry)
     }
     
-    public mutating func addNewNote(
+    public mutating func attemptToAddNewNote(
         content value: String,
         toUsage referenced: Usage.ID
     ) -> Note {
@@ -203,15 +205,15 @@ extension AppModel {
         db.connect(note: note, toUsage: usage)
     }
     
-    public mutating func addNewUsage(
+    public mutating func attemptToAddNewUsage(
         content value: String,
         toEntry referenced: Entry.ID,
-        valueConflictResolution: AutoConflictResolution? = nil
+        autoAppliedValueConflictResolution: AutoConflictResolution? = nil
     ) -> ConflictsResult<Usage> {
         let usage: Usage
         let matches = db.usages(where: { $0.value == value })
         if let firstMatch = matches.first {
-            switch valueConflictResolution {
+            switch autoAppliedValueConflictResolution {
             case .none:
                 return .conflicts(matches)
             case .cancel:
@@ -236,14 +238,14 @@ extension AppModel {
         db.connect(usage: usage, toEntry: entry)
     }
     
-    public mutating func addNewEntry(
+    public mutating func attemptToAddNewEntry(
         fromSpelling spelling: String,
         in language: Language.ID? = nil,
         toEntryCollection collection: EntryCollection.ID,
         atOffset: Int? = nil,
-        spellingConflictResolution: AutoConflictResolution? = nil
+        autoAppliedSpellingConflictResolution: AutoConflictResolution? = nil
     ) -> ConflictsResult<Entry> {
-        let result = addNewEntry(fromSpelling: spelling, in: language, spellingConflictResolution: spellingConflictResolution)
+        let result = attemptToAddNewEntry(fromSpelling: spelling, in: language, autoAppliedSpellingConflictResolution: autoAppliedSpellingConflictResolution)
         switch result {
         case .success(let entry):
             addExisting(entry: entry.id, toEntryCollection: collection, atOffset: atOffset)
@@ -264,14 +266,14 @@ extension AppModel {
         db.connect(language: language, toUsage: usage)
     }
     
-    public mutating func addNewRoot(
+    public mutating func attemptToAddNewRoot(
         fromSpelling spelling: String,
         language: Language.ID? = nil,
         toEntry derived: Entry.ID,
-        spellingConflictResolution: AutoConflictResolution? = nil
+        autoAppliedSpellingConflictResolution: AutoConflictResolution? = nil
     ) -> ConflictsResult<Entry> {
         let languageOfDerivedEntry = languages(.of(.entry(derived))).first?.id
-        let result = addNewEntry(fromSpelling: spelling, in: language ?? languageOfDerivedEntry, spellingConflictResolution: spellingConflictResolution)
+        let result = attemptToAddNewEntry(fromSpelling: spelling, in: language ?? languageOfDerivedEntry, autoAppliedSpellingConflictResolution: autoAppliedSpellingConflictResolution)
         if case .success(let root) = result {
             addExisting(root: root.id, toEntry: derived)
         }
@@ -282,14 +284,14 @@ extension AppModel {
         db.connect(root: root, toEntry: entry)
     }
     
-    public mutating func addNewSeeAlso(
+    public mutating func attemptToAddNewSeeAlso(
         spelling: String,
         language: Language.ID? = nil,
         toEntry target: Entry.ID,
-        spellingConflictResolution: AutoConflictResolution? = nil
+        autoAppliedSpellingConflictResolution: AutoConflictResolution? = nil
     ) -> ConflictsResult<Entry> {
         let languageOfTargetEntry = languages(.of(.entry(target))).first?.id
-        let result = addNewEntry(fromSpelling: spelling, in: language ?? languageOfTargetEntry, spellingConflictResolution: spellingConflictResolution)
+        let result = attemptToAddNewEntry(fromSpelling: spelling, in: language ?? languageOfTargetEntry, autoAppliedSpellingConflictResolution: autoAppliedSpellingConflictResolution)
         if case .success(let seeAlso) = result {
             addExisting(seeAlso: seeAlso.id, toEntry: target)
         }
@@ -303,63 +305,95 @@ extension AppModel {
     
     
     
-    fileprivate mutating func removeOrphan(_ entity: Entity.ID, if condition: Bool) {
-        if condition, !db.containsRelationships(for: entity) {
-            db.delete(entity)
+    
+    
+    
+    
+    public struct RetainedRelationships {
+        public let entities: Set<Entity.ID>
+    }
+    
+    public func entity(_ entity: Entity.ID, wouldBeOrphanIfRemovedFrom proposed: Entity.ID) -> Bool {
+        var result = db.connectedEntities(for: entity)
+        switch entity {
+        case .entry, .usage:
+            result.subtract(db.languages().map(\.id.entityID))
+        default: break
         }
+        result.subtract([proposed])
+        return result.count == 0
     }
     
-    public mutating func remove(translation: Entry.ID, fromEntry translated: Entry.ID, deleteIfOrphaned: Bool = false) {
+    private func retainedRelationships(for entity: Entity.ID) -> RetainedRelationships {
+        return .init(entities: db.connectedEntities(for: entity))
+    }
+    
+    @discardableResult
+    public mutating func remove(translation: Entry.ID, fromEntry translated: Entry.ID) -> RetainedRelationships {
         db.disconnect(translation: translation, fromEntry: translated, bidirectional: true)
-        removeOrphan(.entry(translation), if: deleteIfOrphaned)
+        return retainedRelationships(for: .entry(translation))
     }
     
-    public mutating func remove(keyword: Keyword.ID, fromEntry entry: Entry.ID, deleteIfOrphaned: Bool = false) {
+    @discardableResult
+    public mutating func remove(keyword: Keyword.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
         db.disconnect(keyword: keyword, fromEntry: entry)
-        removeOrphan(.keyword(keyword), if: deleteIfOrphaned)
+        return retainedRelationships(for: .keyword(keyword))
     }
     
-    public mutating func remove(note: Note.ID, fromEntry entry: Entry.ID, deleteIfOrphaned: Bool = false) {
+    @discardableResult
+    public mutating func remove(note: Note.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
         db.disconnect(note: note, fromEntry: entry)
-        removeOrphan(.note(note), if: deleteIfOrphaned)
+        return retainedRelationships(for: .note(note))
     }
     
-    public mutating func remove(note: Note.ID, fromUsage usage: Usage.ID, deleteIfOrphaned: Bool = false) {
+    @discardableResult
+    public mutating func remove(note: Note.ID, fromUsage usage: Usage.ID) -> RetainedRelationships {
         db.disconnect(note: note, fromUsage: usage)
-        removeOrphan(.note(note), if: deleteIfOrphaned)
+        return retainedRelationships(for: .note(note))
     }
     
-    public mutating func remove(usage: Usage.ID, fromEntry entry: Entry.ID, deleteIfOrphaned: Bool = false) {
+    @discardableResult
+    public mutating func remove(usage: Usage.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
         db.disconnect(usage: usage, fromEntry: entry)
-        removeOrphan(.usage(usage), if: deleteIfOrphaned)
+        return retainedRelationships(for: .usage(usage))
     }
     
-    public mutating func remove(entry: Entry.ID, fromEntryCollection entryCollection: EntryCollection.ID, deleteIfOrphaned: Bool = false) {
+    @discardableResult
+    public mutating func remove(entry: Entry.ID, fromEntryCollection entryCollection: EntryCollection.ID) -> RetainedRelationships {
         db.disconnect(entry: entry, fromEntryCollection: entryCollection)
-        removeOrphan(.entry(entry), if: deleteIfOrphaned)
+        return retainedRelationships(for: .entry(entry))
     }
     
-    public mutating func remove(language: Language.ID, fromEntry entry: Entry.ID, deleteIfOrphaned: Bool = false) {
+    @discardableResult
+    public mutating func remove(language: Language.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
         db.disconnect(language: language, fromEntry: entry)
-        removeOrphan(.language(language), if: deleteIfOrphaned)
+        return retainedRelationships(for: .language(language))
     }
     
-    public mutating func remove(language: Language.ID, fromUsage usage: Usage.ID, deleteIfOrphaned: Bool = false) {
+    @discardableResult
+    public mutating func remove(language: Language.ID, fromUsage usage: Usage.ID) -> RetainedRelationships {
         db.disconnect(language: language, fromUsage: usage)
-        removeOrphan(.language(language), if: deleteIfOrphaned)
+        return retainedRelationships(for: .language(language))
     }
     
-    public mutating func remove(root: Entry.ID, fromEntry entry: Entry.ID, deleteIfOrphaned: Bool = false) {
+    @discardableResult
+    public mutating func remove(root: Entry.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
         db.disconnect(root: root, fromEntry: entry)
-        removeOrphan(.entry(root), if: deleteIfOrphaned)
+        return retainedRelationships(for: .entry(root))
     }
     
-    public mutating func remove(seeAlso: Entry.ID, fromEntry entry: Entry.ID, deleteIfOrphaned: Bool = false) {
+    @discardableResult
+    public mutating func remove(seeAlso: Entry.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
         db.disconnect(seeAlso: seeAlso, fromEntry: entry)
-        removeOrphan(.entry(seeAlso), if: deleteIfOrphaned)
+        return retainedRelationships(for: .entry(seeAlso))
     }
     
 
+    
+    
+    
+    
+    
     
     public mutating func moveTranslations(on entry: Entry.ID, fromOffsets: IndexSet, toOffset: Int) {
         db.moveTranslations(on: entry, fromOffsets: fromOffsets, toOffset: toOffset)
@@ -386,18 +420,24 @@ extension AppModel {
     }
 
     
+    
+    
+    
+    
+    
+    
     // The following methods specify the field to update in the signature, because we expect these fields to generally be unique
     
-    public mutating func updateEntrySpelling(
+    public mutating func attemptToUpdateEntrySpelling(
         of entry: Entry.ID,
         to newValue: String,
-        spellingConflictResolution: AutoConflictResolution? = nil
+        autoAppliedSpellingConflictResolution: AutoConflictResolution? = nil
     ) -> ConflictsResult<Entry> {
         guard let existing = db[entry: entry] else { preconditionFailure() }
         var result: Entry
         let matches = db.entries(where: { $0.spelling == newValue })
         if let firstMatch = matches.first {
-            switch spellingConflictResolution {
+            switch autoAppliedSpellingConflictResolution {
             case .none:
                 return .conflicts(matches)
             case .cancel:
@@ -416,16 +456,16 @@ extension AppModel {
         return .success(result)
     }
 
-    public mutating func updateEntryCollectionTitle(
+    public mutating func attemptToUpdateEntryCollectionTitle(
         of entryCollection: EntryCollection.ID,
         to newValue: String,
-        titleConflictResolution: AutoConflictResolution? = nil
+        autoAppliedTitleConflictResolution: AutoConflictResolution? = nil
     ) -> ConflictsResult<EntryCollection> {
         guard let existing = db[entryCollection: entryCollection] else { preconditionFailure() }
         var result: EntryCollection
         let matches = db.entryCollections(where: { $0.title == newValue })
         if let firstMatch = matches.first {
-            switch titleConflictResolution {
+            switch autoAppliedTitleConflictResolution {
             case .none:
                 return .conflicts(matches)
             case .cancel:
@@ -444,16 +484,16 @@ extension AppModel {
         return .success(result)
     }
 
-    public mutating func updateKeywordTitle(
+    public mutating func attemptToUpdateKeywordTitle(
         of keyword: Keyword.ID,
         to newValue: String,
-        titleConflictResolution: AutoConflictResolution? = nil
+        autoAppliedTitleConflictResolution: AutoConflictResolution? = nil
     ) -> ConflictsResult<Keyword> {
         guard let existing = db[keyword: keyword] else { preconditionFailure() }
         var result: Keyword
         let matches = db.keywords(where: { $0.title == newValue })
         if let firstMatch = matches.first {
-            switch titleConflictResolution {
+            switch autoAppliedTitleConflictResolution {
             case .none:
                 return .conflicts(matches)
             case .cancel:

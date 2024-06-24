@@ -31,10 +31,10 @@ final class AppModel_Connection_Tests: AppModelTestCase {
         let entry = model.createNewEntry {
             $0.spelling = "derived_spelling"
         }
-        let rootResult = model.addNewRoot(
+        let rootResult = model.attemptToAddNewRoot(
             fromSpelling: "new_root_spelling",
             toEntry: entry.id,
-            spellingConflictResolution: .maintainDistinction
+            autoAppliedSpellingConflictResolution: .maintainDistinction
         )
         switch rootResult {
         case .success(let root):
@@ -61,10 +61,10 @@ final class AppModel_Connection_Tests: AppModelTestCase {
         let existingRoot = model.createNewEntry {
             $0.spelling = "new_root_spelling"
         }
-        let returnedRootResult = model.addNewRoot(
+        let returnedRootResult = model.attemptToAddNewRoot(
             fromSpelling: "new_root_spelling",
             toEntry: entry.id,
-            spellingConflictResolution: .mergeWithFirstMatch
+            autoAppliedSpellingConflictResolution: .mergeWithFirstMatch
         )
         switch returnedRootResult {
         case .success(let returnedRoot):
