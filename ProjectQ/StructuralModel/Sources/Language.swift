@@ -17,6 +17,12 @@ public struct Language: Identifiable, Equatable, Codable, Sendable {
     
 }
 
+extension TaggedString<Language.BCP47> {
+    public var entityID: Entity.ID {
+        .language(self)
+    }
+}
+
 extension Language {
     
     public static var ukrainian: Language {
@@ -24,6 +30,9 @@ extension Language {
     }
     public static var english: Language {
         try! .init(bcp47: "en_US")
+    }
+    public static var spanish: Language {
+        try! .init(bcp47: "es_MX")
     }
     
     public var primaryLanguage: String? {

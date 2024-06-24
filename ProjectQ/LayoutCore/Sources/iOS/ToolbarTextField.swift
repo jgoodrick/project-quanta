@@ -4,7 +4,7 @@
 import StructuralModel // Language
 import SwiftUI
 
-struct ToolbarTextFieldView: View {
+public struct ToolbarTextFieldView: View {
         
     let placeholder: String
     let language: Language
@@ -19,13 +19,13 @@ struct ToolbarTextFieldView: View {
         focused = false
     }
     
-    struct Style: EnvironmentKey {
-        static var defaultValue: Self = .init()
-        var customHeight: Double? = .none
-        var font: Font = .title2
-        var background: Color = .gray
-        var autocapitalization: Autocapitalization = .none
-        var autocorrection: Autocorrection = .default
+    public struct Style: EnvironmentKey {
+        public static var defaultValue: Self = .init()
+        public var customHeight: Double? = .none
+        public var font: Font = .title2
+        public var background: Color = .gray
+        public var autocapitalization: Autocapitalization = .none
+        public var autocorrection: Autocorrection = .default
     }
     
     @Environment(\.toolbarTextField) var style
@@ -33,7 +33,7 @@ struct ToolbarTextFieldView: View {
 
     var languageIdentifier: String { language.bcp47.rawValue }
 
-    var body: some View {
+    public var body: some View {
         HStack(spacing: 0) {
             PreferredLanguageTextField.init(
                 placeholder: placeholder,
@@ -115,8 +115,7 @@ public struct ToolbarTextFieldInstaller: ViewModifier {
         onLanguageUnavailable: @escaping (String) -> Void,
         onSaveButtonTapped: @escaping () -> Void,
         onSubmit: @escaping () -> Void,
-        tappedViewBehindActiveToolbarTextField: @escaping () -> Void,
-        autocapitalization: Autocapitalization = .none
+        tappedViewBehindActiveToolbarTextField: @escaping () -> Void
     ) {
         self.placeholder = placeholder
         self.language = language
@@ -127,7 +126,6 @@ public struct ToolbarTextFieldInstaller: ViewModifier {
         self.onSaveButtonTapped = onSaveButtonTapped
         self.onSubmit = onSubmit
         self.tappedViewBehindActiveToolbarTextField = tappedViewBehindActiveToolbarTextField
-        self.autocapitalization = autocapitalization
     }
     
     let placeholder: String
@@ -139,7 +137,6 @@ public struct ToolbarTextFieldInstaller: ViewModifier {
     let onSaveButtonTapped: () -> Void
     let onSubmit: () -> Void
     let tappedViewBehindActiveToolbarTextField: () -> Void
-    let autocapitalization: Autocapitalization
 
     public func body(content: Content) -> some View {
         ZStack(alignment: .bottom) {
@@ -169,16 +166,13 @@ public struct ToolbarTextFieldInstaller: ViewModifier {
                     onSubmit: onSubmit
                 )
                 .padding()
-                .transformEnvironment(\.toolbarTextField) {
-                    $0.autocapitalization = autocapitalization
-                }
             }
         }
     }
 }
 
 extension EnvironmentValues {
-    var toolbarTextField: ToolbarTextFieldView.Style {
+    public var toolbarTextField: ToolbarTextFieldView.Style {
         get { self[ToolbarTextFieldView.Style.self] }
         set { self[ToolbarTextFieldView.Style.self] = newValue}
     }

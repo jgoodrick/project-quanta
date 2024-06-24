@@ -13,7 +13,7 @@ final class AppModel_Update_Tests: AppModelTestCase {
         let entry_other = model.createNewEntry {
             $0.spelling = "other_spelling"
         }
-        switch model.updateEntrySpelling(of: entry.id, to: "new_spelling") {
+        switch model.attemptToUpdateEntrySpelling(of: entry.id, to: "new_spelling") {
         case .success(let result):
             XCTAssertEqual(model[entry: entry.id], result)
             XCTAssertNotEqual(model[entry: entry_other.id], result)
@@ -32,7 +32,7 @@ final class AppModel_Update_Tests: AppModelTestCase {
         let entry_other = model.createNewEntry {
             $0.spelling = "other_spelling"
         }
-        switch model.updateEntrySpelling(of: entry.id, to: "other_spelling") {
+        switch model.attemptToUpdateEntrySpelling(of: entry.id, to: "other_spelling") {
         case .success(_):
             XCTFail("Expected to encounter a conflict, but did not")
         case .canceled:
@@ -50,7 +50,7 @@ final class AppModel_Update_Tests: AppModelTestCase {
         let entryCollection_other = model.createNewEntryCollection {
             $0.title = "other_title"
         }
-        switch model.updateEntryCollectionTitle(of: entryCollection.id, to: "new_title") {
+        switch model.attemptToUpdateEntryCollectionTitle(of: entryCollection.id, to: "new_title") {
         case .success(let result):
             XCTAssertEqual(model[entryCollection: entryCollection.id], result)
             XCTAssertNotEqual(model[entryCollection: entryCollection_other.id], result)
@@ -69,7 +69,7 @@ final class AppModel_Update_Tests: AppModelTestCase {
         let entryCollection_other = model.createNewEntryCollection {
             $0.title = "other_title"
         }
-        switch model.updateEntryCollectionTitle(of: entryCollection.id, to: "other_title") {
+        switch model.attemptToUpdateEntryCollectionTitle(of: entryCollection.id, to: "other_title") {
         case .success(_):
             XCTFail("Expected to encounter a conflict, but did not")
         case .canceled:
@@ -87,7 +87,7 @@ final class AppModel_Update_Tests: AppModelTestCase {
         let keyword_other = model.createNewKeyword {
             $0.title = "other_title"
         }
-        switch model.updateKeywordTitle(of: keyword.id, to: "new_title") {
+        switch model.attemptToUpdateKeywordTitle(of: keyword.id, to: "new_title") {
         case .success(let result):
             XCTAssertEqual(model[keyword: keyword.id], result)
             XCTAssertNotEqual(model[keyword: keyword_other.id], result)
@@ -106,7 +106,7 @@ final class AppModel_Update_Tests: AppModelTestCase {
         let keyword_other = model.createNewKeyword {
             $0.title = "other_title"
         }
-        switch model.updateKeywordTitle(of: keyword.id, to: "other_title") {
+        switch model.attemptToUpdateKeywordTitle(of: keyword.id, to: "other_title") {
         case .success(_):
             XCTFail("Expected to encounter a conflict, but did not")
         case .canceled:

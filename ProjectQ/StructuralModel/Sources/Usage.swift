@@ -11,3 +11,9 @@ public struct Usage: Identifiable, Equatable, Codable, Sendable {
     public var value: String = ""
 }
 
+extension TaggedID<Usage> {
+    public var entityID: Entity.ID {
+        .usage(self)
+    }
+}
+

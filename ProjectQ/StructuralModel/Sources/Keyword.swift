@@ -10,3 +10,10 @@ public struct Keyword: Identifiable, Equatable, Codable, Sendable {
     public let id: TaggedID<Self>
     public var title: String = ""
 }
+
+extension TaggedID<Keyword> {
+    public var entityID: Entity.ID {
+        .keyword(self)
+    }
+}
+

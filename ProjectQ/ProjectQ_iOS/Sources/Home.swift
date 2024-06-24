@@ -22,46 +22,6 @@ struct Home {
             print("resetting toolbar")
         }
 
-        mutating func addAndPushNewEntry() -> EffectOf<Home> {
-                
-            switch model.addNewEntry(fromSpelling: toolbarText) {
-            case .canceled: return .none
-            case .conflicts(let conflictingEntries):
-                
-                guard let first = conflictingEntries.first else {
-                    assertionFailure()
-                    return .none
-                }
-                
-                destination = .addEntryConflictChoices(.addOrEditExisting(entry: first))
-                
-                return .none
-                
-            case .success(let newEntry):
-                
-                return resetSpellingAndPush(
-                    entry: newEntry.id,
-                    translationsEditorFocused: true
-                )
-                
-            }
-            
-        }
-
-        mutating func resetSpellingAndPush(entry: Entry.ID, translationsEditorFocused: Bool) -> EffectOf<Home> {
-
-            resetToolbarTextField()
-
-            return .run { send in
-                // add a little delay for the keyboard to finish dismissing
-                @Dependency(\.continuousClock) var clock
-                try await clock.sleep(for: .seconds(0.3))
-
-                await send(.shouldPushDetail(of: entry, translationsEditorFocused: translationsEditorFocused))
-            }
-
-        }
-
         @Shared(.model) var model
         @Presents var destination: Destination.State?
         
@@ -86,8 +46,10 @@ struct Home {
     @Reducer(state: .equatable)
     enum Destination {
         case alert(AlertState<Never>)
+        
         case deletionConfirmationChoices(ConfirmationDialogState<DeletionConfirmationChoice>)
         case addEntryConflictChoices(ConfirmationDialogState<AddEntryConflictChoice>)
+        
         case entryDetail(EntryDetail)
         case settingsEditor(SettingsEditor)
     }
@@ -211,8 +173,33 @@ struct Home {
                     return .none
                 }
                 
-                return state.addAndPushNewEntry()
-                
+                switch state.model.attemptToAddNewEntry(fromSpelling: state.toolbarText) {
+                case .canceled: return .none
+                case .conflicts(let conflictingEntries):
+                    
+                    guard let first = conflictingEntries.first else {
+                        assertionFailure()
+                        return .none
+                    }
+                    
+                    state.destination = .addEntryConflictChoices(.addOrEditExisting(entry: first))
+                    
+                    return .none
+                    
+                case .success(let newEntry):
+                    
+                    state.resetToolbarTextField()
+
+                    return .run { send in
+                        // add a little delay for the keyboard to finish dismissing
+                        @Dependency(\.continuousClock) var clock
+                        try await clock.sleep(for: .seconds(0.3))
+
+                        await send(.shouldPushDetail(of: newEntry.id, translationsEditorFocused: true))
+                    }
+                    
+                }
+
             case .tappedOutsideActiveToolbarTextField:
                 
                 state.resetToolbarTextField()
@@ -333,10 +320,10 @@ struct HomeStackRootView: View {
                 onLanguageUnavailable: { store.send(.textInputCouldNotMatchLanguage(id: $0)) },
                 onSaveButtonTapped: { store.send(.toolbarTextFieldSaveButtonTapped) },
                 onSubmit: { store.send(.toolbarTextFieldSubmitted) },
-                tappedViewBehindActiveToolbarTextField: { store.send(.tappedOutsideActiveToolbarTextField) },
-                autocapitalization: .none
+                tappedViewBehindActiveToolbarTextField: { store.send(.tappedOutsideActiveToolbarTextField) }
             )
         )
+        .environment(\.toolbarTextField.autocapitalization, .none)
         .navigationTitle(store.model.displayNameForDefaultNewEntryLanguage.capitalized)
         .onSubmit(of: .search) {
             store.send(.searchFieldCommitted)

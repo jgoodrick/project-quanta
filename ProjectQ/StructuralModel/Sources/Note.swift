@@ -10,3 +10,10 @@ public struct Note: Identifiable, Equatable, Codable, Sendable {
     public let id: TaggedID<Self>
     public var value: String = ""
 }
+
+extension TaggedID<Note> {
+    public var entityID: Entity.ID {
+        .note(self)
+    }
+}
+

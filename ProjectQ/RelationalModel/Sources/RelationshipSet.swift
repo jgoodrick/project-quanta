@@ -1,10 +1,9 @@
 
+import StructuralModel
+
 protocol RelationshipSet: Equatable, Mergeable {
     init()
-}
-
-extension RelationshipSet {
-    public var areEmpty: Bool { self == .init() }
+    var connectedEntities: Set<Entity.ID> { get }
 }
 
 extension Dictionary where Value: RelationshipSet {

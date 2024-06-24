@@ -20,20 +20,20 @@ extension Database {
         }
     }
     
-    public func containsRelationships(for entity: Entity.ID) -> Bool {
+    public func connectedEntities(for entity: Entity.ID) -> Set<Entity.ID> {
         switch entity {
         case .entry(let entry):
-            relationships.entries[entry]?.areEmpty ?? false
+            relationships.entries[entry]?.connectedEntities ?? []
         case .entryCollection(let entryCollection):
-            relationships.entryCollections[entryCollection]?.areEmpty ?? false
+            relationships.entryCollections[entryCollection]?.connectedEntities ?? []
         case .keyword(let keyword):
-            relationships.keywords[keyword]?.areEmpty ?? false
+            relationships.keywords[keyword]?.connectedEntities ?? []
         case .language(let language):
-            relationships.languages[language]?.areEmpty ?? false
+            relationships.languages[language]?.connectedEntities ?? []
         case .note(let note):
-            relationships.notes[note]?.areEmpty ?? false
+            relationships.notes[note]?.connectedEntities ?? []
         case .usage(let usage):
-            relationships.usages[usage]?.areEmpty ?? false
+            relationships.usages[usage]?.connectedEntities ?? []
         }
     }
     
