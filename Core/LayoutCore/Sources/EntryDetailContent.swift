@@ -5,7 +5,7 @@ import SwiftUI
 struct EntryDetailContent: View {
     let entry: Entry
     let displayTag: (Language) -> String
-    @State private var image: Image? = Image(systemName: "star.circle")
+    @State private var image: Image? = nil// Image(systemName: "star.circle")
     @State private var favorited: Bool = false
     @State private var keywords: [String] = [
         "noun", "plural", "masculine",
@@ -99,9 +99,9 @@ struct EntryDetailContent: View {
             VStack {
                 HStack {
                     
-                    Text(entry.spelling)
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
+                    EntrySpellingField(entry: entry) {
+                        print("entry spelling field long pressed")
+                    }
                     
                     PronunciationButton(available: true) {
                         print("tapped pronunciation button")
@@ -148,27 +148,7 @@ struct EntryDetailContent: View {
                             .foregroundStyle(.purple)
 
                             ForEach(translations) { translation in
-                                Menu {
-                                    Button("Edit Translation") {
-                                        print("tapped edit menu item for \(translation.value)")
-                                    }
-                                    Button("Go To") {
-                                        print("tapped go to menu item for \(translation.value)")
-                                    }
-                                } label: {
-                                    HStack {
-                                        Text(displayTag(translation.language))
-                                            .foregroundStyle(.background)
-                                            .padding(4)
-                                            .background(.secondary)
-                                            .clipShape(RoundedRectangle(cornerRadius: 6))
-                                        Text(translation.value)
-                                            .font(.title)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                    }
-                                } primaryAction: {
-                                    print("tapped \(translation.value)")
-                                }
+                                TranslationCell(translation: translation, displayTag: displayTag)
                             }
                         }
 
@@ -247,13 +227,70 @@ struct EntryDetailContent: View {
                         }
                         .foregroundStyle(.indigo)
                         
+                        Spacer(minLength: 32)
+                        
+                        Menu {
+                            Button {
+                                print("tapped the first additional context option")
+                            } label: {
+                                Label("first", systemImage: "star")
+                            }
+                            Button {
+                                print("tapped the second additioanl content option")
+                            } label: {
+                                Label("second", systemImage: "circle")
+                            }
+                        } label: {
+                            Text("Add more context")
+                        }
+                        .buttonStyle(.roundedTwoTone())
                     }
                     .padding(.horizontal)
                 }
-                .scrollIndicators(.hidden)
                 .safeAreaPadding(.bottom, 64)
+                .scrollIndicators(.hidden)
             }
         }
+    }
+}
+
+struct EntrySpellingField: View {
+    let entry: Entry
+    let onLongPress: () -> Void
+    var body: some View {
+        Text(entry.spelling)
+            .font(.largeTitle)
+            .fontWeight(.bold)
+            .onLongPressGesture(perform: onLongPress)
+    }
+}
+
+struct TranslationCell: View {
+    let translation: EntryDetailContent.Translation
+    let displayTag: (Language) -> String
+    var body: some View {
+        Menu {
+            Button("Edit Translation") {
+                print("tapped edit menu item for \(translation.value)")
+            }
+            Button("Go To") {
+                print("tapped go to menu item for \(translation.value)")
+            }
+        } label: {
+            HStack {
+                Text(displayTag(translation.language))
+                    .foregroundStyle(.background)
+                    .padding(4)
+                    .background(.secondary)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                Text(translation.value)
+                    .font(.title)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        } primaryAction: {
+            print("tapped \(translation.value)")
+        }
+        .foregroundStyle(.primary)
     }
 }
 
