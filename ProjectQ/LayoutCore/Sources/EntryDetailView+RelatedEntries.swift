@@ -2,7 +2,11 @@
 import SwiftUI
 
 struct EntryDetailRelatedEntriesSection: View {
+    
     @State var store: EntryDetailStore
+    
+    @Environment(\.entryDetail) var style
+
     var body: some View {
         Section {
             ScrollView(.horizontal) {
@@ -17,19 +21,45 @@ struct EntryDetailRelatedEntriesSection: View {
                 }
             }
         } header: {
-            SectionHeader(title: "See Also") {
-                AddRelatedEntryButton {
-                    store.send(.addRelatedEntryButtonTapped)
-                } onLongPressMenuEditButtonTapped: {
-                    store.send(.editRelatedEntriesButtonTapped)
+            Group {
+                if store.relatedEntries.isEmpty {
+                    AddRelatedEntryButton {
+                        store.send(.addRelatedEntryButtonTapped)
+                    }
+                } else {
+                    SectionHeader(title: "See Also") {
+                        AddRelatedEntryMenu {
+                            store.send(.addRelatedEntryButtonTapped)
+                        } onLongPressMenuEditButtonTapped: {
+                            store.send(.editRelatedEntriesButtonTapped)
+                        }
+                    }
                 }
             }
         }
-        .foregroundStyle(.indigo)
+        .foregroundStyle(style.primarySectionColors.relatedWords)
     }
 }
 
 struct AddRelatedEntryButton: View {
+    
+    var compact: Bool = false
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Label {
+                Text("Add Related Word")
+            } icon: {
+                Image(systemName: "link.badge.plus")
+            }
+        }
+        .buttonStyle(.roundedTwoTone())
+        .environment(\.roundedTwoToneButton.square, compact)
+    }
+}
+
+struct AddRelatedEntryMenu: View {
     
     let primaryAction: () -> Void
     let onLongPressMenuEditButtonTapped: () -> Void
@@ -41,16 +71,10 @@ struct AddRelatedEntryButton: View {
                 Button("Edit related words", action: onLongPressMenuEditButtonTapped)
             },
             label: {
-                Label {
-                    Text("Add Related Word")
-                } icon: {
-                    Image(systemName: "link.badge.plus")
-                }
+                AddRelatedEntryButton(compact: true, action: primaryAction)
             },
             primaryAction: primaryAction
         )
-        .buttonStyle(.roundedTwoTone())
-        .environment(\.roundedTwoToneButton.square, true)
     }
 }
 
@@ -86,4 +110,12 @@ struct IndividualRelatedEntryButton: View {
 
 #Preview("Populated") {
     EntryDetailRelatedEntriesSection(store: .mock)
+}
+
+#Preview("Empty-Contextualized") {
+    EntryDetailView(store: .init())
+}
+
+#Preview("Populated-Contextualized") {
+    EntryDetailView(store: .mock)
 }
