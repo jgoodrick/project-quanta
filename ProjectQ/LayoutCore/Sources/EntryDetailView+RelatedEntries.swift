@@ -33,7 +33,7 @@ struct EntryDetailRelatedEntriesSection: View {
     }
 }
 
-struct EntryDetailAddFirstRelatedEntriesButton: View {
+struct AddFirstRelatedEntriesButton: View {
         
     @State var store: EntryDetailStore
         
@@ -55,13 +55,12 @@ struct AddRelatedEntryButton: View {
     var body: some View {
         Button(action: action) {
             Label {
-                Text("Add Related")
+                Text("Related")
             } icon: {
                 Image(systemName: "link.badge.plus")
             }
         }
-        .buttonStyle(.roundedTwoTone())
-        .environment(\.roundedTwoToneButton.square, compact)
+        .buttonStyle(.roundedTwoTone(square: compact))
     }
 }
 
@@ -96,20 +95,8 @@ struct IndividualRelatedEntryButton: View {
 
     var body: some View {
         Group {
-            if editMode?.wrappedValue.isEditing == true {
-                Button(action: { }) {
-                    IndividualRelatedEntryButtonContent(relatedEntry: relatedEntry)
-                        .matchedGeometryEffect(id: "2", in: namespace)
-                }.disabled(true)
-                    .padding(.leading)
-                    .overlay(alignment: .topLeading) {
-                        Button(action: onEditModeRemoveButtonTapped) {
-                            Image(systemName: "x.circle.fill")
-                        }
-                        .buttonStyle(.plain)
-                    }
-                
-            } else {
+            if editMode.isNotEditing {
+
                 Menu(
                     content: {
                         Button("Go to this word", action: primaryAction)
@@ -120,11 +107,25 @@ struct IndividualRelatedEntryButton: View {
                     },
                     primaryAction: primaryAction
                 )
+
+            } else {
+                
+                Button(action: { }) {
+                    IndividualRelatedEntryButtonContent(relatedEntry: relatedEntry)
+                        .matchedGeometryEffect(id: "2", in: namespace)
+                }
+                .disabled(true)
+                .padding(.leading)
+                .overlay(alignment: .topLeading) {
+                    Button(action: onEditModeRemoveButtonTapped) {
+                        Image(systemName: "x.circle.fill")
+                    }
+                    .buttonStyle(.plain)
+                }
+
             }
         }
-        .buttonStyle(.roundedTwoTone(highlighted: false))
-        .environment(\.roundedTwoToneButton.square, false)
-        .environment(\.roundedTwoToneButton.dimension, .none)
+        .buttonStyle(.roundedTwoTone(highlighted: false, square: false))
     }
 }
 

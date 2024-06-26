@@ -48,27 +48,16 @@ struct EntryDetailExamplesSection: View {
     }
 }
 
-struct EntryDetailAddFirstExamplesButton: View {
+struct AddFirstExamplesButton: View {
         
     @State var store: EntryDetailStore
         
     @Environment(\.entryDetail) var style
 
     var body: some View {
-        AddExampleButton {
+        Button {
             store.send(.addExampleButtonTapped)
-        }
-        .foregroundStyle(style.primarySectionColors.examples)
-    }
-}
-
-struct AddExampleButton: View {
-    
-    var compact: Bool = false
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
+        } label: {
             Label {
                 Text("Add Example")
             } icon: {
@@ -76,7 +65,7 @@ struct AddExampleButton: View {
             }
         }
         .buttonStyle(.roundedTwoTone())
-        .environment(\.roundedTwoToneButton.square, compact)
+        .foregroundStyle(style.primarySectionColors.examples)
     }
 }
 
@@ -92,11 +81,15 @@ struct AddExampleMenu: View {
                 SuffixedEditButton("examples", additionalAction: onEditButtonTapped)
             },
             label: {
-                AddExampleButton(compact: true, action: primaryAction)
+                Label {
+                    Text("Add Example")
+                } icon: {
+                    Image(systemName: "text.badge.plus")
+                }
             },
             primaryAction: primaryAction
         )
-        .environment(\.roundedTwoToneButton.square, true)
+        .buttonStyle(.roundedTwoTone(square: true))
     }
 }
 

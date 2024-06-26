@@ -3,20 +3,24 @@ extension EntryDetailStore {
     
     static func log(action: Action) {
         switch action {
+        case .spellingTapped:
+            print("tapped the spelling")
         case .newSpellingCommitted(let value):
             print("committed the new spelling value: \(value)")
         case .imageAddButtonTapped:
-            print("tapped add new image menu button")
+            print("tapped add new image button")
         case .imageEditButtonTapped:
-            print("tapped edit image menu button")
+            print("tapped edit image button")
         case .imageRemoveButtonTapped:
-            print("tapped remove image menu button")
+            print("tapped remove image button")
+        case .pronunciationPlayButtonTapped:
+            print("tapped play pronunciation button")
         case .pronunciationAddButtonTapped:
-            print("tapped add new pronunciation menu button")
+            print("tapped add new pronunciation button")
         case .pronunciationEditButtonTapped:
-            print("tapped edit pronunciation menu button")
+            print("tapped edit pronunciation button")
         case .pronunciationRemoveButtonTapped:
-            print("tapped remove pronunciation menu button")
+            print("tapped remove pronunciation button")
         case .individualTagButtonTapped(let tag):
             print("\(tag.title) tag button tapped")
         case .individualTagEditButtonTapped(let tag):

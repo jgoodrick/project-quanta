@@ -42,7 +42,7 @@ struct EntryDetailCollectionsMembershipSection: View {
     }
 }
 
-struct EntryDetailAddFirstCollectionMembershipButton: View {
+struct AddFirstCollectionMembershipButton: View {
     
     @State var store: EntryDetailStore
         
@@ -64,13 +64,12 @@ struct AddToCollectionButton: View {
     var body: some View {
         Button(action: action) {
             Label {
-                Text("Add to collection")
+                Text("Collections")
             } icon: {
                 Image(systemName: "rectangle.stack.badge.plus")
             }
         }
-        .buttonStyle(.roundedTwoTone())
-        .environment(\.roundedTwoToneButton.square, compact)
+        .buttonStyle(.roundedTwoTone(square: compact))
     }
 }
 
@@ -82,7 +81,7 @@ struct AddToCollectionMembershipMenu: View {
     var body: some View {
         Menu(
             content: {
-                Button("Add to a collection", systemImage: "rectangle.stack.badge.plus", action: primaryAction)
+                AddToCollectionButton(action: primaryAction)
                 SuffixedEditButton("collection membership", additionalAction: onEditButtonTapped)
             },
             label: {
@@ -106,8 +105,22 @@ struct IndividualCollectionMembershipButton: View {
 
     var body: some View {
         Group {
-            if editMode?.wrappedValue.isEditing == true {
-                
+            if editMode.isNotEditing {
+
+                Menu(
+                    content: {
+                        Button("Go to this collection", action: primaryAction)
+                        Button("Remove from this collection", action: onRemoveButtonTapped)
+                    },
+                    label: {
+                        IndividualCollectionMembershipButtonContent(collection: collection)
+                            .matchedGeometryEffect(id: "2", in: namespace)
+                    },
+                    primaryAction: primaryAction
+                )
+
+            } else {
+
                 Button(action: { /* This is just for the button styling */ }) {
                     IndividualCollectionMembershipButtonContent(collection: collection)
                         .matchedGeometryEffect(id: "2", in: namespace)
@@ -121,23 +134,9 @@ struct IndividualCollectionMembershipButton: View {
                     .buttonStyle(.plain)
                 }
 
-            } else {
-                Menu(
-                    content: {
-                        Button("Go to this collection", action: primaryAction)
-                        Button("Remove from this collection", action: onRemoveButtonTapped)
-                    },
-                    label: {
-                        IndividualCollectionMembershipButtonContent(collection: collection)
-                            .matchedGeometryEffect(id: "2", in: namespace)
-                    },
-                    primaryAction: primaryAction
-                )
             }
         }
-        .buttonStyle(.roundedTwoTone(highlighted: false))
-        .environment(\.roundedTwoToneButton.square, false)
-        .environment(\.roundedTwoToneButton.dimension, .none)
+        .buttonStyle(.roundedTwoTone(highlighted: false, square: false))
     }
 }
 

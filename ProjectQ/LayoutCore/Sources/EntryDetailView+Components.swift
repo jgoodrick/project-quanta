@@ -22,6 +22,8 @@ struct SectionHeader<Icon: View>: View {
     let title: String
     let icon: () -> Icon
     
+    @Environment(\.editMode) var editMode
+
     var body: some View {
         HStack(alignment: .bottom) {
             
@@ -30,8 +32,11 @@ struct SectionHeader<Icon: View>: View {
                 .fontWeight(.medium)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
-            icon()
-            
+            if editMode.isNotEditing {
+                
+                icon()
+                
+            }
         }
     }
 }
@@ -50,18 +55,18 @@ struct SuffixedEditButton: View {
     @Environment(\.editMode) private var editMode
     
     var title: LocalizedStringKey {
-        if editMode?.wrappedValue.isEditing == true {
-            "Done editing"
-        } else {
+        if editMode.isNotEditing {
             "Edit \(suffix)"
+        } else {
+            "Done editing"
         }
     }
     
     func toggleEditMode() {
-        if editMode?.wrappedValue.isEditing == true {
-            editMode?.wrappedValue = .inactive
-        } else {
+        if editMode.isNotEditing {
             editMode?.wrappedValue = .active
+        } else {
+            editMode?.wrappedValue = .inactive
         }
     }
     
@@ -70,5 +75,11 @@ struct SuffixedEditButton: View {
             toggleEditMode()
             additionalAction()
         }
+    }
+}
+
+extension Optional where Wrapped == Binding<EditMode> {
+    var isNotEditing: Bool {
+        self?.wrappedValue.isEditing != true
     }
 }
