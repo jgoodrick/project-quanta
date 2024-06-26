@@ -112,9 +112,21 @@ struct EntryDetailView: View {
     }
 }
 
+public struct AppAccentColor: EnvironmentKey {
+    public static var defaultValue: Color = .black
+}
+
+extension EnvironmentValues {
+    var appAccentColor: Color {
+        get { self[AppAccentColor.self] }
+        set { self[AppAccentColor.self] = newValue }
+    }
+}
+
+
 public struct EntryDetailViewStyle: EnvironmentKey {
     public static var defaultValue: EntryDetailViewStyle = .init()
-    public var primarySectionColors: PrimarySectionColors = .uniform(.indigo)
+    public var primarySectionColors: PrimarySectionColors = .uniform(AppAccentColor.defaultValue)
     public struct PrimarySectionColors {
         public static func uniform(_ color: Color) -> Self {
             Self.init(
