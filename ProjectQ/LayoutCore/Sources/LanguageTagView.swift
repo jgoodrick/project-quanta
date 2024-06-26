@@ -25,7 +25,7 @@ struct LanguageTagView: View {
 
 public struct LanguageTagStyle: EnvironmentKey {
     public static var defaultValue: LanguageTagStyle = .init()
-    public var primaryColor: Color = .indigo.opacity(0.6)
+    public var primaryColor: Color = AppAccentColor.defaultValue.opacity(0.6)
 }
 
 extension EnvironmentValues {
