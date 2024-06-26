@@ -2,7 +2,11 @@
 import SwiftUI
 
 struct EntryDetailNotesSection: View {
+    
     @State var store: EntryDetailStore
+    
+    @Environment(\.entryDetail) var style
+
     var body: some View {
         Section {
             ForEach(store.notes) { note in
@@ -19,19 +23,45 @@ struct EntryDetailNotesSection: View {
                 }
             }
         } header: {
-            SectionHeader(title: "Notes") {
-                AddNoteButton {
-                    store.send(.addNoteButtonTapped)
-                } onLongPressMenuEditButtonTapped: {
-                    store.send(.editNotesButtonTapped)
+            Group {
+                if store.examples.isEmpty {
+                    AddNoteButton {
+                        store.send(.addNoteButtonTapped)
+                    }
+                } else {
+                    SectionHeader(title: "Notes") {
+                        AddNoteMenu {
+                            store.send(.addNoteButtonTapped)
+                        } onLongPressMenuEditButtonTapped: {
+                            store.send(.editNotesButtonTapped)
+                        }
+                    }
                 }
             }
-            .foregroundStyle(.purple)
+            .foregroundStyle(style.primarySectionColors.notes)
         }
     }
 }
 
 struct AddNoteButton: View {
+
+    var compact: Bool = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Label {
+                Text("Add Note")
+            } icon: {
+                Image(systemName: "pencil.tip.crop.circle.badge.plus")
+            }
+        }
+        .buttonStyle(.roundedTwoTone())
+        .environment(\.roundedTwoToneButton.square, compact)
+    }
+}
+
+struct AddNoteMenu: View {
     
     let primaryAction: () -> Void
     let onLongPressMenuEditButtonTapped: () -> Void
@@ -43,16 +73,10 @@ struct AddNoteButton: View {
                 Button("Edit notes", action: onLongPressMenuEditButtonTapped)
             },
             label: {
-                Label {
-                    Text("Add Note")
-                } icon: {
-                    Image(systemName: "pencil.tip.crop.circle.badge.plus")
-                }
+                AddNoteButton(compact: true, action: primaryAction)
             },
             primaryAction: primaryAction
         )
-        .buttonStyle(.roundedTwoTone())
-        .environment(\.roundedTwoToneButton.square, true)
     }
 }
 

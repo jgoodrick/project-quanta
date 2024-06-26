@@ -2,7 +2,11 @@
 import SwiftUI
 
 struct EntryDetailHeader: View {
+    
     @State var store: EntryDetailStore
+    
+    @Environment(\.entryDetail) var style
+    
     var body: some View {
         HStack {
             
@@ -15,15 +19,20 @@ struct EntryDetailHeader: View {
             } onLongPressMenuEditButtonTapped: {
                 store.send(.pronunciationEditButtonTapped)
             }
+            .foregroundStyle(style.primarySectionColors.header)
 
             Spacer()
             
-            AddToCollectionButton {
+            AdditionalContextButton {
+                store.send(.addNewPhotoButtonTapped)
+            } onAddPronunciationMenuButton: {
+                store.send(.addNewPronunciationButtonTapped)
+            } onAddToCollectionMenuButton: {
                 store.send(.addToCollectionButtonTapped)
-            } onLongPressMenuEditButtonTapped: {
+            } onEditCollectionMembershipMenuButton: {
                 store.send(.editCollectionMembershipButtonTapped)
             }
-            .foregroundStyle(.mint)
+            .foregroundStyle(style.primarySectionColors.header)
             
         }
     }
@@ -91,29 +100,32 @@ struct PronunciationButton: View {
         .buttonStyle(.roundedTwoTone())
         .environment(\.roundedTwoToneButton.square, true)
         .environment(\.adaptiveHighlightableTwoTone.lightMode.standard.background, .clear)
-        .foregroundStyle(.blue)
+        .environment(\.adaptiveHighlightableTwoTone.darkMode.standard.background, .clear)
     }
 }
 
-struct AddToCollectionButton: View {
+struct AdditionalContextButton: View {
     
-    let primaryAction: () -> Void
-    let onLongPressMenuEditButtonTapped: () -> Void
+    let onAddPhotoMenuButton: () -> Void
+    let onAddPronunciationMenuButton: () -> Void
+    let onAddToCollectionMenuButton: () -> Void
+    let onEditCollectionMembershipMenuButton: () -> Void
     
     var body: some View {
         Menu(
             content: {
-                Button("Add to a new collection", action: primaryAction)
-                Button("Edit collection membership", action: onLongPressMenuEditButtonTapped)
+                Button("Add a photo", systemImage: "photo.badge.plus", action: onAddPhotoMenuButton)
+                Button("Add a pronunciation", systemImage: "waveform.path.badge.plus", action: onAddPronunciationMenuButton)
+                Button("Add to a new collection", systemImage: "rectangle.stack.badge.plus", action: onAddToCollectionMenuButton)
+                Button("Edit collection membership", systemImage: "rectangle.stack.badge.minus", action: onEditCollectionMembershipMenuButton)
             },
             label: {
                 Label {
-                    Text("Add to Collection")
+                    Text("Additional Context")
                 } icon: {
-                    Image(systemName: "rectangle.stack.badge.plus")
+                    Image(systemName: "ellipsis.circle")
                 }
-            },
-            primaryAction: primaryAction
+            }
         )
         .buttonStyle(.roundedTwoTone())
         .environment(\.roundedTwoToneButton.square, true)

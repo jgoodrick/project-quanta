@@ -2,7 +2,11 @@
 import SwiftUI
 
 struct EntryDetailExamplesSection: View {
+    
     @State var store: EntryDetailStore
+    
+    @Environment(\.entryDetail) var style
+
     var body: some View {
         Section {
             ForEach(store.examples) { example in
@@ -29,19 +33,45 @@ struct EntryDetailExamplesSection: View {
                 }
             }
         } header: {
-            SectionHeader(title: "Examples") {
-                AddExampleButton {
-                    store.send(.addExampleButtonTapped)
-                } onLongPressMenuEditButtonTapped: {
-                    store.send(.editExamplesButtonTapped)
+            Group {
+                if store.examples.isEmpty {
+                    AddExampleButton {
+                        store.send(.addExampleButtonTapped)
+                    }
+                } else {
+                    SectionHeader(title: "Examples") {
+                        AddExampleMenu {
+                            store.send(.addExampleButtonTapped)
+                        } onLongPressMenuEditButtonTapped: {
+                            store.send(.editExamplesButtonTapped)
+                        }
+                    }
                 }
             }
-            .foregroundStyle(.indigo)
+            .foregroundStyle(style.primarySectionColors.examples)
         }
     }
 }
 
 struct AddExampleButton: View {
+    
+    var compact: Bool = false
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Label {
+                Text("Add Example")
+            } icon: {
+                Image(systemName: "text.badge.plus")
+            }
+        }
+        .buttonStyle(.roundedTwoTone())
+        .environment(\.roundedTwoToneButton.square, compact)
+    }
+}
+
+struct AddExampleMenu: View {
     
     let primaryAction: () -> Void
     let onLongPressMenuEditButtonTapped: () -> Void
@@ -53,15 +83,10 @@ struct AddExampleButton: View {
                 Button("Edit examples", action: onLongPressMenuEditButtonTapped)
             },
             label: {
-                Label {
-                    Text("Add Example")
-                } icon: {
-                    Image(systemName: "text.badge.plus")
-                }
+                AddExampleButton(compact: true, action: primaryAction)
             },
             primaryAction: primaryAction
         )
-        .buttonStyle(.roundedTwoTone())
         .environment(\.roundedTwoToneButton.square, true)
     }
 }
