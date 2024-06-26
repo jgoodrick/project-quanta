@@ -2,37 +2,71 @@
 import SwiftUI
 
 struct EntryDetailTagsSection: View {
+    
     @State var store: EntryDetailStore
+        
+    @Environment(\.entryDetail) var style
+
     var body: some View {
-        Section {
-            HStack {
-                ScrollView(.horizontal) {
+        Group {
+            if store.translations.isEmpty {
+                Section {
+                    
+                } header: {
+                    AddTagButton {
+                        store.send(.addTagButtonTapped)
+                    }
+                }
+            } else {
+                Section {
                     HStack {
-                        ForEach(store.tags) { tag in
-                            IndividualTagButton(tag: tag) {
-                                store.send(.individualTagButtonTapped(tag))
-                            } onLongPressMenuEditButtonTapped: {
-                                store.send(.individualTagEditButtonTapped(tag))
-                            } onLongPressMenuRemoveButtonTapped: {
-                                store.send(.individualTagRemoveButtonTapped(tag))
+                        ScrollView(.horizontal) {
+                            HStack {
+                                ForEach(store.tags) { tag in
+                                    IndividualTagButton(tag: tag) {
+                                        store.send(.individualTagButtonTapped(tag))
+                                    } onLongPressMenuEditButtonTapped: {
+                                        store.send(.individualTagEditButtonTapped(tag))
+                                    } onLongPressMenuRemoveButtonTapped: {
+                                        store.send(.individualTagRemoveButtonTapped(tag))
+                                    }
+                                }
                             }
+                        }
+                        .scrollClipDisabled()
+                        
+                        AddTagMenu {
+                            store.send(.addTagButtonTapped)
+                        } onLongPressMenuEditButtonTapped: {
+                            store.send(.editTagsButtonTapped)
                         }
                     }
                 }
-                .scrollClipDisabled()
-                
-                AddTagButton {
-                    store.send(.addTagButtonTapped)
-                } onLongPressMenuEditButtonTapped: {
-                    store.send(.editTagsButtonTapped)
-                }
             }
-            .foregroundStyle(.cyan)
         }
+        .foregroundStyle(style.primarySectionColors.tags)
     }
 }
 
 struct AddTagButton: View {
+    
+    var compact: Bool = false
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Label {
+                Text("Add Tag")
+            } icon: {
+                Image(systemName: "tag")
+            }
+        }
+        .buttonStyle(.roundedTwoTone())
+        .environment(\.roundedTwoToneButton.square, compact)
+    }
+}
+
+struct AddTagMenu: View {
     
     let primaryAction: () -> Void
     let onLongPressMenuEditButtonTapped: () -> Void
@@ -40,20 +74,14 @@ struct AddTagButton: View {
     var body: some View {
         Menu(
             content: {
-                Button("Add a new tag", action: primaryAction)
-                Button("Edit tags", action: onLongPressMenuEditButtonTapped)
+                Button("Add a new tag", systemImage: "plus", action: primaryAction)
+                Button("Edit tags", systemImage: "ellipses", action: onLongPressMenuEditButtonTapped)
             },
             label: {
-                Label {
-                    Text("Add Tag")
-                } icon: {
-                    Image(systemName: "tag")
-                }
+                AddTagButton(compact: true, action: primaryAction)
             },
             primaryAction: primaryAction
         )
-        .buttonStyle(.roundedTwoTone())
-        .environment(\.roundedTwoToneButton.square, true)
     }
 }
 

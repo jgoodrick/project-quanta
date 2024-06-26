@@ -7,6 +7,7 @@ struct LanguageTagView: View {
     let language: Language
     
     @Environment(\.languageNameFormatter) var formatter
+    @Environment(\.languageTag) var style
     
     var body: some View {
         Menu {
@@ -17,8 +18,20 @@ struct LanguageTagView: View {
                 .padding(4)
                 .background(.secondary)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
-                .foregroundStyle(.blue)
+                .foregroundStyle(style.primaryColor)
         }
+    }
+}
+
+public struct LanguageTagStyle: EnvironmentKey {
+    public static var defaultValue: LanguageTagStyle = .init()
+    public var primaryColor: Color = .indigo.opacity(0.6)
+}
+
+extension EnvironmentValues {
+    var languageTag: LanguageTagStyle {
+        get { self[LanguageTagStyle.self] }
+        set { self[LanguageTagStyle.self] = newValue }
     }
 }
 

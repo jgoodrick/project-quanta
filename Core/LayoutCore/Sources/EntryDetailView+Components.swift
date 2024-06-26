@@ -59,28 +59,3 @@ struct SectionHeader<Icon: View>: View {
         }
     }
 }
-
-struct AddAdditionalContextButton: View {
-    
-    let onAddNewPhoto: () -> Void
-    let onAddNewPronunciation: () -> Void
-    
-    var body: some View {
-        Menu(
-            content: {
-                Button("Add a new photo", systemImage: "photo.badge.plus", action: onAddNewPhoto)
-                Button("Add a new pronunciation", systemImage: "waveform.badge.plus", action: onAddNewPronunciation)
-            },
-            label: {
-                Label {
-                    Text("Add more context")
-                } icon: {
-                    Image(systemName: "ellipsis.circle")
-                }
-            }
-        )
-        .buttonStyle(.roundedTwoTone())
-        .environment(\.roundedTwoToneButton.square, false)
-    }
-}
-

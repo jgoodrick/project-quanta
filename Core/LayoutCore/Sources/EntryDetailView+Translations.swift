@@ -2,7 +2,11 @@
 import SwiftUI
 
 struct EntryDetailTranslationsSection: View {
+    
     @State var store: EntryDetailStore
+    
+    @Environment(\.entryDetail) var style
+
     var body: some View {
         Section {
             ForEach(store.translations) { translation in
@@ -23,19 +27,45 @@ struct EntryDetailTranslationsSection: View {
                 }
             }
         } header: {
-            SectionHeader(title: "Translations") {
-                AddTranslationButton {
-                    store.send(.addTranslationButtonTapped)
-                } onLongPressMenuEditButtonTapped: {
-                    store.send(.editTranslationsButtonTapped)
+            Group {
+                if store.translations.isEmpty {
+                    AddTranslationButton {
+                        store.send(.addTranslationButtonTapped)
+                    }
+                } else {
+                    SectionHeader(title: "Translations") {
+                        AddTranslationMenu {
+                            store.send(.addTranslationButtonTapped)
+                        } onLongPressMenuEditButtonTapped: {
+                            store.send(.editTranslationsButtonTapped)
+                        }
+                    }
                 }
             }
-            .foregroundStyle(.purple)
+            .foregroundStyle(style.primarySectionColors.translation)
         }
     }
 }
 
 struct AddTranslationButton: View {
+    
+    var compact: Bool = false
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            Label {
+                Text("Add Translation")
+            } icon: {
+                Image(systemName: "character.book.closed.fill")
+            }
+        }
+        .buttonStyle(.roundedTwoTone())
+        .environment(\.roundedTwoToneButton.square, compact)
+    }
+}
+
+struct AddTranslationMenu: View {
     
     let primaryAction: () -> Void
     var onLongPressMenuEditButtonTapped: () -> Void
@@ -47,16 +77,10 @@ struct AddTranslationButton: View {
                 Button("Edit translations", action: onLongPressMenuEditButtonTapped)
             },
             label: {
-                Label {
-                    Text("Add Translation")
-                } icon: {
-                    Image(systemName: "character.book.closed.fill")
-                }
+                AddTranslationButton(compact: true, action: primaryAction)
             },
             primaryAction: primaryAction
         )
-        .buttonStyle(.roundedTwoTone())
-        .environment(\.roundedTwoToneButton.square, true)
     }
 }
 
@@ -97,4 +121,12 @@ struct TranslationCell: View {
 
 #Preview("Populated") {
     EntryDetailTranslationsSection(store: .mock)
+}
+
+#Preview("Empty-Contextualized") {
+    EntryDetailView(store: .init())
+}
+
+#Preview("Populated-Contextualized") {
+    EntryDetailView(store: .mock)
 }
