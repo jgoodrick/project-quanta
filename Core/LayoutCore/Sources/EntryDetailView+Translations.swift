@@ -12,13 +12,16 @@ struct EntryDetailTranslationsSection: View {
             ForEach(store.translations) { translation in
                 TranslationCell(translation: translation) {
                     store.send(.translationTapped(translation))
-                } onLongPressMenuEditButtonTapped: {
+                } onEditButtonTapped: {
                     store.send(.translationEditButtonTapped(translation))
-                } onLongPressMenuGoToDetailButtonTapped: {
+                } onGoToDetailButtonTapped: {
                     store.send(.translationGoToDetailButtonTapped(translation))
-                } onLongPressMenuRemoveButtonTapped: {
+                } onRemoveButtonTapped: {
                     store.send(.translationRemoveButtonTapped(translation))
                 }
+            }
+            .onMove { indices, newOffset in
+                store.send(.translationsMoved(fromOffsets: indices, toOffset: newOffset))
             }
             .onDelete { indexSet in
                 indexSet.forEach {
@@ -27,23 +30,29 @@ struct EntryDetailTranslationsSection: View {
                 }
             }
         } header: {
-            Group {
-                if store.translations.isEmpty {
-                    AddTranslationButton {
-                        store.send(.addTranslationButtonTapped)
-                    }
-                } else {
-                    SectionHeader(title: "Translations") {
-                        AddTranslationMenu {
-                            store.send(.addTranslationButtonTapped)
-                        } onLongPressMenuEditButtonTapped: {
-                            store.send(.editTranslationsButtonTapped)
-                        }
-                    }
+            SectionHeader(title: "Translations") {
+                AddTranslationMenu {
+                    store.send(.addTranslationButtonTapped)
+                } onEditButtonTapped: {
+                    store.send(.editTranslationsButtonTapped)
                 }
             }
             .foregroundStyle(style.primarySectionColors.translation)
         }
+    }
+}
+
+struct EntryDetailAddFirstTranslationsButton: View {
+        
+    @State var store: EntryDetailStore
+        
+    @Environment(\.entryDetail) var style
+
+    var body: some View {
+        AddTranslationButton {
+            store.send(.addTranslationButtonTapped)
+        }
+        .foregroundStyle(style.primarySectionColors.translation)
     }
 }
 
@@ -68,13 +77,13 @@ struct AddTranslationButton: View {
 struct AddTranslationMenu: View {
     
     let primaryAction: () -> Void
-    var onLongPressMenuEditButtonTapped: () -> Void
+    var onEditButtonTapped: () -> Void
     
     var body: some View {
         Menu(
             content: {
                 Button("Add a new translation", action: primaryAction)
-                Button("Edit translations", action: onLongPressMenuEditButtonTapped)
+                SuffixedEditButton("translations", additionalAction: onEditButtonTapped)
             },
             label: {
                 AddTranslationButton(compact: true, action: primaryAction)
@@ -88,29 +97,41 @@ struct TranslationCell: View {
     
     let translation: EntryDetailStore.Translation
     let primaryAction: () -> Void
-    var onLongPressMenuEditButtonTapped: () -> Void
-    var onLongPressMenuGoToDetailButtonTapped: () -> Void
-    var onLongPressMenuRemoveButtonTapped: () -> Void
+    var onEditButtonTapped: () -> Void
+    var onGoToDetailButtonTapped: () -> Void
+    var onRemoveButtonTapped: () -> Void
     
+    @Environment(\.editMode) var editMode
+    
+    var isEditing: Bool { editMode?.wrappedValue.isEditing ?? false }
+
     var body: some View {
         HStack {
+            
             LanguageTagView(language: translation.language)
             
             Menu(
                 content: {
-                    Button("Edit this translation", action: onLongPressMenuEditButtonTapped)
-                    Button("Go to translation detail", action: onLongPressMenuGoToDetailButtonTapped)
-                    Button("Remove this translation", action: onLongPressMenuRemoveButtonTapped)
+                    Button("Edit this translation", action: onEditButtonTapped)
+                    Button("Go to translation detail", action: onGoToDetailButtonTapped)
+                    Button("Remove this translation", action: onRemoveButtonTapped)
                 },
                 label: {
-                    Text(translation.value)
-                        .font(.title)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    TranslationCellContent(translation: translation)
                 },
                 primaryAction: primaryAction
             )
         }
         .foregroundStyle(.primary)
+    }
+}
+
+struct TranslationCellContent: View {
+    let translation: EntryDetailStore.Translation
+    var body: some View {
+        Text(translation.value)
+            .font(.title)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 
@@ -123,10 +144,3 @@ struct TranslationCell: View {
     EntryDetailTranslationsSection(store: .mock)
 }
 
-#Preview("Empty-Contextualized") {
-    EntryDetailView(store: .init())
-}
-
-#Preview("Populated-Contextualized") {
-    EntryDetailView(store: .mock)
-}

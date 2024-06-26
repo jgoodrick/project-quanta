@@ -1,29 +1,6 @@
 
 import SwiftUI
 
-enum SplashImage: View {
-    case url(URL)
-    case data(Data)
-    case systemName(String)
-    
-    var body: some View {
-        switch self {
-        case .url(let url):
-            AsyncImage(url: url)
-        case .data(let data):
-            UIImage(data: data).map(Image.init(uiImage:))?
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-        case .systemName(let name):
-            Image(systemName: name)
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .padding(160)
-                .foregroundStyle(.white)
-        }
-    }
-}
-
 struct PlainList<Content: View>: View {
     var content: () -> Content
 
@@ -40,7 +17,6 @@ struct PlainList<Content: View>: View {
     }
 }
 
-
 struct SectionHeader<Icon: View>: View {
     
     let title: String
@@ -56,6 +32,43 @@ struct SectionHeader<Icon: View>: View {
             
             icon()
             
+        }
+    }
+}
+
+struct SuffixedEditButton: View {
+    init(_ suffix: LocalizedStringResource, systemImage: String = "pencil", additionalAction: @escaping () -> Void = { }) {
+        self.suffix = suffix
+        self.systemImage = systemImage
+        self.additionalAction = additionalAction
+    }
+    
+    let suffix: LocalizedStringResource
+    var systemImage: String
+    var additionalAction: () -> Void
+    
+    @Environment(\.editMode) private var editMode
+    
+    var title: LocalizedStringKey {
+        if editMode?.wrappedValue.isEditing == true {
+            "Done editing"
+        } else {
+            "Edit \(suffix)"
+        }
+    }
+    
+    func toggleEditMode() {
+        if editMode?.wrappedValue.isEditing == true {
+            editMode?.wrappedValue = .inactive
+        } else {
+            editMode?.wrappedValue = .active
+        }
+    }
+    
+    var body: some View {
+        Button(title, systemImage: systemImage) {
+            toggleEditMode()
+            additionalAction()
         }
     }
 }

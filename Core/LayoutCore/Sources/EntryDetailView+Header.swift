@@ -15,23 +15,32 @@ struct EntryDetailHeader: View {
             }
             
             PronunciationButton(pronunciation: store.pronunciation) {
-                store.send(.pronunciationButtonTapped)
-            } onLongPressMenuEditButtonTapped: {
+                store.send(.pronunciationAddButtonTapped)
+            } onEditButtonTapped: {
                 store.send(.pronunciationEditButtonTapped)
+            } onRemoveButtonTapped: {
+                store.send(.pronunciationRemoveButtonTapped)
             }
             .foregroundStyle(style.primarySectionColors.header)
 
             Spacer()
             
-            AdditionalContextButton {
-                store.send(.addNewPhotoButtonTapped)
-            } onAddPronunciationMenuButton: {
-                store.send(.addNewPronunciationButtonTapped)
-            } onAddToCollectionMenuButton: {
-                store.send(.addToCollectionButtonTapped)
-            } onEditCollectionMembershipMenuButton: {
-                store.send(.editCollectionMembershipButtonTapped)
-            }
+            AdditionalContextButton(
+                splashImage: SplashImageButton(image: store.image) {
+                    store.send(.imageAddButtonTapped)
+                } onEditButtonTapped: {
+                    store.send(.imageEditButtonTapped)
+                } onRemoveButtonTapped: {
+                    store.send(.imageRemoveButtonTapped)
+                },
+                pronunciation: PronunciationButton(pronunciation: store.pronunciation) {
+                    store.send(.pronunciationAddButtonTapped)
+                } onEditButtonTapped: {
+                    store.send(.pronunciationEditButtonTapped)
+                } onRemoveButtonTapped: {
+                    store.send(.pronunciationRemoveButtonTapped)
+                }
+            )
             .foregroundStyle(style.primarySectionColors.header)
             
         }
@@ -77,47 +86,84 @@ struct EntrySpellingField: View {
     }
 }
 
+struct SplashImageButton: View {
+    
+    let image: EntryDetailStore.SplashImage?
+    let onAddButtonTapped: () -> Void
+    let onEditButtonTapped: () -> Void
+    let onRemoveButtonTapped: () -> Void
+    
+    var body: some View {
+        Group {
+            if image != nil {
+                Menu(
+                    content: {
+                        Button("Edit image", systemImage: "pencil", action: onEditButtonTapped)
+                        Button("Remove image", systemImage: "trash", action: onRemoveButtonTapped)
+                    },
+                    label: {
+                        Label {
+                            Text("Image")
+                        } icon: {
+                            Image(systemName: "photo")
+                        }
+                    }
+                )
+            } else {
+                Button("Add an image", systemImage: "photo.badge.plus", action: onAddButtonTapped)
+            }
+        }
+        .buttonStyle(.roundedTwoTone())
+        .environment(\.roundedTwoToneButton.square, true)
+        .environment(\.adaptiveTwoTone.lightMode.standard.background, .clear)
+        .environment(\.adaptiveTwoTone.darkMode.standard.background, .clear)
+    }
+}
+
 struct PronunciationButton: View {
     
     let pronunciation: EntryDetailStore.Pronunciation?
-    let primaryAction: () -> Void
-    let onLongPressMenuEditButtonTapped: () -> Void
+    let onAddButtonTapped: () -> Void
+    let onEditButtonTapped: () -> Void
+    let onRemoveButtonTapped: () -> Void
     
     var body: some View {
-        Menu(
-            content: {
-                Button("Edit pronunciation", systemImage: "pencil", action: onLongPressMenuEditButtonTapped)
-            },
-            label: {
-                if pronunciation?.audio != nil {
-                    Image(systemName: "waveform.path")
-                } else {
-                    Image(systemName: "waveform.path.badge.plus")
-                }
-            },
-            primaryAction: primaryAction
-        )
+        Group {
+            if pronunciation != nil {
+                Menu(
+                    content: {
+                        Button("Edit pronunciation", systemImage: "pencil", action: onEditButtonTapped)
+                        Button("Remove pronunciation", systemImage: "trash", action: onRemoveButtonTapped)
+                    },
+                    label: {
+                        Label {
+                            Text("Pronunciation")
+                        } icon: {
+                            Image(systemName: "waveform.path")
+                        }
+                    }
+                )
+            } else {
+                Button("Add a pronunciation", systemImage: "waveform.path.badge.plus", action: onAddButtonTapped)
+            }
+        }
         .buttonStyle(.roundedTwoTone())
         .environment(\.roundedTwoToneButton.square, true)
-        .environment(\.adaptiveHighlightableTwoTone.lightMode.standard.background, .clear)
-        .environment(\.adaptiveHighlightableTwoTone.darkMode.standard.background, .clear)
+        .environment(\.adaptiveTwoTone.lightMode.standard.background, .clear)
+        .environment(\.adaptiveTwoTone.darkMode.standard.background, .clear)
     }
 }
 
 struct AdditionalContextButton: View {
     
-    let onAddPhotoMenuButton: () -> Void
-    let onAddPronunciationMenuButton: () -> Void
-    let onAddToCollectionMenuButton: () -> Void
-    let onEditCollectionMembershipMenuButton: () -> Void
+    let splashImage: SplashImageButton
+    let pronunciation: PronunciationButton
     
     var body: some View {
         Menu(
             content: {
-                Button("Add a photo", systemImage: "photo.badge.plus", action: onAddPhotoMenuButton)
-                Button("Add a pronunciation", systemImage: "waveform.path.badge.plus", action: onAddPronunciationMenuButton)
-                Button("Add to a new collection", systemImage: "rectangle.stack.badge.plus", action: onAddToCollectionMenuButton)
-                Button("Edit collection membership", systemImage: "rectangle.stack.badge.minus", action: onEditCollectionMembershipMenuButton)
+                splashImage
+                pronunciation
             },
             label: {
                 Label {

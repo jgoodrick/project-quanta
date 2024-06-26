@@ -5,20 +5,24 @@ extension EntryDetailStore {
         switch action {
         case .newSpellingCommitted(let value):
             print("committed the new spelling value: \(value)")
-        case .pronunciationButtonTapped:
-            print("tapped pronunciation button")
+        case .imageAddButtonTapped:
+            print("tapped add new image menu button")
+        case .imageEditButtonTapped:
+            print("tapped edit image menu button")
+        case .imageRemoveButtonTapped:
+            print("tapped remove image menu button")
+        case .pronunciationAddButtonTapped:
+            print("tapped add new pronunciation menu button")
         case .pronunciationEditButtonTapped:
-            print("tapped edit pronunciation")
-        case .addToCollectionButtonTapped:
-            print("tapped add to collection")
-        case .editCollectionMembershipButtonTapped:
-            print("tapped edit collection memberships")
+            print("tapped edit pronunciation menu button")
+        case .pronunciationRemoveButtonTapped:
+            print("tapped remove pronunciation menu button")
         case .individualTagButtonTapped(let tag):
             print("\(tag.title) tag button tapped")
         case .individualTagEditButtonTapped(let tag):
-            print("\(tag.title) tag button tapped")
+            print("\(tag.title) tag edit button tapped")
         case .individualTagRemoveButtonTapped(let tag):
-            print("\(tag.title) tag button tapped")
+            print("\(tag.title) tag remove button tapped")
         case .addTagButtonTapped:
             print("tapped add tag button")
         case .editTagsButtonTapped:
@@ -32,7 +36,9 @@ extension EntryDetailStore {
         case .translationRemoveButtonTapped(let translation):
             print("tapped remove translation: \(translation)")
         case .translationSwipedAndDeleted(let removed):
-            print("deleted \(removed.value)")
+            print("swiped and deleted \(removed.value)")
+        case .translationsMoved(let fromOffsets, let toOffset):
+            print("moved \(fromOffsets.count) item(s) to \(toOffset)")
         case .addTranslationButtonTapped:
             print("tapped add translation button")
         case .editTranslationsButtonTapped:
@@ -41,6 +47,8 @@ extension EntryDetailStore {
             print("tapped example: \(example.id)")
         case .exampleEditButtonTapped(let example):
             print("tapped edit example: \(example.id)")
+        case .examplesMoved(fromOffsets: let fromOffsets, toOffset: let toOffset):
+            print("moved \(fromOffsets.count) example(s) to \(toOffset)")
         case .exampleAddNewTranslationButtonTapped(let example):
             print("tapped add new translation to example: \(example.id)")
         case .exampleTranslationCellTapped(let translation):
@@ -50,7 +58,9 @@ extension EntryDetailStore {
         case .exampleTranslationRemoveButtonTapped(let translation):
             print("tapped remove example translation cell: \(translation.id)")
         case .exampleSwipedAndDeleted(let removed):
-            print("deleted \(removed.value)")
+            print("swiped and deleted \(removed.value)")
+        case .exampleTranslationsMoved(fromOffsets: let fromOffsets, toOffset: let toOffset):
+            print("moved \(fromOffsets.count) translation(s) to \(toOffset)")
         case .addExampleButtonTapped:
             print("tapped add example button")
         case .editExamplesButtonTapped:
@@ -60,23 +70,31 @@ extension EntryDetailStore {
         case .noteEditButtonTapped(let note):
             print("tapped edit note: \(note)")
         case .noteSwipedAndDeleted(let removed):
-            print("deleted \(removed.value)")
+            print("swiped and deleted \(removed.value)")
         case .addNoteButtonTapped:
             print("tapped add note button")
         case .editNotesButtonTapped:
             print("tapped edit notes button")
+        case .notesMoved(fromOffsets: let fromOffsets, toOffset: let toOffset):
+            print("moved \(fromOffsets.count) note(s) to \(toOffset)")
+        case .individualCollectionButtonTapped(let collection):
+            print("\(collection.title) collection button tapped")
+        case .individualCollectionEditButtonTapped(let collection):
+            print("\(collection.title) collection edit button tapped")
+        case .individualCollectionRemoveButtonTapped(let collection):
+            print("\(collection.title) collection remove button tapped")
+        case .addToCollectionButtonTapped:
+            print("tapped add collection button")
+        case .editEntryCollectionsMembershipButtonTapped:
+            print("tapped edit collections button")
         case .individualRelatedEntryCellTapped(let entry):
-            print("\(entry.spelling) button tapped")
+            print("\(entry.spelling) related entry button tapped")
         case .individualRelatedEntryRemoveButtonTapped(let entry):
-            print("\(entry.spelling) remove button tapped")
+            print("\(entry.spelling) related entry remove button tapped")
         case .addRelatedEntryButtonTapped:
             print("tapped add related word button")
         case .editRelatedEntriesButtonTapped:
             print("tapped edit related words button")
-        case .addNewPhotoButtonTapped:
-            print("tapped add new photo menu button")
-        case .addNewPronunciationButtonTapped:
-            print("tapped add new pronunciation menu button")
         }
     }
 
