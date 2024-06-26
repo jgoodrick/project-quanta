@@ -9,33 +9,39 @@ struct EntryDetailRelatedEntriesSection: View {
 
     var body: some View {
         Section {
-            ScrollView(.horizontal) {
-                HStack {
-                    ForEach(store.relatedEntries) { entry in
-                        IndividualRelatedEntryButton(relatedWord: entry) {
-                            store.send(.individualRelatedEntryCellTapped(entry))
-                        } onLongPressMenuRemoveButtonTapped: {
-                            store.send(.individualRelatedEntryRemoveButtonTapped(entry))
-                        }
+            TagLayout(alignment: .leading) {
+                ForEach(store.relatedEntries) { entry in
+                    IndividualRelatedEntryButton(relatedEntry: entry) {
+                        store.send(.individualRelatedEntryCellTapped(entry))
+                    } onRemoveButtonTapped: {
+                        store.send(.individualRelatedEntryRemoveButtonTapped(entry))
+                    } onEditModeRemoveButtonTapped: {
+                        store.send(.individualRelatedEntryRemoveButtonTapped(entry))
                     }
                 }
             }
         } header: {
-            Group {
-                if store.relatedEntries.isEmpty {
-                    AddRelatedEntryButton {
-                        store.send(.addRelatedEntryButtonTapped)
-                    }
-                } else {
-                    SectionHeader(title: "See Also") {
-                        AddRelatedEntryMenu {
-                            store.send(.addRelatedEntryButtonTapped)
-                        } onLongPressMenuEditButtonTapped: {
-                            store.send(.editRelatedEntriesButtonTapped)
-                        }
-                    }
+            SectionHeader(title: "See Also") {
+                AddRelatedEntryMenu {
+                    store.send(.addRelatedEntryButtonTapped)
+                } onEditButtonTapped: {
+                    store.send(.editRelatedEntriesButtonTapped)
                 }
             }
+        }
+        .foregroundStyle(style.primarySectionColors.relatedWords)
+    }
+}
+
+struct EntryDetailAddFirstRelatedEntriesButton: View {
+        
+    @State var store: EntryDetailStore
+        
+    @Environment(\.entryDetail) var style
+
+    var body: some View {
+        AddRelatedEntryButton {
+            store.send(.addRelatedEntryButtonTapped)
         }
         .foregroundStyle(style.primarySectionColors.relatedWords)
     }
@@ -49,7 +55,7 @@ struct AddRelatedEntryButton: View {
     var body: some View {
         Button(action: action) {
             Label {
-                Text("Add Related Word")
+                Text("Add Related")
             } icon: {
                 Image(systemName: "link.badge.plus")
             }
@@ -62,13 +68,13 @@ struct AddRelatedEntryButton: View {
 struct AddRelatedEntryMenu: View {
     
     let primaryAction: () -> Void
-    let onLongPressMenuEditButtonTapped: () -> Void
+    let onEditButtonTapped: () -> Void
     
     var body: some View {
         Menu(
             content: {
                 Button("Add a new related word", action: primaryAction)
-                Button("Edit related words", action: onLongPressMenuEditButtonTapped)
+                SuffixedEditButton("related", additionalAction: onEditButtonTapped)
             },
             label: {
                 AddRelatedEntryButton(compact: true, action: primaryAction)
@@ -80,29 +86,58 @@ struct AddRelatedEntryMenu: View {
 
 struct IndividualRelatedEntryButton: View {
     
-    let relatedWord: EntryDetailStore.RelatedEntry
+    let relatedEntry: EntryDetailStore.RelatedEntry
     let primaryAction: () -> Void
-    let onLongPressMenuRemoveButtonTapped: () -> Void
+    let onRemoveButtonTapped: () -> Void
+    let onEditModeRemoveButtonTapped: () -> Void
+
+    @Environment(\.editMode) var editMode
+    @Namespace var namespace
 
     var body: some View {
-        Menu(
-            content: {
-                Button("Go to this word", action: primaryAction)
-                Button("Disconnect these words", action: onLongPressMenuRemoveButtonTapped)
-            },
-            label: {
-                Text(relatedWord.spelling)
-                    .italic()
-                    .padding(6)
-            },
-            primaryAction: primaryAction
-        )
+        Group {
+            if editMode?.wrappedValue.isEditing == true {
+                Button(action: { }) {
+                    IndividualRelatedEntryButtonContent(relatedEntry: relatedEntry)
+                        .matchedGeometryEffect(id: "2", in: namespace)
+                }.disabled(true)
+                    .padding(.leading)
+                    .overlay(alignment: .topLeading) {
+                        Button(action: onEditModeRemoveButtonTapped) {
+                            Image(systemName: "x.circle.fill")
+                        }
+                        .buttonStyle(.plain)
+                    }
+                
+            } else {
+                Menu(
+                    content: {
+                        Button("Go to this word", action: primaryAction)
+                        Button("Disconnect these words", action: onRemoveButtonTapped)
+                    },
+                    label: {
+                        IndividualRelatedEntryButtonContent(relatedEntry: relatedEntry)
+                    },
+                    primaryAction: primaryAction
+                )
+            }
+        }
         .buttonStyle(.roundedTwoTone(highlighted: false))
         .environment(\.roundedTwoToneButton.square, false)
         .environment(\.roundedTwoToneButton.dimension, .none)
     }
 }
 
+struct IndividualRelatedEntryButtonContent: View {
+
+    let relatedEntry: EntryDetailStore.RelatedEntry
+    
+    var body: some View {
+        Text(relatedEntry.spelling)
+            .italic()
+            .padding(6)
+    }
+}
 
 #Preview("Empty") {
     EntryDetailRelatedEntriesSection(store: .init())
@@ -110,12 +145,4 @@ struct IndividualRelatedEntryButton: View {
 
 #Preview("Populated") {
     EntryDetailRelatedEntriesSection(store: .mock)
-}
-
-#Preview("Empty-Contextualized") {
-    EntryDetailView(store: .init())
-}
-
-#Preview("Populated-Contextualized") {
-    EntryDetailView(store: .mock)
 }

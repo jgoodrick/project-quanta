@@ -12,7 +12,7 @@ struct EntryDetailNotesSection: View {
             ForEach(store.notes) { note in
                 NoteCell(note: note) {
                     store.send(.noteCellTapped(note))
-                } onLongPressMenuEditButtonTapped: {
+                } onEditButtonTapped: {
                     store.send(.noteEditButtonTapped(note))
                 }
             }
@@ -22,24 +22,33 @@ struct EntryDetailNotesSection: View {
                     store.send(.noteSwipedAndDeleted(note))
                 }
             }
+            .onMove { indices, newOffset in
+                store.send(.notesMoved(fromOffsets: indices, toOffset: newOffset))
+            }
         } header: {
-            Group {
-                if store.examples.isEmpty {
-                    AddNoteButton {
-                        store.send(.addNoteButtonTapped)
-                    }
-                } else {
-                    SectionHeader(title: "Notes") {
-                        AddNoteMenu {
-                            store.send(.addNoteButtonTapped)
-                        } onLongPressMenuEditButtonTapped: {
-                            store.send(.editNotesButtonTapped)
-                        }
-                    }
+            SectionHeader(title: "Notes") {
+                AddNoteMenu {
+                    store.send(.addNoteButtonTapped)
+                } onEditButtonTapped: {
+                    store.send(.editNotesButtonTapped)
                 }
             }
             .foregroundStyle(style.primarySectionColors.notes)
         }
+    }
+}
+
+struct EntryDetailAddFirstNotesButton: View {
+        
+    @State var store: EntryDetailStore
+        
+    @Environment(\.entryDetail) var style
+
+    var body: some View {
+        AddNoteButton {
+            store.send(.addNoteButtonTapped)
+        }
+        .foregroundStyle(style.primarySectionColors.notes)
     }
 }
 
@@ -64,13 +73,13 @@ struct AddNoteButton: View {
 struct AddNoteMenu: View {
     
     let primaryAction: () -> Void
-    let onLongPressMenuEditButtonTapped: () -> Void
+    let onEditButtonTapped: () -> Void
 
     var body: some View {
         Menu(
             content: {
                 Button("Add a new note", action: primaryAction)
-                Button("Edit notes", action: onLongPressMenuEditButtonTapped)
+                SuffixedEditButton("notes", additionalAction: onEditButtonTapped)
             },
             label: {
                 AddNoteButton(compact: true, action: primaryAction)
@@ -84,12 +93,12 @@ struct NoteCell: View {
     
     let note: EntryDetailStore.IndexedNote
     let primaryAction: () -> Void
-    let onLongPressMenuEditButtonTapped: () -> Void
+    let onEditButtonTapped: () -> Void
     
     var body: some View {
         Menu(
             content: {
-                Button("Edit Note", action: onLongPressMenuEditButtonTapped)
+                Button("Edit Note", action: onEditButtonTapped)
             },
             label: {
                 HStack(alignment: .top) {
