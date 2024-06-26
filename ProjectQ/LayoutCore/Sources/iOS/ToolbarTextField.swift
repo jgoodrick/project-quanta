@@ -84,7 +84,7 @@ public struct ToolbarTextFieldView: View {
         .shadow(radius: 2, x: 1, y: 2)
         .frame(maxWidth: .infinity, alignment: .leading)
         .frame(height: style.customHeight ?? 70)
-        .synchronize($focused, $focusState)
+        .synchronize(focusState: $focusState, with: $focused)
     }
     
     struct SaveButton: View {

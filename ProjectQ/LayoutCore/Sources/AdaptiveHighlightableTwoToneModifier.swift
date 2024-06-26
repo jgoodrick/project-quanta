@@ -43,7 +43,7 @@ struct AdaptiveHighlightableTwoToneModifier: ViewModifier {
     }
     
     @Environment(\.colorScheme) var colorScheme
-    @Environment(\.adaptiveHighlightableTwoTone) var style
+    @Environment(\.adaptiveTwoTone) var style
     
     var foregroundStyle: some ShapeStyle {
         switch colorScheme {
@@ -125,7 +125,7 @@ struct AdaptiveHighlightableTwoToneModifier: ViewModifier {
 }
 
 extension EnvironmentValues {
-    var adaptiveHighlightableTwoTone: AdaptiveHighlightableTwoToneModifier.Style {
+    var adaptiveTwoTone: AdaptiveHighlightableTwoToneModifier.Style {
         get { self[AdaptiveHighlightableTwoToneModifier.Style.self] }
         set { self[AdaptiveHighlightableTwoToneModifier.Style.self] = newValue }
     }

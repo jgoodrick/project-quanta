@@ -8,7 +8,7 @@ struct RoundedTwoToneButton: ButtonStyle {
         static var defaultValue: Self = .init()
         var dimension: CGFloat? = 44
         var square: Bool = false
-        var fontWeight: Font.Weight? = .light
+        var fontWeight: Font.Weight? = .regular
     }
     
     @Environment(\.colorScheme) var colorScheme

@@ -10,18 +10,18 @@ struct EntryDetailExamplesSection: View {
     var body: some View {
         Section {
             ForEach(store.examples) { example in
-                ExampleCell(example: example) {
+                ExampleCell(store: store, example: example) {
                     store.send(.exampleTapped(example))
-                } onLongPressMenuEditButtonTapped: {
+                } onEditButtonTapped: {
                     store.send(.exampleEditButtonTapped(example))
-                } onLongPressMenuAddNewExampleTranslationButtonTapped: {
+                } onAddNewExampleTranslationButtonTapped: {
                     store.send(.exampleAddNewTranslationButtonTapped(example))
                 } translationCell: { translation in
                     ExampleTranslationCell(translation: translation) {
                         store.send(.exampleTranslationCellTapped(translation))
-                    } onLongPressMenuEditButtonTapped: {
+                    } onEditButtonTapped: {
                         store.send(.exampleTranslationEditButtonTapped(translation))
-                    } onLongPressMenuRemoveButtonTapped: {
+                    } onRemoveButtonTapped: {
                         store.send(.exampleTranslationRemoveButtonTapped(translation))
                     }
                 }
@@ -32,24 +32,33 @@ struct EntryDetailExamplesSection: View {
                     store.send(.exampleSwipedAndDeleted(example))
                 }
             }
+            .onMove { indices, newOffset in
+                store.send(.examplesMoved(fromOffsets: indices, toOffset: newOffset))
+            }
         } header: {
-            Group {
-                if store.examples.isEmpty {
-                    AddExampleButton {
-                        store.send(.addExampleButtonTapped)
-                    }
-                } else {
-                    SectionHeader(title: "Examples") {
-                        AddExampleMenu {
-                            store.send(.addExampleButtonTapped)
-                        } onLongPressMenuEditButtonTapped: {
-                            store.send(.editExamplesButtonTapped)
-                        }
-                    }
+            SectionHeader(title: "Examples") {
+                AddExampleMenu {
+                    store.send(.addExampleButtonTapped)
+                } onEditButtonTapped: {
+                    store.send(.editExamplesButtonTapped)
                 }
             }
             .foregroundStyle(style.primarySectionColors.examples)
         }
+    }
+}
+
+struct EntryDetailAddFirstExamplesButton: View {
+        
+    @State var store: EntryDetailStore
+        
+    @Environment(\.entryDetail) var style
+
+    var body: some View {
+        AddExampleButton {
+            store.send(.addExampleButtonTapped)
+        }
+        .foregroundStyle(style.primarySectionColors.examples)
     }
 }
 
@@ -74,13 +83,13 @@ struct AddExampleButton: View {
 struct AddExampleMenu: View {
     
     let primaryAction: () -> Void
-    let onLongPressMenuEditButtonTapped: () -> Void
+    let onEditButtonTapped: () -> Void
     
     var body: some View {
         Menu(
             content: {
                 Button("Add a new example", action: primaryAction)
-                Button("Edit examples", action: onLongPressMenuEditButtonTapped)
+                SuffixedEditButton("examples", additionalAction: onEditButtonTapped)
             },
             label: {
                 AddExampleButton(compact: true, action: primaryAction)
@@ -93,10 +102,11 @@ struct AddExampleMenu: View {
 
 struct ExampleCell: View {
     
+    let store: EntryDetailStore
     let example: EntryDetailStore.Example
     let primaryAction: () -> Void
-    let onLongPressMenuEditButtonTapped: () -> Void
-    let onLongPressMenuAddNewExampleTranslationButtonTapped: () -> Void
+    let onEditButtonTapped: () -> Void
+    let onAddNewExampleTranslationButtonTapped: () -> Void
     let translationCell: (EntryDetailStore.ExampleTranslation) -> ExampleTranslationCell
         
     var body: some View {
@@ -106,8 +116,8 @@ struct ExampleCell: View {
             VStack {
                 Menu(
                     content: {
-                        Button("Edit Example", action: onLongPressMenuEditButtonTapped)
-                        Button("Add new example translation", action: onLongPressMenuAddNewExampleTranslationButtonTapped)
+                        Button("Edit Example", action: onEditButtonTapped)
+                        Button("Add new example translation", action: onAddNewExampleTranslationButtonTapped)
                     },
                     label: {
                         Text(example.value)
@@ -119,6 +129,9 @@ struct ExampleCell: View {
                 
                 ForEach(example.translations) { translated in
                     translationCell(translated)
+                }
+                .onMove { indices, newOffset in
+                    store.send(.exampleTranslationsMoved(fromOffsets: indices, toOffset: newOffset))
                 }
             }
         }
@@ -132,8 +145,8 @@ struct ExampleTranslationCell: View {
     
     let translation: EntryDetailStore.ExampleTranslation
     let primaryAction: () -> Void
-    var onLongPressMenuEditButtonTapped: () -> Void
-    var onLongPressMenuRemoveButtonTapped: () -> Void
+    var onEditButtonTapped: () -> Void
+    var onRemoveButtonTapped: () -> Void
     
     var body: some View {
         HStack(alignment: .top) {
@@ -142,8 +155,8 @@ struct ExampleTranslationCell: View {
             
             Menu(
                 content: {
-                    Button("Edit this translation", action: onLongPressMenuEditButtonTapped)
-                    Button("Remove this translation", action: onLongPressMenuRemoveButtonTapped)
+                    Button("Edit this translation", action: onEditButtonTapped)
+                    Button("Remove this translation", action: onRemoveButtonTapped)
                 },
                 label: {
                     Text(translation.value)

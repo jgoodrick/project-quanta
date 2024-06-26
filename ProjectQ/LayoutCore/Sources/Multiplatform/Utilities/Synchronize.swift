@@ -3,12 +3,34 @@ import SwiftUI
 
 extension View {
     public func synchronize<Value: Equatable>(
-        _ first: Binding<Value>,
-        _ second: FocusState<Value>.Binding
+        _ lhs: Binding<Value>,
+        _ rhs: Binding<Value>
     ) -> some View {
         self
-            .onChange(of: first.wrappedValue) { _, new in second.wrappedValue = new }
-            .onChange(of: second.wrappedValue) { _, new in first.wrappedValue = new }
+            .onChange(of: lhs.wrappedValue) { _, new in rhs.wrappedValue = new }
+            .onChange(of: rhs.wrappedValue) { _, new in lhs.wrappedValue = new }
     }
 }
 
+extension View {
+    public func synchronize<Value: Equatable>(
+        focusState lhs: FocusState<Value>.Binding,
+        with rhs: Binding<Value>
+    ) -> some View {
+        self
+            .onChange(of: rhs.wrappedValue) { _, new in lhs.wrappedValue = new }
+            .onChange(of: lhs.wrappedValue) { _, new in rhs.wrappedValue = new }
+    }
+}
+
+extension View {
+    public func synchronize<Value: Equatable>(
+        optional lhs: Binding<Value>?,
+        with rhs: Binding<Value>,
+        fallback: Value
+    ) -> some View {
+        self
+            .onChange(of: rhs.wrappedValue) { _, new in lhs?.wrappedValue = new }
+            .onChange(of: lhs?.wrappedValue) { _, new in rhs.wrappedValue = new ?? fallback }
+    }
+}
