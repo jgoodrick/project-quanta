@@ -6,43 +6,39 @@ struct EntryDetailHeader: View {
     @State var store: EntryDetailStore
     
     @Environment(\.entryDetail) var style
+    @Environment(\.editMode) var editMode
     
     var body: some View {
         HStack {
             
             EntrySpellingField(spelling: store.spelling) {
+                store.send(.spellingTapped)
+            } onChangeCommitted: {
                 store.send(.newSpellingCommitted(value: $0))
             }
             
-            PronunciationButton(pronunciation: store.pronunciation) {
-                store.send(.pronunciationAddButtonTapped)
-            } onEditButtonTapped: {
-                store.send(.pronunciationEditButtonTapped)
-            } onRemoveButtonTapped: {
-                store.send(.pronunciationRemoveButtonTapped)
+            if store.pronunciation != nil {
+                PronunciationButton(
+                    compact: true,
+                    store: store
+                )
             }
-            .foregroundStyle(style.primarySectionColors.header)
 
             Spacer()
             
-            AdditionalContextButton(
-                splashImage: SplashImageButton(image: store.image) {
-                    store.send(.imageAddButtonTapped)
-                } onEditButtonTapped: {
-                    store.send(.imageEditButtonTapped)
-                } onRemoveButtonTapped: {
-                    store.send(.imageRemoveButtonTapped)
-                },
-                pronunciation: PronunciationButton(pronunciation: store.pronunciation) {
-                    store.send(.pronunciationAddButtonTapped)
-                } onEditButtonTapped: {
-                    store.send(.pronunciationEditButtonTapped)
-                } onRemoveButtonTapped: {
-                    store.send(.pronunciationRemoveButtonTapped)
-                }
-            )
-            .foregroundStyle(style.primarySectionColors.header)
-            
+            if editMode.isNotEditing {
+                AdditionalContextButton(
+                    splashImage: SplashImageButton(image: store.image) {
+                        store.send(.imageAddButtonTapped)
+                    } onEditButtonTapped: {
+                        store.send(.imageEditButtonTapped)
+                    } onRemoveButtonTapped: {
+                        store.send(.imageRemoveButtonTapped)
+                    },
+                    pronunciation: PronunciationButton(store: store)
+                )
+                .foregroundStyle(style.primarySectionColors.header)
+            }
         }
     }
 }
@@ -50,6 +46,7 @@ struct EntryDetailHeader: View {
 struct EntrySpellingField: View {
     
     let spelling: String
+    let onTap: () -> Void
     let onChangeCommitted: (String) -> Void
     
     @State private var draft: String = ""
@@ -76,10 +73,10 @@ struct EntrySpellingField: View {
                     }
                 }
             } else {
-                Text(spelling)
-                    .onLongPressGesture {
-                        beginEditing()
-                    }
+                Button(action: beginEditing) {
+                    Text(spelling)
+                }
+                .buttonStyle(.plain)
             }
         }
         .font(.largeTitle.bold())
@@ -113,42 +110,7 @@ struct SplashImageButton: View {
                 Button("Add an image", systemImage: "photo.badge.plus", action: onAddButtonTapped)
             }
         }
-        .buttonStyle(.roundedTwoTone())
-        .environment(\.roundedTwoToneButton.square, true)
-        .environment(\.adaptiveTwoTone.lightMode.standard.background, .clear)
-        .environment(\.adaptiveTwoTone.darkMode.standard.background, .clear)
-    }
-}
-
-struct PronunciationButton: View {
-    
-    let pronunciation: EntryDetailStore.Pronunciation?
-    let onAddButtonTapped: () -> Void
-    let onEditButtonTapped: () -> Void
-    let onRemoveButtonTapped: () -> Void
-    
-    var body: some View {
-        Group {
-            if pronunciation != nil {
-                Menu(
-                    content: {
-                        Button("Edit pronunciation", systemImage: "pencil", action: onEditButtonTapped)
-                        Button("Remove pronunciation", systemImage: "trash", action: onRemoveButtonTapped)
-                    },
-                    label: {
-                        Label {
-                            Text("Pronunciation")
-                        } icon: {
-                            Image(systemName: "waveform.path")
-                        }
-                    }
-                )
-            } else {
-                Button("Add a pronunciation", systemImage: "waveform.path.badge.plus", action: onAddButtonTapped)
-            }
-        }
-        .buttonStyle(.roundedTwoTone())
-        .environment(\.roundedTwoToneButton.square, true)
+        .buttonStyle(.roundedTwoTone(square: true))
         .environment(\.adaptiveTwoTone.lightMode.standard.background, .clear)
         .environment(\.adaptiveTwoTone.darkMode.standard.background, .clear)
     }
@@ -173,8 +135,7 @@ struct AdditionalContextButton: View {
                 }
             }
         )
-        .buttonStyle(.roundedTwoTone())
-        .environment(\.roundedTwoToneButton.square, true)
+        .buttonStyle(.roundedTwoTone(square: true))
     }
 }
 

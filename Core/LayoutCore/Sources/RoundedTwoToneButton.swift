@@ -5,27 +5,31 @@ struct RoundedTwoToneButton: ButtonStyle {
     
     var highlighted: Bool = false
     struct Style: EnvironmentKey, Sendable {
-        static let defaultValue: Self = .init()
+        static var defaultValue: Self = .init()
         var dimension: CGFloat? = 44
         var square: Bool = false
+        var maxWidth: CGFloat? = .infinity
+        var height: CGFloat?
+        var maxHeight: CGFloat? = .infinity
+        var horizontalPadding: CGFloat = 8
+        var verticalPadding: CGFloat = 0
+        var alignment: Alignment = .center
         var fontWeight: Font.Weight? = .regular
     }
     
     @Environment(\.colorScheme) var colorScheme
     @Environment(\.roundedTwoToneButton) var style
     
-    var foregroundMaxDimension: CGFloat? {
-        style.dimension != nil ? .infinity : .none
-    }
-    
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .frame(maxWidth: foregroundMaxDimension, maxHeight: foregroundMaxDimension)
+            .frame(maxWidth: style.maxWidth, maxHeight: style.maxHeight, alignment: style.alignment)
+            .padding(.horizontal, style.horizontalPadding)
+            .padding(.vertical, style.verticalPadding)
             .modifier(AdaptiveHighlightableTwoToneModifier(highlighted: highlighted))
             .clipShape(.buttonBorder)
             .opacity(configuration.isPressed ? 0.6 : 1.0)
-            .labelStyle(iconOnly: style.square)
-            .frame(width: style.square ? style.dimension : nil, height: style.dimension)
+            .labelStyle(iconOnly: square != nil)
+            .frame(width: square ?? style.width, height: square ?? style.height)
             .fontWeight(style.fontWeight)
     }
 }
@@ -49,8 +53,8 @@ extension View {
 }
 
 extension ButtonStyle where Self == RoundedTwoToneButton {
-    static func roundedTwoTone(highlighted: Bool = false) -> Self {
-        Self(highlighted: highlighted)
+    static func roundedTwoTone(highlighted: Bool = false, square: Bool = false) -> Self {
+        Self(highlighted: highlighted, square: square ? 44 : .none)
     }
 }
 

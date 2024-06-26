@@ -38,7 +38,7 @@ struct EntryDetailNotesSection: View {
     }
 }
 
-struct EntryDetailAddFirstNotesButton: View {
+struct AddFirstNotesButton: View {
         
     @State var store: EntryDetailStore
         
@@ -60,13 +60,12 @@ struct AddNoteButton: View {
     var body: some View {
         Button(action: action) {
             Label {
-                Text("Add Note")
+                Text("Note")
             } icon: {
                 Image(systemName: "pencil.tip.crop.circle.badge.plus")
             }
         }
-        .buttonStyle(.roundedTwoTone())
-        .environment(\.roundedTwoToneButton.square, compact)
+        .buttonStyle(.roundedTwoTone(square: compact))
     }
 }
 

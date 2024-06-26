@@ -30,8 +30,7 @@ struct FavoriteButton: View {
                 Image(systemName: iconSystemName)
             }
         }
-        .buttonStyle(.roundedTwoTone(highlighted: favorited))
-        .environment(\.roundedTwoToneButton.square, true)
+        .buttonStyle(.roundedTwoTone(highlighted: favorited, square: true))
         .foregroundStyle(.red)
     }
 }
