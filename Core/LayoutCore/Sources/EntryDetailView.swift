@@ -20,18 +20,24 @@ class EntryDetailStore {
     var relatedEntries: [RelatedEntry] = []
     var onAction: (Action) -> Void = { EntryDetailStore.log(action: $0) }
     var editMode: EditMode = .inactive
+    var spellingFocused: Bool = false
     
     func send(_ action: Action) {
+        if case .spellingTapped = action { } else {
+            
+        }
         onAction(action)
     }
 
     enum Action {
+        case spellingTapped
         case newSpellingCommitted(value: String)
         
         case imageAddButtonTapped
         case imageEditButtonTapped
         case imageRemoveButtonTapped
         
+        case pronunciationPlayButtonTapped
         case pronunciationAddButtonTapped
         case pronunciationEditButtonTapped
         case pronunciationRemoveButtonTapped
@@ -112,17 +118,17 @@ struct EntryDetailView: View {
         Group {
             switch context {
             case .tags:
-                if store.tags.isEmpty { EntryDetailAddFirstTagButton(store: store) }
+                if store.tags.isEmpty { AddFirstTagButton(store: store) }
             case .translations:
-                if store.translations.isEmpty { EntryDetailAddFirstTranslationsButton(store: store) }
+                if store.translations.isEmpty { AddFirstTranslationsButton(store: store) }
             case .examples:
-                if store.examples.isEmpty { EntryDetailAddFirstExamplesButton(store: store) }
+                if store.examples.isEmpty { AddFirstExamplesButton(store: store) }
             case .notes:
-                if store.notes.isEmpty { EntryDetailAddFirstNotesButton(store: store) }
+                if store.notes.isEmpty { AddFirstNotesButton(store: store) }
             case .collections:
-                if store.collectionsMembership.isEmpty { EntryDetailAddFirstCollectionMembershipButton(store: store) }
+                if store.collectionsMembership.isEmpty { AddFirstCollectionMembershipButton(store: store) }
             case .relatedEntries:
-                if store.relatedEntries.isEmpty { EntryDetailAddFirstRelatedEntriesButton(store: store) }
+                if store.relatedEntries.isEmpty { AddFirstRelatedEntriesButton(store: store) }
             }
         }
     }
@@ -150,11 +156,16 @@ struct EntryDetailView: View {
 
                     Spacer()
                     
-                    LazyVGrid(columns: [.init(), .init()]) {
-                        ForEach(EntryDetailStore.ContextSection.allCases) {
-                            addFirst(context: $0)
+                    if editMode.isNotEditing {
+                        LazyVGrid(columns: [.init(), .init()]) {
+                            ForEach(EntryDetailStore.ContextSection.unpopulatedSuggestions) {
+                                addFirst(context: $0)
+                            }
+                            if store.pronunciation == nil { PronunciationButton(store: store) }
                         }
+                        .environment(\.roundedTwoToneButton.verticalPadding, 32)
                     }
+                    
                 }
                 .scrollIndicators(.hidden)
 
@@ -179,19 +190,13 @@ extension EnvironmentValues {
 
 public struct EntryDetailViewStyle: EnvironmentKey {
     public static var defaultValue: EntryDetailViewStyle = .init()
-    public var horizontalListMaskStops: [Color] = {
-        var result: [Color] = []
-        (0..<6).forEach { _ in
-            result.append(.black)
-        }
-        result.append(.clear)
-        return result
-    }()
+    public var buttonTextAlignment: HorizontalAlignment = .leading
     public var primarySectionColors: PrimarySectionColors = .uniform(AppAccentColor.defaultValue)
     public struct PrimarySectionColors {
         public static func uniform(_ color: Color) -> Self {
             Self.init(
                 header: color,
+                pronunciation: color,
                 tags: color,
                 translation: color,
                 examples: color,
@@ -203,6 +208,7 @@ public struct EntryDetailViewStyle: EnvironmentKey {
         }
         
         public var header: Color
+        public var pronunciation: Color
         public var tags: Color
         public var translation: Color
         public var examples: Color
@@ -225,8 +231,8 @@ extension EnvironmentValues {
 }
 
 #Preview("Populated") {
-//    NavigationStack {
-//        Text("Root").navigationDestination(isPresented: .constant(true)) {
+    NavigationStack {
+        Text("Root").navigationDestination(isPresented: .constant(true)) {
             EntryDetailView(store: .mockAll(
                 image: .none,
                 except: [
@@ -239,6 +245,6 @@ extension EnvironmentValues {
                 ]
             ))
             .toolbar { EditButton() }
-//        }
-//    }
+        }
+    }
 }

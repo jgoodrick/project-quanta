@@ -12,6 +12,16 @@ extension EntryDetailStore {
         case notes
         case collections
         case relatedEntries
+        static var unpopulatedSuggestions: [Self] {
+            [
+                .translations,
+                .examples,
+                .tags,
+                .notes,
+                .collections,
+                .relatedEntries,
+            ]
+        }
     }
     
     enum SplashImage: View {

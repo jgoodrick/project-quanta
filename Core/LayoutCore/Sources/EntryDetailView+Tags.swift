@@ -6,6 +6,7 @@ struct EntryDetailTagsSection: View {
     @State var store: EntryDetailStore
         
     @Environment(\.entryDetail) var style
+    @Environment(\.editMode) var editMode
     
     var body: some View {
         Section {
@@ -26,10 +27,12 @@ struct EntryDetailTagsSection: View {
                 
                 Spacer(minLength: 8)
                 
-                AddTagMenu {
-                    store.send(.addTagButtonTapped)
-                } onEditButtonTapped: {
-                    store.send(.editTagsButtonTapped)
+                if editMode.isNotEditing {
+                    AddTagMenu {
+                        store.send(.addTagButtonTapped)
+                    } onEditButtonTapped: {
+                        store.send(.editTagsButtonTapped)
+                    }
                 }
             }
         }
@@ -37,7 +40,7 @@ struct EntryDetailTagsSection: View {
     }
 }
 
-struct EntryDetailAddFirstTagButton: View {
+struct AddFirstTagButton: View {
     
     @State var store: EntryDetailStore
         
@@ -59,13 +62,12 @@ struct AddTagButton: View {
     var body: some View {
         Button(action: action) {
             Label {
-                Text("Add Tag")
+                Text("Tag")
             } icon: {
                 Image(systemName: "tag")
             }
         }
-        .buttonStyle(.roundedTwoTone())
-        .environment(\.roundedTwoToneButton.square, compact)
+        .buttonStyle(.roundedTwoTone(square: compact))
     }
 }
 
@@ -101,22 +103,8 @@ struct IndividualTagButton: View {
 
     var body: some View {
         Group {
-            if editMode?.wrappedValue.isEditing == true {
+            if editMode.isNotEditing {
                 
-                Button(action: { /* This is just for the button styling */ }) {
-                    IndividualTagButtonContent(tag: tag)
-                        .matchedGeometryEffect(id: "2", in: namespace)
-                }
-                .disabled(true)
-                .padding(.leading)
-                .overlay(alignment: .topLeading) {
-                    Button(action: onEditModeRemoveButtonTapped) {
-                        Image(systemName: "x.circle.fill")
-                    }
-                    .buttonStyle(.plain)
-                }
-
-            } else {
                 Menu(
                     content: {
                         Button("Go to this tag", action: primaryAction)
@@ -129,11 +117,25 @@ struct IndividualTagButton: View {
                     },
                     primaryAction: primaryAction
                 )
+
+            } else {
+
+                Button(action: { /* This is just for the button styling */ }) {
+                    IndividualTagButtonContent(tag: tag)
+                        .matchedGeometryEffect(id: "2", in: namespace)
+                }
+                .disabled(true)
+                .padding(.leading)
+                .overlay(alignment: .topLeading) {
+                    Button(action: onEditModeRemoveButtonTapped) {
+                        Image(systemName: "x.circle.fill")
+                    }
+                    .buttonStyle(.plain)
+                }
+                
             }
         }
-        .buttonStyle(.roundedTwoTone(highlighted: false))
-        .environment(\.roundedTwoToneButton.square, false)
-        .environment(\.roundedTwoToneButton.dimension, .none)
+        .buttonStyle(.roundedTwoTone(highlighted: false, square: false))
     }
 }
 

@@ -42,7 +42,7 @@ struct EntryDetailTranslationsSection: View {
     }
 }
 
-struct EntryDetailAddFirstTranslationsButton: View {
+struct AddFirstTranslationsButton: View {
         
     @State var store: EntryDetailStore
         
@@ -64,13 +64,12 @@ struct AddTranslationButton: View {
     var body: some View {
         Button(action: action) {
             Label {
-                Text("Add Translation")
+                Text("Translate")
             } icon: {
                 Image(systemName: "character.book.closed.fill")
             }
         }
-        .buttonStyle(.roundedTwoTone())
-        .environment(\.roundedTwoToneButton.square, compact)
+        .buttonStyle(.roundedTwoTone(square: compact))
     }
 }
 
@@ -103,8 +102,6 @@ struct TranslationCell: View {
     
     @Environment(\.editMode) var editMode
     
-    var isEditing: Bool { editMode?.wrappedValue.isEditing ?? false }
-
     var body: some View {
         HStack {
             
