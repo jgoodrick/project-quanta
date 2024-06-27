@@ -11,11 +11,7 @@ struct EntryDetailHeader: View {
     var body: some View {
         HStack {
             
-            EntrySpellingField(spelling: store.spelling) {
-                store.send(.spellingTapped)
-            } onChangeCommitted: {
-                store.send(.newSpellingCommitted(value: $0))
-            }
+            EntrySpellingField(store: store)
             
             if store.pronunciation != nil {
                 PronunciationButton(
@@ -26,18 +22,21 @@ struct EntryDetailHeader: View {
 
             Spacer()
             
-            if editMode.isNotEditing {
-                AdditionalContextButton(
-                    splashImage: SplashImageButton(image: store.image) {
-                        store.send(.imageAddButtonTapped)
-                    } onEditButtonTapped: {
-                        store.send(.imageEditButtonTapped)
-                    } onRemoveButtonTapped: {
-                        store.send(.imageRemoveButtonTapped)
+            if editMode.isNotEditing, !store.unpopulatedAdditionalContext.isEmpty {
+                Menu(
+                    content: {
+                        EntryDetailUnpopulatedAdditionalContext(store: store)
                     },
-                    pronunciation: PronunciationButton(store: store)
+                    label: {
+                        Label {
+                            Text("Additional Context")
+                        } icon: {
+                            Image(systemName: "ellipsis.circle")
+                        }
+                    }
                 )
-                .foregroundStyle(style.primarySectionColors.header)
+                .buttonStyle(.roundedTwoTone(square: true))
+                .foregroundStyle(style.primarySectionColors.additionalContext)
             }
         }
     }
@@ -45,100 +44,33 @@ struct EntryDetailHeader: View {
 
 struct EntrySpellingField: View {
     
-    let spelling: String
-    let onTap: () -> Void
-    let onChangeCommitted: (String) -> Void
+    @State var store: EntryDetailStore
     
-    @State private var draft: String = ""
-    @State private var isEditing: Bool = false
+    @FocusState private var focused: Bool
     
     private func beginEditing() {
-        draft = spelling
-        isEditing = true
+        store.draftSpelling = store.spelling
+        focused = true
     }
     
     private func reset() {
-        isEditing = false
-        draft = ""
+        focused = false
+        store.draftSpelling = ""
     }
     
     var body: some View {
-        Group {
-            if isEditing {
-                TextField("Spelling", text: $draft) {
-                    defer { reset() }
-                    let committed = draft
-                    if committed != spelling {
-                        onChangeCommitted(committed)
-                    }
-                }
-            } else {
-                Button(action: beginEditing) {
-                    Text(spelling)
-                }
-                .buttonStyle(.plain)
+        TextField("Spelling", text: $store.draftSpelling) {
+            defer { reset() }
+            let committed = store.draftSpelling
+            if committed != store.spelling {
+                store.send(.newSpellingCommitted(value: committed))
             }
         }
+        .focused($focused)
         .font(.largeTitle.bold())
+        .synchronize(focusState: $focused, with: $store.spellingFocused)
     }
 }
-
-struct SplashImageButton: View {
-    
-    let image: EntryDetailStore.SplashImage?
-    let onAddButtonTapped: () -> Void
-    let onEditButtonTapped: () -> Void
-    let onRemoveButtonTapped: () -> Void
-    
-    var body: some View {
-        Group {
-            if image != nil {
-                Menu(
-                    content: {
-                        Button("Edit image", systemImage: "pencil", action: onEditButtonTapped)
-                        Button("Remove image", systemImage: "trash", action: onRemoveButtonTapped)
-                    },
-                    label: {
-                        Label {
-                            Text("Image")
-                        } icon: {
-                            Image(systemName: "photo")
-                        }
-                    }
-                )
-            } else {
-                Button("Add an image", systemImage: "photo.badge.plus", action: onAddButtonTapped)
-            }
-        }
-        .buttonStyle(.roundedTwoTone(square: true))
-        .environment(\.adaptiveTwoTone.lightMode.standard.background, .clear)
-        .environment(\.adaptiveTwoTone.darkMode.standard.background, .clear)
-    }
-}
-
-struct AdditionalContextButton: View {
-    
-    let splashImage: SplashImageButton
-    let pronunciation: PronunciationButton
-    
-    var body: some View {
-        Menu(
-            content: {
-                splashImage
-                pronunciation
-            },
-            label: {
-                Label {
-                    Text("Additional Context")
-                } icon: {
-                    Image(systemName: "ellipsis.circle")
-                }
-            }
-        )
-        .buttonStyle(.roundedTwoTone(square: true))
-    }
-}
-
 
 #Preview("Empty") {
     EntryDetailHeader(store: .init())

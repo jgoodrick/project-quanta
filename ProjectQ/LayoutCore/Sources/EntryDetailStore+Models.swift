@@ -24,6 +24,18 @@ extension EntryDetailStore {
         }
     }
     
+    enum AdditionalContext: CaseIterable, Identifiable {
+        var id: Self { self }
+        case pronunciation
+        case image
+        static var unpopulatedSuggestions: [Self] {
+            [
+                .pronunciation,
+                .image,
+            ]
+        }
+    }
+    
     enum SplashImage: View {
         case url(URL)
         case data(Data)
