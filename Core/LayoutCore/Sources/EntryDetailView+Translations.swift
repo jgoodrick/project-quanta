@@ -25,8 +25,7 @@ struct EntryDetailTranslationsSection: View {
             }
             .onDelete { indexSet in
                 indexSet.forEach {
-                    let translation = store.translations.remove(at: $0)
-                    store.send(.translationSwipedAndDeleted(translation))
+                    store.send(.translationSwipedAndDeleted(store.translations[$0]))
                 }
             }
         } header: {
@@ -134,7 +133,7 @@ struct TranslationCellContent: View {
 
 
 #Preview("Empty") {
-    EntryDetailTranslationsSection(store: .init())
+    EntryDetailTranslationsSection(store: .mockEmpty)
 }
 
 #Preview("Populated") {

@@ -141,7 +141,7 @@ struct IndividualRelatedEntryButtonContent: View {
 }
 
 #Preview("Empty") {
-    EntryDetailRelatedEntriesSection(store: .init())
+    EntryDetailRelatedEntriesSection(store: .mockEmpty)
 }
 
 #Preview("Populated") {

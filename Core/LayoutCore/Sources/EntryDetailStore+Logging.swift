@@ -3,10 +3,8 @@ extension EntryDetailStore {
     
     static func log(action: Action) {
         switch action {
-        case .spellingTapped:
-            print("tapped the spelling")
-        case .newSpellingCommitted(let value):
-            print("committed the new spelling value: \(value)")
+        case .draftSpellingCommitted:
+            print("committed the draft spelling value")
         case .imageAddButtonTapped:
             print("tapped add new image button")
         case .imageEditButtonTapped:

@@ -18,8 +18,7 @@ struct EntryDetailNotesSection: View {
             }
             .onDelete { indexSet in
                 indexSet.forEach {
-                    let note = store.notes.remove(at: $0)
-                    store.send(.noteSwipedAndDeleted(note))
+                    store.send(.noteSwipedAndDeleted(store.notes[$0]))
                 }
             }
             .onMove { indices, newOffset in
@@ -115,7 +114,7 @@ struct NoteCell: View {
 
 
 #Preview("Empty") {
-    EntryDetailNotesSection(store: .init())
+    EntryDetailNotesSection(store: .mockEmpty)
 }
 
 #Preview("Populated") {
