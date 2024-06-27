@@ -1,13 +1,28 @@
 
+import Combine
+
 extension EntryDetailStore {
     static let mock: EntryDetailStore = .mockAll(except: [])
+    static let mockEmpty: EntryDetailStore = .mockAll(except: ContextSection.allCases.reduce(into: [], { $0.insert($1) }))
     static func mockAll(
+        spelling: String = "кванти",
         image: SplashImage? = .none,
         pronunciation: Pronunciation? = .none,
-        except excluding: Set<ContextSection>
+        except excluding: Set<ContextSection> = []
     ) -> EntryDetailStore {
-        let result = EntryDetailStore()
-        result.spelling = "кванти"
+        var result: EntryDetailStore.State = .init(
+            spelling: spelling,
+            draftSpelling: spelling,
+            image: image,
+            tags: [],
+            pronunciation: pronunciation,
+            collectionsMembership: [],
+            translations: [],
+            examples: [],
+            notes: [],
+            relatedEntries: []
+        )
+        result.spelling = spelling
         result.image = image
         if !excluding.contains(.tags) {
             result.tags = [
@@ -86,7 +101,10 @@ extension EntryDetailStore {
                 .init(index: 2, spelling: "Квантова"),
             ]
         }
-        return result
+        return EntryDetailStore.init(
+            state: result,
+            onAction: { EntryDetailStore.log(action: $0) }
+        )
     }
 }
 

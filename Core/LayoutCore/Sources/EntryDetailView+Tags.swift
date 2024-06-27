@@ -152,7 +152,7 @@ struct IndividualTagButtonContent: View {
 
 
 #Preview("Empty") {
-    EntryDetailTagsSection(store: .init())
+    EntryDetailTagsSection(store: .mockEmpty)
 }
 
 #Preview("Populated") {

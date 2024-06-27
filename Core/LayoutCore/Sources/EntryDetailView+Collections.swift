@@ -153,7 +153,7 @@ struct IndividualCollectionMembershipButtonContent: View {
 
 
 #Preview("Empty") {
-    EntryDetailCollectionsMembershipSection(store: .init())
+    EntryDetailCollectionsMembershipSection(store: .mockEmpty)
 }
 
 #Preview("Populated") {

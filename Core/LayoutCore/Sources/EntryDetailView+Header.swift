@@ -47,33 +47,23 @@ struct EntrySpellingField: View {
     @State var store: EntryDetailStore
     
     @FocusState private var focused: Bool
-    
-    private func beginEditing() {
-        store.draftSpelling = store.spelling
-        focused = true
-    }
-    
-    private func reset() {
-        focused = false
-        store.draftSpelling = ""
-    }
-    
+        
     var body: some View {
-        TextField("Spelling", text: $store.draftSpelling) {
-            defer { reset() }
-            let committed = store.draftSpelling
-            if committed != store.spelling {
-                store.send(.newSpellingCommitted(value: committed))
-            }
+        TextField(
+            "Spelling",
+            text: $store.draftSpelling
+        )
+        .onSubmit(of: .text) {
+            store.send(.draftSpellingCommitted)
         }
         .focused($focused)
         .font(.largeTitle.bold())
-        .synchronize(focusState: $focused, with: $store.spellingFocused)
+        .synchronize(focusState: $focused, when: $store.focused, equals: .spelling)
     }
 }
 
 #Preview("Empty") {
-    EntryDetailHeader(store: .init())
+    EntryDetailHeader(store: .mockEmpty)
 }
 
 #Preview("Populated") {

@@ -28,8 +28,7 @@ struct EntryDetailExamplesSection: View {
             }
             .onDelete { indexSet in
                 indexSet.forEach {
-                    let example = store.examples.remove(at: $0)
-                    store.send(.exampleSwipedAndDeleted(example))
+                    store.send(.exampleSwipedAndDeleted(store.examples[$0]))
                 }
             }
             .onMove { indices, newOffset in
@@ -168,7 +167,7 @@ struct ExampleTranslationCell: View {
 
 
 #Preview("Empty") {
-    EntryDetailExamplesSection(store: .init())
+    EntryDetailExamplesSection(store: .mockEmpty)
 }
 
 #Preview("Populated") {
