@@ -3,7 +3,7 @@ import SwiftUI
 
 struct EntryDetailRelatedEntriesSection: View {
     
-    @State var store: EntryDetailStore
+    let store: EntryDetailStore
     
     @Environment(\.entryDetail) var style
 
@@ -35,7 +35,7 @@ struct EntryDetailRelatedEntriesSection: View {
 
 struct AddFirstRelatedEntriesButton: View {
         
-    @State var store: EntryDetailStore
+    let store: EntryDetailStore
         
     @Environment(\.entryDetail) var style
 
@@ -90,7 +90,7 @@ struct IndividualRelatedEntryButton: View {
     let onRemoveButtonTapped: () -> Void
     let onEditModeRemoveButtonTapped: () -> Void
 
-    @Environment(\.editMode) var editMode
+    @Environment(\.editMode) private var editMode
     @Namespace var namespace
 
     var body: some View {

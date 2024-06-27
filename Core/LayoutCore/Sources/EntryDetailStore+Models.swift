@@ -58,50 +58,61 @@ extension EntryDetailStore {
             }
         }
     }
+    
+    struct Entry {
+        var id: UUID = .init()
+        let spelling: String
+        var draft: String = ""
+        var language: Language
+    }
 
     struct Pronunciation {
         var audio: URL?
     }
     
     struct EntryCollection: Identifiable {
-        var id: String { title }
+        var id: UUID = .init()
         var title: String
     }
     
     struct Tag: Identifiable {
-        var id: Int { index }
+        var id: UUID = .init()
         var index: Int
         var title: String
     }
     
     struct Example: Identifiable {
-        var id: Int { index }
+        var id: UUID = .init()
         var index: Int
         var value: String
+        var draft: String = ""
         var translations: [ExampleTranslation] = []
     }
     
     struct Translation: Identifiable {
-        var id: String { value }
-        var value: String
+        var id: UUID = .init()
+        let value: String
+        var draft: String = ""
         var language: Language
     }
     
     struct ExampleTranslation: Identifiable {
-        var id: String { value }
+        var id: UUID = .init()
         var exampleID: Example.ID
         var value: String
+        var draft: String = ""
         var language: Language
     }
     
     struct IndexedNote: Identifiable {
-        var id: Int { index }
+        var id: UUID = .init()
         var index: Int
         var value: String
+        var draft: String = ""
     }
     
     struct RelatedEntry: Identifiable {
-        var id: Int { index }
+        var id: UUID = .init()
         var index: Int
         var spelling: String
     }

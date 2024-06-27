@@ -4,7 +4,7 @@ import SwiftUI
 struct PronunciationButton: View {
     
     var compact: Bool = false
-    @State var store: EntryDetailStore
+    let store: EntryDetailStore
         
     @Environment(\.entryDetail) var style
 
@@ -31,7 +31,7 @@ struct PronunciationButtonOrMenu: View {
     let onEditButtonTapped: () -> Void
     let onRemoveButtonTapped: () -> Void
     
-    @Environment(\.editMode) var editMode
+    @Environment(\.editMode) private var editMode
     
     private var background: Color? {
         compact ? .clear : .none
