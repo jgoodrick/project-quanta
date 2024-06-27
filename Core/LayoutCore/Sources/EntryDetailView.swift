@@ -7,9 +7,11 @@ class EntryDetailStore {
     
     init(spelling: String = "") {
         self.spelling = spelling
+        self.draftSpelling = spelling
     }
     
-    var spelling: String = ""
+    var spelling: String { didSet { draftSpelling = spelling } }
+    var draftSpelling: String
     var image: SplashImage?
     var tags: [Tag] = []
     var pronunciation: Pronunciation?
@@ -24,7 +26,7 @@ class EntryDetailStore {
     
     func send(_ action: Action) {
         if case .spellingTapped = action { } else {
-            
+            spellingFocused = false
         }
         onAction(action)
     }
@@ -89,49 +91,117 @@ class EntryDetailStore {
         
     }
 
+    var populatedContextSections: [ContextSection] {
+        ContextSection.allCases.filter {
+            switch $0 {
+            case .tags:
+                !tags.isEmpty
+            case .translations:
+                !translations.isEmpty
+            case .examples:
+                !examples.isEmpty
+            case .notes:
+                !notes.isEmpty
+            case .collections:
+                !collectionsMembership.isEmpty
+            case .relatedEntries:
+                !relatedEntries.isEmpty
+            }
+        }
+    }
+
+    var unpopulatedContextSections: [ContextSection] {
+        ContextSection.unpopulatedSuggestions.filter {
+            switch $0 {
+            case .tags:
+                tags.isEmpty
+            case .translations:
+                translations.isEmpty
+            case .examples:
+                examples.isEmpty
+            case .notes:
+                notes.isEmpty
+            case .collections:
+                collectionsMembership.isEmpty
+            case .relatedEntries:
+                relatedEntries.isEmpty
+            }
+        }
+    }
+    
+    var unpopulatedAdditionalContext: [AdditionalContext] {
+        AdditionalContext.allCases.filter {
+            switch $0 {
+            case .pronunciation:
+                pronunciation == nil
+            case .image:
+                image == nil
+            }
+        }
+    }
+}
+
+struct EntryDetailPopulatedSection: View {
+    @State var store: EntryDetailStore
+    var body: some View {
+        ForEach(store.populatedContextSections) {
+            switch $0 {
+            case .tags:
+                EntryDetailTagsSection(store: store)
+            case .translations:
+                EntryDetailTranslationsSection(store: store)
+            case .examples:
+                EntryDetailExamplesSection(store: store)
+            case .notes:
+                EntryDetailNotesSection(store: store)
+            case .collections:
+                EntryDetailCollectionsMembershipSection(store: store)
+            case .relatedEntries:
+                EntryDetailRelatedEntriesSection(store: store)
+            }
+        }
+    }
+}
+
+struct EntryDetailUnpopulatedSection: View {
+    @State var store: EntryDetailStore
+    var body: some View {
+        ForEach(store.unpopulatedContextSections) {
+            switch $0 {
+            case .tags:
+                AddFirstTagButton(store: store)
+            case .translations:
+                AddFirstTranslationsButton(store: store)
+            case .examples:
+                AddFirstExamplesButton(store: store)
+            case .notes:
+                AddFirstNotesButton(store: store)
+            case .collections:
+                AddFirstCollectionMembershipButton(store: store)
+            case .relatedEntries:
+                AddFirstRelatedEntriesButton(store: store)
+            }
+        }
+    }
+}
+
+struct EntryDetailUnpopulatedAdditionalContext: View {
+    @State var store: EntryDetailStore
+    var body: some View {
+        ForEach(store.unpopulatedAdditionalContext) {
+            switch $0 {
+            case .pronunciation:
+                PronunciationButton(store: store)
+            case .image:
+                SplashImageButton(store: store)
+            }
+        }
+    }
 }
 
 struct EntryDetailView: View {
     
     @State var store: EntryDetailStore
-    
-    func section(context: EntryDetailStore.ContextSection) -> some View {
-        Group {
-            switch context {
-            case .tags:
-                if !store.tags.isEmpty { EntryDetailTagsSection(store: store) }
-            case .translations:
-                if !store.translations.isEmpty { EntryDetailTranslationsSection(store: store) }
-            case .examples:
-                if !store.examples.isEmpty { EntryDetailExamplesSection(store: store) }
-            case .notes:
-                if !store.notes.isEmpty { EntryDetailNotesSection(store: store) }
-            case .collections:
-                if !store.collectionsMembership.isEmpty { EntryDetailCollectionsMembershipSection(store: store) }
-            case .relatedEntries:
-                if !store.relatedEntries.isEmpty { EntryDetailRelatedEntriesSection(store: store) }
-            }
-        }
-    }
-    
-    func addFirst(context: EntryDetailStore.ContextSection) -> some View {
-        Group {
-            switch context {
-            case .tags:
-                if store.tags.isEmpty { AddFirstTagButton(store: store) }
-            case .translations:
-                if store.translations.isEmpty { AddFirstTranslationsButton(store: store) }
-            case .examples:
-                if store.examples.isEmpty { AddFirstExamplesButton(store: store) }
-            case .notes:
-                if store.notes.isEmpty { AddFirstNotesButton(store: store) }
-            case .collections:
-                if store.collectionsMembership.isEmpty { AddFirstCollectionMembershipButton(store: store) }
-            case .relatedEntries:
-                if store.relatedEntries.isEmpty { AddFirstRelatedEntriesButton(store: store) }
-            }
-        }
-    }
     
     @Environment(\.editMode) var editMode
     
@@ -150,18 +220,14 @@ struct EntryDetailView: View {
                 
                 PlainList {
                     
-                    ForEach(EntryDetailStore.ContextSection.allCases) {
-                        section(context: $0)
-                    }
+                    EntryDetailPopulatedSection(store: store)
 
                     Spacer()
                     
                     if editMode.isNotEditing {
                         LazyVGrid(columns: [.init(), .init()]) {
-                            ForEach(EntryDetailStore.ContextSection.unpopulatedSuggestions) {
-                                addFirst(context: $0)
-                            }
-                            if store.pronunciation == nil { PronunciationButton(store: store) }
+                            EntryDetailUnpopulatedSection(store: store)
+                            EntryDetailUnpopulatedAdditionalContext(store: store)
                         }
                         .environment(\.roundedTwoToneButton.verticalPadding, 32)
                     }
@@ -195,7 +261,8 @@ public struct EntryDetailViewStyle: EnvironmentKey {
     public struct PrimarySectionColors {
         public static func uniform(_ color: Color) -> Self {
             Self.init(
-                header: color,
+                additionalContext: color,
+                image: color,
                 pronunciation: color,
                 tags: color,
                 translation: color,
@@ -207,7 +274,8 @@ public struct EntryDetailViewStyle: EnvironmentKey {
             )
         }
         
-        public var header: Color
+        public var additionalContext: Color
+        public var image: Color
         public var pronunciation: Color
         public var tags: Color
         public var translation: Color
@@ -234,14 +302,15 @@ extension EnvironmentValues {
     NavigationStack {
         Text("Root").navigationDestination(isPresented: .constant(true)) {
             EntryDetailView(store: .mockAll(
-                image: .none,
+//                image: .systemName("star.circle"),
+//                pronunciation: .init(),
                 except: [
-//                    .examples,
-    //                .notes,
-    //                .translations,
-    //                .relatedEntries,
-    //                .tags
-//                    .collections,
+                    .examples,
+                    .notes,
+                    .translations,
+                    .relatedEntries,
+                    .tags,
+                    .collections,
                 ]
             ))
             .toolbar { EditButton() }
