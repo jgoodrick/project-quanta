@@ -3,8 +3,8 @@ import StructuralModel
 import SwiftUI
 import Combine
 
-@dynamicMemberLookup
 @Observable
+@dynamicMemberLookup
 class EntryDetailStore {
     
     subscript<T>(dynamicMember keyPath: WritableKeyPath<State, T>) -> T {
@@ -18,8 +18,7 @@ class EntryDetailStore {
     }
             
     struct State {
-        var spelling: String
-        var draftSpelling: String
+        var entry: Entry
         var image: SplashImage?
         var tags: [Tag]
         var pronunciation: Pronunciation?
@@ -30,8 +29,10 @@ class EntryDetailStore {
         var relatedEntries: [RelatedEntry]
         var editMode: EditMode = .inactive
         var focused: FocusedField?
-        enum FocusedField: Equatable {
+        enum FocusedField: Hashable {
             case spelling
+            case translation(Translation.ID)
+            case example(Example.ID)
         }
     }
     
@@ -51,11 +52,14 @@ class EntryDetailStore {
         }
     }
     
-
     enum Action {
         
-        case draftSpellingCommitted
-        
+        case spellingTapped
+        case spellingTextCommitted
+        case spellingFocusDropped
+        case spellingEditButtonTapped
+        case spellingRemoveButtonTapped
+
         case imageAddButtonTapped
         case imageEditButtonTapped
         case imageRemoveButtonTapped
@@ -72,29 +76,36 @@ class EntryDetailStore {
         case editTagsButtonTapped
         
         case translationTapped(Translation)
+        case translationFocusDropped(Translation)
+        case translationTextCommitted(Translation)
         case translationEditButtonTapped(Translation)
         case translationGoToDetailButtonTapped(Translation)
         case translationRemoveButtonTapped(Translation)
-        case translationSwipedAndDeleted(Translation)
+        case translationSwipedAndDeleted(indexSet: IndexSet)
         case translationsMoved(fromOffsets: IndexSet, toOffset: Int)
         case addTranslationButtonTapped
         case editTranslationsButtonTapped
         
         case exampleTapped(Example)
+        case exampleFocusDropped(Example)
+        case exampleTextCommitted(Example)
+        case exampleRemoveButtonTapped(Example)
         case exampleEditButtonTapped(Example)
         case examplesMoved(fromOffsets: IndexSet, toOffset: Int)
         case exampleAddNewTranslationButtonTapped(Example)
         case exampleTranslationCellTapped(ExampleTranslation)
+        case exampleTranslationFocusDropped(ExampleTranslation)
+        case exampleTranslationTextCommitted(ExampleTranslation)
         case exampleTranslationEditButtonTapped(ExampleTranslation)
         case exampleTranslationRemoveButtonTapped(ExampleTranslation)
         case exampleTranslationsMoved(fromOffsets: IndexSet, toOffset: Int)
-        case exampleSwipedAndDeleted(Example)
+        case exampleSwipedAndDeleted(indexSet: IndexSet)
         case addExampleButtonTapped
         case editExamplesButtonTapped
         
         case noteCellTapped(IndexedNote)
         case noteEditButtonTapped(IndexedNote)
-        case noteSwipedAndDeleted(IndexedNote)
+        case noteSwipedAndDeleted(indexSet: IndexSet)
         case notesMoved(fromOffsets: IndexSet, toOffset: Int)
         case addNoteButtonTapped
         case editNotesButtonTapped
@@ -115,24 +126,10 @@ class EntryDetailStore {
 }
 
 struct EntryDetailView: View {
+        
+    @Bindable var store: EntryDetailStore
     
-    init(
-        state: EntryDetailStore.State,
-        onAction: @escaping (EntryDetailStore.Action) -> Void
-    ) {
-        self.store = .init(
-            state: state,
-            onAction: onAction
-        )
-    }
-
-    init(store: EntryDetailStore) {
-        self.store = store
-    }
-    
-    @State var store: EntryDetailStore
-    
-    @Environment(\.editMode) var editMode
+    @Environment(\.editMode) private var editMode
     
     var body: some View {
         VStack(spacing: 0) {
@@ -231,15 +228,15 @@ extension EnvironmentValues {
     NavigationStack {
         Text("Root").navigationDestination(isPresented: .constant(true)) {
             EntryDetailView(store: .mockAll(
-//                image: .systemName("star.circle"),
-//                pronunciation: .init(),
+                image: .systemName("star.circle"),
+                pronunciation: .init(),
                 except: [
-                    .examples,
-                    .notes,
-                    .translations,
-                    .relatedEntries,
-                    .tags,
-                    .collections,
+//                    .examples,
+//                    .notes,
+//                    .translations,
+//                    .relatedEntries,
+//                    .tags,
+//                    .collections,
                 ]
             ))
             .toolbar { EditButton() }

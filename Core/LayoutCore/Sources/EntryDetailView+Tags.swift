@@ -3,10 +3,10 @@ import SwiftUI
 
 struct EntryDetailTagsSection: View {
     
-    @State var store: EntryDetailStore
+    let store: EntryDetailStore
         
     @Environment(\.entryDetail) var style
-    @Environment(\.editMode) var editMode
+    @Environment(\.editMode) private var editMode
     
     var body: some View {
         Section {
@@ -42,7 +42,7 @@ struct EntryDetailTagsSection: View {
 
 struct AddFirstTagButton: View {
     
-    @State var store: EntryDetailStore
+    let store: EntryDetailStore
         
     @Environment(\.entryDetail) var style
 
@@ -98,7 +98,7 @@ struct IndividualTagButton: View {
     let onRemoveButtonTapped: () -> Void
     let onEditModeRemoveButtonTapped: () -> Void
     
-    @Environment(\.editMode) var editMode
+    @Environment(\.editMode) private var editMode
     @Namespace var namespace
 
     var body: some View {

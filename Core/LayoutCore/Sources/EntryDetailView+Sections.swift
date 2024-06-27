@@ -55,7 +55,7 @@ extension EntryDetailStore {
 }
 
 struct EntryDetailPopulatedSection: View {
-    @State var store: EntryDetailStore
+    let store: EntryDetailStore
     var body: some View {
         ForEach(store.populatedContextSections) {
             switch $0 {
@@ -77,7 +77,7 @@ struct EntryDetailPopulatedSection: View {
 }
 
 struct EntryDetailUnpopulatedSection: View {
-    @State var store: EntryDetailStore
+    let store: EntryDetailStore
     var body: some View {
         ForEach(store.unpopulatedContextSections) {
             switch $0 {
@@ -99,7 +99,7 @@ struct EntryDetailUnpopulatedSection: View {
 }
 
 struct EntryDetailUnpopulatedAdditionalContext: View {
-    @State var store: EntryDetailStore
+    let store: EntryDetailStore
     var body: some View {
         ForEach(store.unpopulatedAdditionalContext) {
             switch $0 {

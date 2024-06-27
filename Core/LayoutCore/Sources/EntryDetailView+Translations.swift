@@ -3,14 +3,14 @@ import SwiftUI
 
 struct EntryDetailTranslationsSection: View {
     
-    @State var store: EntryDetailStore
+    @Bindable var store: EntryDetailStore
     
     @Environment(\.entryDetail) var style
 
     var body: some View {
         Section {
-            ForEach(store.translations) { translation in
-                TranslationCell(translation: translation) {
+            ForEach($store.translations) { $translation in
+                TranslationCell(focusState: $store.focused, translation: $translation) {
                     store.send(.translationTapped(translation))
                 } onEditButtonTapped: {
                     store.send(.translationEditButtonTapped(translation))
@@ -18,15 +18,17 @@ struct EntryDetailTranslationsSection: View {
                     store.send(.translationGoToDetailButtonTapped(translation))
                 } onRemoveButtonTapped: {
                     store.send(.translationRemoveButtonTapped(translation))
+                } onFocusDropped: {
+                    store.send(.translationFocusDropped(translation))
+                } onTextCommitted: {
+                    store.send(.translationTextCommitted(translation))
                 }
             }
             .onMove { indices, newOffset in
                 store.send(.translationsMoved(fromOffsets: indices, toOffset: newOffset))
             }
             .onDelete { indexSet in
-                indexSet.forEach {
-                    store.send(.translationSwipedAndDeleted(store.translations[$0]))
-                }
+                store.send(.translationSwipedAndDeleted(indexSet: indexSet))
             }
         } header: {
             SectionHeader(title: "Translations") {
@@ -43,7 +45,7 @@ struct EntryDetailTranslationsSection: View {
 
 struct AddFirstTranslationsButton: View {
         
-    @State var store: EntryDetailStore
+    let store: EntryDetailStore
         
     @Environment(\.entryDetail) var style
 
@@ -93,41 +95,61 @@ struct AddTranslationMenu: View {
 
 struct TranslationCell: View {
     
-    let translation: EntryDetailStore.Translation
-    let primaryAction: () -> Void
+    @Binding var focusState: EntryDetailStore.State.FocusedField?
+    @Binding var translation: EntryDetailStore.Translation
+    var onUnfocusedCellTapped: () -> Void
     var onEditButtonTapped: () -> Void
     var onGoToDetailButtonTapped: () -> Void
     var onRemoveButtonTapped: () -> Void
+    var onFocusDropped: () -> Void
+    var onTextCommitted: () -> Void
     
-    @Environment(\.editMode) var editMode
+    @FocusState private var focused: Bool
+    @Environment(\.editMode) private var editMode
+    @Environment(\.languageNameFormatter) private var formatter
+
+    var placeholder: String { "\(formatter.displayName(for: translation.language, style: .full)) translation" }
     
     var body: some View {
         HStack {
             
             LanguageTagView(language: translation.language)
             
-            Menu(
-                content: {
-                    Button("Edit this translation", action: onEditButtonTapped)
-                    Button("Go to translation detail", action: onGoToDetailButtonTapped)
-                    Button("Remove this translation", action: onRemoveButtonTapped)
-                },
-                label: {
-                    TranslationCellContent(translation: translation)
-                },
-                primaryAction: primaryAction
-            )
+            Group {
+                if editMode.isNotEditing {
+                    Menu(
+                        content: {
+                            Button("Edit this translation", action: onEditButtonTapped)
+                            Button("Go to translation detail", action: onGoToDetailButtonTapped)
+                            Button("Remove this translation", action: onRemoveButtonTapped)
+                        },
+                        label: {
+                            Text(translation.value)
+                        },
+                        primaryAction: {
+                            editMode?.wrappedValue = .active
+                            focused = true
+                            onUnfocusedCellTapped()
+                        }
+                    )
+                } else {
+                    TextField(placeholder, text: $translation.draft)
+                        .textInputAutocapitalization(.never)
+                        .disableAutocorrection(true)
+                        .task {
+                            translation.draft = translation.value
+                        }
+                }
+            }
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .font(.title)
+            
         }
         .foregroundStyle(.primary)
-    }
-}
-
-struct TranslationCellContent: View {
-    let translation: EntryDetailStore.Translation
-    var body: some View {
-        Text(translation.value)
-            .font(.title)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        .focused($focused)
+        .synchronize(focusState: $focused, when: $focusState, equals: .translation(translation.id), onFocusDrop: onFocusDropped)
+        .onSubmit(onTextCommitted)
     }
 }
 

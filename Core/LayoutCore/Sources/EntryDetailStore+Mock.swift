@@ -1,18 +1,22 @@
 
-import Combine
+import Foundation
+import StructuralModel
 
 extension EntryDetailStore {
     static let mock: EntryDetailStore = .mockAll(except: [])
     static let mockEmpty: EntryDetailStore = .mockAll(except: ContextSection.allCases.reduce(into: [], { $0.insert($1) }))
     static func mockAll(
         spelling: String = "кванти",
+        language: Language = .ukrainian,
         image: SplashImage? = .none,
         pronunciation: Pronunciation? = .none,
         except excluding: Set<ContextSection> = []
     ) -> EntryDetailStore {
         var result: EntryDetailStore.State = .init(
-            spelling: spelling,
-            draftSpelling: spelling,
+            entry: .init(
+                spelling: spelling,
+                language: language
+            ),
             image: image,
             tags: [],
             pronunciation: pronunciation,
@@ -22,7 +26,6 @@ extension EntryDetailStore {
             notes: [],
             relatedEntries: []
         )
-        result.spelling = spelling
         result.image = image
         if !excluding.contains(.tags) {
             result.tags = [
@@ -47,29 +50,33 @@ extension EntryDetailStore {
             ]
         }
         if !excluding.contains(.examples) {
+            let firstExampleID: UUID = .init()
+            let secondExampleID: UUID = .init()
             result.examples = [
                 .init(
+                    id: firstExampleID,
                     index: 1,
                     value: "Учені досліджували властивості квантів у рамках нової теорії фізики.",
                     translations: [
                         .init(
-                            exampleID: 1,
+                            exampleID: firstExampleID,
                             value: "Scientists studied the properties of quanta within the framework of a new theory in physics.",
                             language: .english
                         ),
                         .init(
-                            exampleID: 1,
+                            exampleID: firstExampleID,
                             value: "Los científicos investigaron las propiedades de los cuantos en el marco de una nueva teoría de la física.",
                             language: .spanish
                         ),
                     ]
                 ),
                 .init(
+                    id: secondExampleID,
                     index: 2,
                     value: "Квантова механіка описує поведінку частинок на рівні квантів.",
                     translations: [
                         .init(
-                            exampleID: 2,
+                            exampleID: secondExampleID,
                             value: "Quantum mechanics describes the behavior of particles at the level of quanta.",
                             language: .english
                         ),

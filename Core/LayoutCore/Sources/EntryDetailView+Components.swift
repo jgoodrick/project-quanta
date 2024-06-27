@@ -22,7 +22,7 @@ struct SectionHeader<Icon: View>: View {
     let title: String
     let icon: () -> Icon
     
-    @Environment(\.editMode) var editMode
+    @Environment(\.editMode) private var editMode
 
     var body: some View {
         HStack(alignment: .bottom) {

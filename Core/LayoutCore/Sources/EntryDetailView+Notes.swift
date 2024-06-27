@@ -3,7 +3,7 @@ import SwiftUI
 
 struct EntryDetailNotesSection: View {
     
-    @State var store: EntryDetailStore
+    let store: EntryDetailStore
     
     @Environment(\.entryDetail) var style
 
@@ -17,9 +17,7 @@ struct EntryDetailNotesSection: View {
                 }
             }
             .onDelete { indexSet in
-                indexSet.forEach {
-                    store.send(.noteSwipedAndDeleted(store.notes[$0]))
-                }
+                store.send(.noteSwipedAndDeleted(indexSet: indexSet))
             }
             .onMove { indices, newOffset in
                 store.send(.notesMoved(fromOffsets: indices, toOffset: newOffset))
@@ -39,7 +37,7 @@ struct EntryDetailNotesSection: View {
 
 struct AddFirstNotesButton: View {
         
-    @State var store: EntryDetailStore
+    let store: EntryDetailStore
         
     @Environment(\.entryDetail) var style
 
