@@ -6,7 +6,7 @@ struct LanguageTagView: View {
     
     let language: Language
     
-    @Environment(\.languageNameFormatter) var formatter
+    @Environment(\.languageNameFormatter) private var formatter
     @Environment(\.languageTag) var style
     
     var body: some View {

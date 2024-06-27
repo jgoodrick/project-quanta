@@ -3,7 +3,7 @@ import SwiftUI
 
 struct EntryDetailCollectionsMembershipSection: View {
     
-    @State var store: EntryDetailStore
+    let store: EntryDetailStore
         
     @Environment(\.entryDetail) var style
     
@@ -44,7 +44,7 @@ struct EntryDetailCollectionsMembershipSection: View {
 
 struct AddFirstCollectionMembershipButton: View {
     
-    @State var store: EntryDetailStore
+    let store: EntryDetailStore
         
     @Environment(\.entryDetail) var style
 
@@ -100,7 +100,7 @@ struct IndividualCollectionMembershipButton: View {
     let onRemoveButtonTapped: () -> Void
     let onEditModeRemoveButtonTapped: () -> Void
     
-    @Environment(\.editMode) var editMode
+    @Environment(\.editMode) private var editMode
     @Namespace var namespace
 
     var body: some View {

@@ -27,23 +27,25 @@ extension View {
     public func synchronize<Value: Equatable>(
         focusState boolean: FocusState<Bool>.Binding,
         when enumeration: Binding<Value?>,
-        equals value: Value
+        equals value: Value,
+        onFocusDrop: @escaping () -> Void
     ) -> some View {
         self
             .onChange(of: enumeration.wrappedValue) { _, newEnumValue in
-                print("driving the focus state to \(newEnumValue == value)")
-                boolean.wrappedValue = newEnumValue == value
+                if let newEnumValue {
+                    if newEnumValue == value {
+                        boolean.wrappedValue = true
+                    }
+                } else if boolean.wrappedValue {
+                    boolean.wrappedValue = false
+                }
             }
-            .onChange(of: boolean.wrappedValue) { wasTrue, isTrue in
-                switch (wasTrue, isTrue) {
-                case (false, true):
-                    print("setting focus state to \(value)")
+            .onChange(of: boolean.wrappedValue) { _, isNowFocused in
+                if isNowFocused {
                     enumeration.wrappedValue = value
-                case (true, false): 
-                    print("removing focus from \(value)")
-                    enumeration.wrappedValue = .none
-                case (true, true), (false, false):
-                    print("focus state was changed to matching value")
+                } else if enumeration.wrappedValue == value {
+                    enumeration.wrappedValue = nil
+                    onFocusDrop()
                 }
             }
     }
