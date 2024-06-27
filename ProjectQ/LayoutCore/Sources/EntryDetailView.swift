@@ -1,48 +1,60 @@
 
 import StructuralModel
 import SwiftUI
+import Combine
 
+@dynamicMemberLookup
 @Observable
 class EntryDetailStore {
     
-    init(spelling: String = "") {
-        self.spelling = spelling
-        self.draftSpelling = spelling
+    subscript<T>(dynamicMember keyPath: WritableKeyPath<State, T>) -> T {
+        get { state[keyPath: keyPath] }
+        set { state[keyPath: keyPath] = newValue }
     }
     
-    var spelling: String { didSet { draftSpelling = spelling } }
-    var draftSpelling: String
-    var image: SplashImage?
-    var tags: [Tag] = []
-    var pronunciation: Pronunciation?
-    var collectionsMembership: [EntryCollection] = []
-    var translations: [Translation] = []
-    var examples: [Example] = []
-    var notes: [IndexedNote] = []
-    var relatedEntries: [RelatedEntry] = []
-    var onAction: (Action) -> Void = { EntryDetailStore.log(action: $0) }
-    var editMode: EditMode = .inactive {
-        willSet {
-            if spellingFocused, editMode == .active {
-                spellingFocused = false
-                if spelling != draftSpelling {
-                    send(.newSpellingCommitted(value: draftSpelling))
-                }
-            }
+    init(state: State, onAction: @escaping (Action) -> Void) {
+        self.state = state
+        self.onAction = onAction
+    }
+            
+    struct State {
+        var spelling: String
+        var draftSpelling: String
+        var image: SplashImage?
+        var tags: [Tag]
+        var pronunciation: Pronunciation?
+        var collectionsMembership: [EntryCollection]
+        var translations: [Translation]
+        var examples: [Example]
+        var notes: [IndexedNote]
+        var relatedEntries: [RelatedEntry]
+        var editMode: EditMode = .inactive
+        var focused: FocusedField?
+        enum FocusedField: Equatable {
+            case spelling
         }
     }
-    var spellingFocused: Bool = false
     
+    var state: State
+        
+    // Actions
+    var onAction: (Action) throws -> Void
+
     func send(_ action: Action) {
-        if case .spellingTapped = action { } else {
-            spellingFocused = false
+        let beforeReducerRuns = state
+        reduce(action: action)
+        do {
+            try onAction(action)
+        } catch {
+            print("EntryDetailStore.onAction Error: \(error.localizedDescription)")
+            state = beforeReducerRuns
         }
-        onAction(action)
     }
+    
 
     enum Action {
-        case spellingTapped
-        case newSpellingCommitted(value: String)
+        
+        case draftSpellingCommitted
         
         case imageAddButtonTapped
         case imageEditButtonTapped
@@ -100,115 +112,23 @@ class EntryDetailStore {
         
     }
 
-    var populatedContextSections: [ContextSection] {
-        ContextSection.allCases.filter {
-            switch $0 {
-            case .tags:
-                !tags.isEmpty
-            case .translations:
-                !translations.isEmpty
-            case .examples:
-                !examples.isEmpty
-            case .notes:
-                !notes.isEmpty
-            case .collections:
-                !collectionsMembership.isEmpty
-            case .relatedEntries:
-                !relatedEntries.isEmpty
-            }
-        }
-    }
-
-    var unpopulatedContextSections: [ContextSection] {
-        ContextSection.unpopulatedSuggestions.filter {
-            switch $0 {
-            case .tags:
-                tags.isEmpty
-            case .translations:
-                translations.isEmpty
-            case .examples:
-                examples.isEmpty
-            case .notes:
-                notes.isEmpty
-            case .collections:
-                collectionsMembership.isEmpty
-            case .relatedEntries:
-                relatedEntries.isEmpty
-            }
-        }
-    }
-    
-    var unpopulatedAdditionalContext: [AdditionalContext] {
-        AdditionalContext.allCases.filter {
-            switch $0 {
-            case .pronunciation:
-                pronunciation == nil
-            case .image:
-                image == nil
-            }
-        }
-    }
-}
-
-struct EntryDetailPopulatedSection: View {
-    @State var store: EntryDetailStore
-    var body: some View {
-        ForEach(store.populatedContextSections) {
-            switch $0 {
-            case .tags:
-                EntryDetailTagsSection(store: store)
-            case .translations:
-                EntryDetailTranslationsSection(store: store)
-            case .examples:
-                EntryDetailExamplesSection(store: store)
-            case .notes:
-                EntryDetailNotesSection(store: store)
-            case .collections:
-                EntryDetailCollectionsMembershipSection(store: store)
-            case .relatedEntries:
-                EntryDetailRelatedEntriesSection(store: store)
-            }
-        }
-    }
-}
-
-struct EntryDetailUnpopulatedSection: View {
-    @State var store: EntryDetailStore
-    var body: some View {
-        ForEach(store.unpopulatedContextSections) {
-            switch $0 {
-            case .tags:
-                AddFirstTagButton(store: store)
-            case .translations:
-                AddFirstTranslationsButton(store: store)
-            case .examples:
-                AddFirstExamplesButton(store: store)
-            case .notes:
-                AddFirstNotesButton(store: store)
-            case .collections:
-                AddFirstCollectionMembershipButton(store: store)
-            case .relatedEntries:
-                AddFirstRelatedEntriesButton(store: store)
-            }
-        }
-    }
-}
-
-struct EntryDetailUnpopulatedAdditionalContext: View {
-    @State var store: EntryDetailStore
-    var body: some View {
-        ForEach(store.unpopulatedAdditionalContext) {
-            switch $0 {
-            case .pronunciation:
-                PronunciationButton(store: store)
-            case .image:
-                SplashImageButton(store: store)
-            }
-        }
-    }
 }
 
 struct EntryDetailView: View {
+    
+    init(
+        state: EntryDetailStore.State,
+        onAction: @escaping (EntryDetailStore.Action) -> Void
+    ) {
+        self.store = .init(
+            state: state,
+            onAction: onAction
+        )
+    }
+
+    init(store: EntryDetailStore) {
+        self.store = store
+    }
     
     @State var store: EntryDetailStore
     
@@ -304,7 +224,7 @@ extension EnvironmentValues {
 }
 
 #Preview("Empty") {
-    EntryDetailView(store: .init(spelling: "escuela"))
+    EntryDetailView(store: .mockEmpty)
 }
 
 #Preview("Populated") {
