@@ -2,7 +2,7 @@
 extension EntryDetailStore {
     static let mock: EntryDetailStore = .mockAll(except: [])
     static func mockAll(
-        image: SplashImage? = .systemName("star.circle"),
+        image: SplashImage? = .none,
         pronunciation: Pronunciation? = .none,
         except excluding: Set<ContextSection>
     ) -> EntryDetailStore {
