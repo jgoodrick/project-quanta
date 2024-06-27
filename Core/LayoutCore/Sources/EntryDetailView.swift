@@ -21,7 +21,16 @@ class EntryDetailStore {
     var notes: [IndexedNote] = []
     var relatedEntries: [RelatedEntry] = []
     var onAction: (Action) -> Void = { EntryDetailStore.log(action: $0) }
-    var editMode: EditMode = .inactive
+    var editMode: EditMode = .inactive {
+        willSet {
+            if spellingFocused, editMode == .active {
+                spellingFocused = false
+                if spelling != draftSpelling {
+                    send(.newSpellingCommitted(value: draftSpelling))
+                }
+            }
+        }
+    }
     var spellingFocused: Bool = false
     
     func send(_ action: Action) {
