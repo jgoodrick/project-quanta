@@ -1,5 +1,6 @@
 
 import SwiftUI
+import StructuralModel
 
 struct EntryDetailHeader: View {
     
@@ -55,11 +56,13 @@ struct EntrySpellingField: View {
         } onEditButtonTapped: {
             store.send(.spellingEditButtonTapped)
         } onRemoveButtonTapped: {
-            store.send(.spellingRemoveButtonTapped)
+            store.send(.spellingRemoveEntireEntryButtonTapped)
         } onFocusDropped: {
             store.send(.spellingFocusDropped)
         } onTextCommitted: {
             store.send(.spellingTextCommitted)
+        } onLanguageChanged: {
+            store.send(.spellingLanguageChanged(to: $0))
         }
     }
 }
@@ -73,7 +76,8 @@ struct SpellingCell: View {
     var onRemoveButtonTapped: () -> Void
     var onFocusDropped: () -> Void
     var onTextCommitted: () -> Void
-    
+    var onLanguageChanged: (Language) -> Void
+
     @FocusState private var focused: Bool
     @Environment(\.editMode) private var editMode
     @Environment(\.languageNameFormatter) private var formatter
@@ -81,7 +85,7 @@ struct SpellingCell: View {
     var body: some View {
         HStack {
             
-            LanguageTagView(language: entry.language)
+            LanguageTagMenu(language: entry.language, onLanguageSelected: onLanguageChanged)
             
             Group {
                 if editMode.isNotEditing {

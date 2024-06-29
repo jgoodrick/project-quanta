@@ -1,7 +1,7 @@
 
 import Foundation
 
-public struct Language: Identifiable, Equatable, Codable, Sendable {
+public struct Language: Identifiable, Hashable, Codable, Sendable {
     public init(bcp47: String) throws {
         struct AttemptedToCreateLanguageWithEmptyLanguageCode: Error {}
         guard !bcp47.isEmpty else { throw AttemptedToCreateLanguageWithEmptyLanguageCode() }
@@ -9,15 +9,15 @@ public struct Language: Identifiable, Equatable, Codable, Sendable {
         self.bcp47 = .init(rawValue: bcp47.replacingOccurrences(of: "_", with: "-"))
     }
 
-    public var id: TaggedString<BCP47> { bcp47 }
+    public var id: Self { self }
     
-    public let bcp47: ID
+    public let bcp47: TaggedString<BCP47>
     
     public enum BCP47 {}
     
 }
 
-extension TaggedString<Language.BCP47> {
+extension Language {
     public var entityID: Entity.ID {
         .language(self)
     }

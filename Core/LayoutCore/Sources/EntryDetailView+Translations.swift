@@ -1,11 +1,13 @@
 
 import SwiftUI
+import StructuralModel
 
 struct EntryDetailTranslationsSection: View {
     
     @Bindable var store: EntryDetailStore
     
     @Environment(\.entryDetail) var style
+    @Environment(\.editMode) private var editMode
 
     var body: some View {
         Section {
@@ -18,10 +20,6 @@ struct EntryDetailTranslationsSection: View {
                     store.send(.translationGoToDetailButtonTapped(translation))
                 } onRemoveButtonTapped: {
                     store.send(.translationRemoveButtonTapped(translation))
-                } onFocusDropped: {
-                    store.send(.translationFocusDropped(translation))
-                } onTextCommitted: {
-                    store.send(.translationTextCommitted(translation))
                 }
             }
             .onMove { indices, newOffset in
@@ -30,6 +28,35 @@ struct EntryDetailTranslationsSection: View {
             .onDelete { indexSet in
                 store.send(.translationSwipedAndDeleted(indexSet: indexSet))
             }
+            
+            if editMode.isEditing {
+                
+                ForEach($store.translationDrafts) { translationDraft in
+                    TranslationDraftCell(focusState: $store.focused, translation: translationDraft) {
+                        store.send(.translationDraftFocusDropped(translationDraft.wrappedValue))
+                    } onTextCommitted: {
+                        store.send(.translationDraftTextCommitted(translationDraft.wrappedValue))
+                    }
+                }
+                .onDelete { indexSet in
+                    store.send(.translationDraftSwipedAndDeleted(indexSet: indexSet))
+                }
+                
+                HStack {
+                    Spacer()
+                    
+                    Button {
+                        store.send(.addTranslationButtonTapped)
+                    } label: {
+                        Text("+")
+                    }
+                    .buttonStyle(LanguageTagButtonStyle())
+
+                }
+                .padding(.top, 8)
+                .padding(.bottom)
+            }
+
         } header: {
             SectionHeader(title: "Translations") {
                 AddTranslationMenu {
@@ -101,6 +128,46 @@ struct TranslationCell: View {
     var onEditButtonTapped: () -> Void
     var onGoToDetailButtonTapped: () -> Void
     var onRemoveButtonTapped: () -> Void
+    
+    @FocusState private var focused: Bool
+    @Environment(\.editMode) private var editMode
+    @Environment(\.languageNameFormatter) private var formatter
+
+    var placeholder: String { "\(formatter.displayName(for: translation.language)) translation" }
+    
+    var body: some View {
+        HStack {
+            
+            LanguageTagMenu(language: translation.language)
+            
+            Menu(
+                content: {
+                    Button("Edit this translation", action: onEditButtonTapped)
+                    Button("Go to translation detail", action: onGoToDetailButtonTapped)
+                    Button("Remove this translation", action: onRemoveButtonTapped)
+                },
+                label: {
+                    Text(translation.value)
+                },
+                primaryAction: {
+                    editMode?.wrappedValue = .active
+                    focused = true
+                    onUnfocusedCellTapped()
+                }
+            )
+            .lineLimit(1)
+            .minimumScaleFactor(0.5)
+            .font(.title)
+            
+        }
+        .foregroundStyle(.primary)
+    }
+}
+
+struct TranslationDraftCell: View {
+    
+    @Binding var focusState: EntryDetailStore.State.FocusedField?
+    @Binding var translation: EntryDetailStore.TranslationDraft
     var onFocusDropped: () -> Void
     var onTextCommitted: () -> Void
     
@@ -108,42 +175,21 @@ struct TranslationCell: View {
     @Environment(\.editMode) private var editMode
     @Environment(\.languageNameFormatter) private var formatter
 
-    var placeholder: String { "\(formatter.displayName(for: translation.language, style: .full)) translation" }
+    var placeholder: String { "\(formatter.displayName(for: translation.language)) translation" }
     
     var body: some View {
         HStack {
             
-            LanguageTagView(language: translation.language)
-            
-            Group {
-                if editMode.isNotEditing {
-                    Menu(
-                        content: {
-                            Button("Edit this translation", action: onEditButtonTapped)
-                            Button("Go to translation detail", action: onGoToDetailButtonTapped)
-                            Button("Remove this translation", action: onRemoveButtonTapped)
-                        },
-                        label: {
-                            Text(translation.value)
-                        },
-                        primaryAction: {
-                            editMode?.wrappedValue = .active
-                            focused = true
-                            onUnfocusedCellTapped()
-                        }
-                    )
-                } else {
-                    TextField(placeholder, text: $translation.draft)
-                        .textInputAutocapitalization(.never)
-                        .disableAutocorrection(true)
-                        .task {
-                            translation.draft = translation.value
-                        }
-                }
+            LanguageTagMenu(language: translation.language) {
+                translation.language = $0
             }
-            .lineLimit(1)
-            .minimumScaleFactor(0.5)
-            .font(.title)
+            
+            TextField(placeholder, text: $translation.draft)
+                .textInputAutocapitalization(.never)
+                .disableAutocorrection(true)
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .font(.title)
             
         }
         .foregroundStyle(.primary)

@@ -12,9 +12,16 @@ class EntryDetailStore {
         set { state[keyPath: keyPath] = newValue }
     }
     
-    init(state: State, onAction: @escaping (Action) -> Void) {
+    init(
+        state: State,
+        onAction: @escaping (Action) -> Void,
+        uuidGenerator: @escaping () -> UUID = UUID.init,
+        currentLanguage: @escaping () -> Language = { (try? Language.init(bcp47: Locale.current.identifier)) ?? .english }
+    ) {
         self.state = state
         self.onAction = onAction
+        self.uuid = uuidGenerator
+        self.currentLanguage = currentLanguage
     }
             
     struct State {
@@ -24,19 +31,30 @@ class EntryDetailStore {
         var pronunciation: Pronunciation?
         var collectionsMembership: [EntryCollection]
         var translations: [Translation]
+        var translationDrafts: [TranslationDraft]
         var examples: [Example]
-        var notes: [IndexedNote]
+        var exampleDrafts: [ExampleDraft]
+        var notes: [Note]
+        var noteDrafts: [NoteDraft]
         var relatedEntries: [RelatedEntry]
         var editMode: EditMode = .inactive
         var focused: FocusedField?
         enum FocusedField: Hashable {
             case spelling
             case translation(Translation.ID)
+            case translationDraft(TranslationDraft.ID)
             case example(Example.ID)
+            case exampleDraft(ExampleDraft.ID)
+            case exampleTranslation(ExampleTranslation.ID)
+            case exampleTranslationDraft(ExampleTranslationDraft.ID)
+            case note(Note.ID)
+            case noteDraft(NoteDraft.ID)
         }
     }
     
     var state: State
+    var uuid: () -> UUID
+    var currentLanguage: () -> Language
         
     // Actions
     var onAction: (Action) throws -> Void
@@ -58,7 +76,8 @@ class EntryDetailStore {
         case spellingTextCommitted
         case spellingFocusDropped
         case spellingEditButtonTapped
-        case spellingRemoveButtonTapped
+        case spellingRemoveEntireEntryButtonTapped
+        case spellingLanguageChanged(to: Language)
 
         case imageAddButtonTapped
         case imageEditButtonTapped
@@ -76,8 +95,6 @@ class EntryDetailStore {
         case editTagsButtonTapped
         
         case translationTapped(Translation)
-        case translationFocusDropped(Translation)
-        case translationTextCommitted(Translation)
         case translationEditButtonTapped(Translation)
         case translationGoToDetailButtonTapped(Translation)
         case translationRemoveButtonTapped(Translation)
@@ -85,31 +102,49 @@ class EntryDetailStore {
         case translationsMoved(fromOffsets: IndexSet, toOffset: Int)
         case addTranslationButtonTapped
         case editTranslationsButtonTapped
-        
+
+        case translationDraftFocusDropped(TranslationDraft)
+        case translationDraftTextCommitted(TranslationDraft)
+        case translationDraftSwipedAndDeleted(indexSet: IndexSet)
+
         case exampleTapped(Example)
+        case exampleTextEditorTask(Example)
         case exampleFocusDropped(Example)
         case exampleTextCommitted(Example)
+        case exampleAddTranslationButtonTapped(example: Example, language: Language?)
         case exampleRemoveButtonTapped(Example)
         case exampleEditButtonTapped(Example)
         case examplesMoved(fromOffsets: IndexSet, toOffset: Int)
-        case exampleAddNewTranslationButtonTapped(Example)
+        case exampleSwipedAndDeleted(indexSet: IndexSet)
+        case addExampleButtonTapped
+        case editExamplesButtonTapped
+
         case exampleTranslationCellTapped(ExampleTranslation)
+        case exampleTranslationTextEditorTask(ExampleTranslation)
         case exampleTranslationFocusDropped(ExampleTranslation)
         case exampleTranslationTextCommitted(ExampleTranslation)
         case exampleTranslationEditButtonTapped(ExampleTranslation)
         case exampleTranslationRemoveButtonTapped(ExampleTranslation)
-        case exampleTranslationsMoved(fromOffsets: IndexSet, toOffset: Int)
-        case exampleSwipedAndDeleted(indexSet: IndexSet)
-        case addExampleButtonTapped
-        case editExamplesButtonTapped
         
-        case noteCellTapped(IndexedNote)
-        case noteEditButtonTapped(IndexedNote)
+        case exampleTranslationDraftFocusDropped(ExampleTranslationDraft)
+        case exampleTranslationDraftTextCommitted(ExampleTranslationDraft)
+        case exampleTranslationDraftRemoveButtonTapped(ExampleTranslationDraft)
+        
+        case noteCellTapped(Note)
+        case noteTextEditorTask(Note)
+        case noteFocusDropped(Note)
+        case noteTextCommitted(Note)
+        case noteEditButtonTapped(Note)
+        case noteRemoveButtonTapped(Note)
         case noteSwipedAndDeleted(indexSet: IndexSet)
         case notesMoved(fromOffsets: IndexSet, toOffset: Int)
         case addNoteButtonTapped
         case editNotesButtonTapped
         
+        case noteDraftFocusDropped(NoteDraft)
+        case noteDraftTextCommitted(NoteDraft)
+        case noteDraftSwipedAndDeleted(indexSet: IndexSet)
+
         case individualCollectionButtonTapped(EntryCollection)
         case individualCollectionEditButtonTapped(EntryCollection)
         case individualCollectionRemoveButtonTapped(EntryCollection)
@@ -121,6 +156,8 @@ class EntryDetailStore {
         case addRelatedEntryButtonTapped
         case editRelatedEntriesButtonTapped
         
+        case didBeginEditing
+        case didEndEditing
     }
 
 }
@@ -165,6 +202,7 @@ struct EntryDetailView: View {
             .safeAreaPadding(.bottom, 64)
         }
         .synchronize(optional: editMode, with: $store.editMode, fallback: .inactive)
+        .modifier(OnEditModeChanged(onBegan: { store.send(.didBeginEditing) }, onEnded: { store.send(.didEndEditing) }))
     }
 }
 
