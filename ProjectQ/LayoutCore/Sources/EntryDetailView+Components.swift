@@ -79,7 +79,29 @@ struct SuffixedEditButton: View {
 }
 
 extension Optional where Wrapped == Binding<EditMode> {
+    var isEditing: Bool {
+        self?.wrappedValue.isEditing == true
+    }
     var isNotEditing: Bool {
         self?.wrappedValue.isEditing != true
+    }
+}
+
+struct OnEditModeChanged: ViewModifier {
+    
+    let onBegan: () -> Void
+    let onEnded: () -> Void
+    
+    @Environment(\.editMode) private var editMode
+    
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: editMode.isEditing) { old, new in
+                if !old, new {
+                    onBegan()
+                } else if old, !new {
+                    onEnded()
+                }
+            }
     }
 }

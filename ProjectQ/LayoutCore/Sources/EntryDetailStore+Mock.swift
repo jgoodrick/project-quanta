@@ -10,75 +10,91 @@ extension EntryDetailStore {
         language: Language = .ukrainian,
         image: SplashImage? = .none,
         pronunciation: Pronunciation? = .none,
+        editMode: Bool = false,
+        focused: EntryDetailStore.State.FocusedField? = nil,
         except excluding: Set<ContextSection> = []
     ) -> EntryDetailStore {
         var result: EntryDetailStore.State = .init(
             entry: .init(
-                spelling: spelling,
-                language: language
+                id: .mock(0),
+                language: language,
+                spelling: spelling
             ),
             image: image,
             tags: [],
             pronunciation: pronunciation,
             collectionsMembership: [],
             translations: [],
+            translationDrafts: [],
             examples: [],
+            exampleDrafts: [],
             notes: [],
-            relatedEntries: []
+            noteDrafts: [],
+            relatedEntries: [],
+            editMode: editMode ? .active : .inactive,
+            focused: focused
         )
         result.image = image
         if !excluding.contains(.tags) {
             result.tags = [
-                .init(index: 0, title: "noun"),
-                .init(index: 1, title: "plural"),
-                .init(index: 2, title: "masculine"),
-                .init(index: 3, title: "nominative"),
-                .init(index: 4, title: "present"),
+                .init(id: .mock(1), title: "noun"),
+                .init(id: .mock(2), title: "plural"),
+                .init(id: .mock(3), title: "masculine"),
+                .init(id: .mock(4), title: "nominative"),
+                .init(id: .mock(5), title: "present"),
             ]
         }
         result.pronunciation = pronunciation
         if !excluding.contains(.translations) {
             result.translations = [
                 .init(
-                    value: "quanta",
-                    language: .english
+                    id: .mock(11),
+                    language: .english,
+                    value: "quanta"
                 ),
                 .init(
-                    value: "cuantos",
-                    language: .spanish
+                    id: .mock(22),
+                    language: .spanish,
+                    value: "cuantos"
                 ),
             ]
         }
         if !excluding.contains(.examples) {
-            let firstExampleID: UUID = .init()
-            let secondExampleID: UUID = .init()
+            let firstExampleID: UUID = .mock(111)
+            let secondExampleID: UUID = .mock(222)
             result.examples = [
                 .init(
                     id: firstExampleID,
-                    index: 1,
+                    language: .ukrainian,
                     value: "Учені досліджували властивості квантів у рамках нової теорії фізики.",
                     translations: [
-                        .init(
-                            exampleID: firstExampleID,
-                            value: "Scientists studied the properties of quanta within the framework of a new theory in physics.",
-                            language: .english
+                        Language.english.id: .init(
+                            id: .init(
+                                example: firstExampleID,
+                                language: .english
+                            ),
+                            value: "Scientists studied the properties of quanta within the framework of a new theory in physics."
                         ),
-                        .init(
-                            exampleID: firstExampleID,
-                            value: "Los científicos investigaron las propiedades de los cuantos en el marco de una nueva teoría de la física.",
-                            language: .spanish
+                        Language.spanish.id: .init(
+                            id: .init(
+                                example: firstExampleID,
+                                language: .spanish
+                            ),
+                            value: "Los científicos investigaron las propiedades de los cuantos en el marco de una nueva teoría de la física."
                         ),
                     ]
                 ),
                 .init(
                     id: secondExampleID,
-                    index: 2,
+                    language: .ukrainian,
                     value: "Квантова механіка описує поведінку частинок на рівні квантів.",
                     translations: [
-                        .init(
-                            exampleID: secondExampleID,
-                            value: "Quantum mechanics describes the behavior of particles at the level of quanta.",
-                            language: .english
+                        Language.english.id: .init(
+                            id: .init(
+                                example: secondExampleID,
+                                language: .english
+                            ),
+                            value: "Quantum mechanics describes the behavior of particles at the level of quanta."
                         ),
                     ]
                 ),
@@ -87,25 +103,25 @@ extension EntryDetailStore {
         if !excluding.contains(.notes) {
             result.notes = [
                 .init(
-                    index: 1,
+                    id: .mock(1111),
                     value: "this word is really only used in physics contexts in Ukrainian"
                 ),
             ]
         }
         if !excluding.contains(.collections) {
             result.collectionsMembership = [
-                .init(title: "Cool Words"),
-                .init(title: "To Learn"),
-                .init(title: "Ukrainian Words"),
-                .init(title: "Fun with Flags"),
-                .init(title: "Nouns and Adjectives"),
+                .init(id: .mock(11111), title: "Cool Words"),
+                .init(id: .mock(22222), title: "To Learn"),
+                .init(id: .mock(33333), title: "Ukrainian Words"),
+                .init(id: .mock(44444), title: "Fun with Flags"),
+                .init(id: .mock(55555), title: "Nouns and Adjectives"),
             ]
         }
         if !excluding.contains(.relatedEntries) {
             result.relatedEntries = [
-                .init(index: 0, spelling: "Квантова"),
-                .init(index: 1, spelling: "квантів"),
-                .init(index: 2, spelling: "Квантова"),
+                .init(id: .mock(000000), spelling: "Квантова"),
+                .init(id: .mock(111111), spelling: "квантів"),
+                .init(id: .mock(222222), spelling: "Квантова"),
             ]
         }
         return EntryDetailStore.init(
