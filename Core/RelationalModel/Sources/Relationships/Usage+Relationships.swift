@@ -27,3 +27,20 @@ extension Usage: Mergeable {
     
 }
 
+extension Array where Element == Language {
+    mutating func merge(with merging: [Language]) {
+        for incoming in merging {
+            var foundMatch: Bool = false
+            for index in indices {
+                if incoming.id == self[index].id {
+                    self[index].merge(with: incoming)
+                    foundMatch = true
+                }
+            }
+            if !foundMatch {
+                append(incoming)
+            }
+        }
+    }
+}
+

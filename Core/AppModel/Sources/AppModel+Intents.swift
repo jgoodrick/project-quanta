@@ -73,7 +73,7 @@ extension AppModel {
         } else {
             result = language.primaryLanguage.flatMap({ locale.localizedString(forLanguageCode: $0) })
         }
-        return result ?? language.id.rawValue
+        return result ?? language.id.bcp47.rawValue
     }
     
     public var displayNameForDefaultNewEntryLanguage: String {

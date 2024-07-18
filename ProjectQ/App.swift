@@ -2,6 +2,7 @@
 import ComposableArchitecture
 import AppModel
 import SwiftUI
+import LayoutCore
 
 @main
 struct ProjectQ: App {
@@ -15,6 +16,7 @@ struct ProjectQ: App {
         }
     )
     
+    @State private var destinationIsShowing: Bool = true
     var body: some Scene {
         WindowGroup {
             if isTesting {
@@ -24,6 +26,14 @@ struct ProjectQ: App {
             } else {
                 HomeStackView(store: Self.store)
             }
+//            HomeStackView(store: Self.store)
+            NavigationStack {
+                Text("Root").navigationDestination(isPresented: $destinationIsShowing) {
+                    NewEntryDetailView()
+                    .toolbar { EditButton() }
+                }
+            }
+
         }
     }
 }

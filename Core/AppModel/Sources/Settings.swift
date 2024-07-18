@@ -73,7 +73,7 @@ extension Settings {
         }
         
         // filter out emoji. The user can always add it later, if they want
-        result[id: .init(rawValue: "emoji")] = nil
+        result[id: try! .init(bcp47: "emoji")] = nil
         
         return result
     }
