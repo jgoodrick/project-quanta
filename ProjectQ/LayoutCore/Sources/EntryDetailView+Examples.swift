@@ -383,7 +383,7 @@ struct SentenceEditor: View {
 
 #Preview("Editing") {
     let store: EntryDetailStore = .mock
-    return EntryDetailView(store: store)
+    return NewEntryDetailView(store: store)
         .task {
             store.editMode = .active
         }

@@ -162,13 +162,31 @@ class EntryDetailStore {
 
 }
 
-struct EntryDetailView: View {
+public struct NewEntryDetailView: View {
+    internal init(store: EntryDetailStore) {
+        self.store = store
+    }
+    
+    public init() {
+        self.store = .mockAll(
+            image: .systemName("star.circle"),
+            pronunciation: .init(),
+            except: [
+//                    .examples,
+//                    .notes,
+//                    .translations,
+//                    .relatedEntries,
+//                    .tags,
+//                    .collections,
+            ]
+        )
+    }
         
     @Bindable var store: EntryDetailStore
     
     @Environment(\.editMode) private var editMode
     
-    var body: some View {
+    public var body: some View {
         VStack(spacing: 0) {
             store.image
                 .frame(maxHeight: 100)
@@ -218,8 +236,8 @@ extension EnvironmentValues {
 }
 
 
-public struct EntryDetailViewStyle: EnvironmentKey {
-    public static var defaultValue: EntryDetailViewStyle = .init()
+public struct NewEntryDetailViewStyle: EnvironmentKey {
+    public static var defaultValue: NewEntryDetailViewStyle = .init()
     public var buttonTextAlignment: HorizontalAlignment = .leading
     public var primarySectionColors: PrimarySectionColors = .uniform(AppAccentColor.defaultValue)
     public struct PrimarySectionColors {
@@ -252,20 +270,20 @@ public struct EntryDetailViewStyle: EnvironmentKey {
 }
 
 extension EnvironmentValues {
-    var entryDetail: EntryDetailViewStyle {
-        get { self[EntryDetailViewStyle.self] }
-        set { self[EntryDetailViewStyle.self] = newValue }
+    var entryDetail: NewEntryDetailViewStyle {
+        get { self[NewEntryDetailViewStyle.self] }
+        set { self[NewEntryDetailViewStyle.self] = newValue }
     }
 }
 
 #Preview("Empty") {
-    EntryDetailView(store: .mockEmpty)
+    NewEntryDetailView(store: .mockEmpty)
 }
 
 #Preview("Populated") {
     NavigationStack {
         Text("Root").navigationDestination(isPresented: .constant(true)) {
-            EntryDetailView(store: .mockAll(
+            NewEntryDetailView(store: .mockAll(
                 image: .systemName("star.circle"),
                 pronunciation: .init(),
                 except: [

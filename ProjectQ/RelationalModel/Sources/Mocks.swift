@@ -165,9 +165,3 @@ extension Language {
         try! .init(bcp47: "en_US_\(int)")
     }
 }
-extension Language.ID {
-    public static func mock(_ int: Int) -> Language.ID {
-        Language.mock(int).id
-    }
-}
-
