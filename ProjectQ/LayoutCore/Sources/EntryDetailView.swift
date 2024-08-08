@@ -3,6 +3,8 @@ import StructuralModel
 import SwiftUI
 import Combine
 
+let myConst: String = "Hello There"
+
 @Observable
 @dynamicMemberLookup
 class EntryDetailStore {

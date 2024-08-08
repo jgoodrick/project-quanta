@@ -14,12 +14,14 @@ struct ProjectQ: App {
         }
     )
     
-    @State private var destinationIsShowing: Bool = true
+    @State private var destinationIsShowing: Bool = false
     var body: some Scene {
         WindowGroup {
 //            HomeStackView(store: Self.store)
             NavigationStack {
-                Text("Root").navigationDestination(isPresented: $destinationIsShowing) {
+                Button("Root") {
+                    $destinationIsShowing.wrappedValue = true
+                }.navigationDestination(isPresented: $destinationIsShowing) {
                     NewEntryDetailView()
                     .toolbar { EditButton() }
                 }
