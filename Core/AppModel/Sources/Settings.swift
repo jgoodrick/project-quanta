@@ -7,6 +7,28 @@ public struct Settings: Equatable, Codable, Sendable {
     public var languageSelectionList: IdentifiedArrayOf<Language>
     public var defaultNewEntryLanguage: Language
     public var defaultTranslationLanguage: Language
+    var loaded: Bool
+}
+
+extension SharedReaderKey where Self == FileStorageKey<Settings>.Default {
+    public static var settings: Self {
+        Self[
+            .fileStorage(URL.documentsDirectory.appending(component: "settings.json")),
+            default: .beforeSystemLanguagesSync
+        ]
+    }
+}
+
+extension Settings {
+
+    static let beforeSystemLanguagesSync: Self = .init(
+        languageSelectionList: [.spanish, .english],
+        defaultNewEntryLanguage: .spanish,
+        defaultTranslationLanguage: .english,
+        loaded: false
+    )
+
+    @MainActor
     public var additionalSystemLanguagesAvailable: IdentifiedArrayOf<Language> {
         @Dependency(\.systemLanguages) var systemLanguages
         var result = systemLanguages.allConfiguredTextInputModeLanguages()
@@ -16,30 +38,33 @@ public struct Settings: Equatable, Codable, Sendable {
         return result
     }
 
-    static var defaultValue: Self {
+    static func systemDefaults() async -> Self {
         @Dependency(\.systemLanguages) var systemLanguages
-        let defaults = Self.defaultLanguages
+        let defaults = await systemDefaultLanguages()
         return .init(
             languageSelectionList: defaults,
             defaultNewEntryLanguage: defaults.first ?? systemLanguages.current(),
-            defaultTranslationLanguage: systemLanguages.current()
+            defaultTranslationLanguage: systemLanguages.current(),
+            loaded: true
         )
     }
-    
-    static var defaultLanguages: IdentifiedArrayOf<Language> {
+
+    static func systemDefaultLanguages() async -> IdentifiedArrayOf<Language> {
         @Dependency(\.systemLanguages) var systemLanguages
         
         var result: IdentifiedArrayOf<Language> = []
         
         // unique the languages by their primary language code (users can always add these later)
         var languageCodes = Set<String>()
-        systemLanguages.allConfiguredTextInputModeLanguages().forEach {
+        let languages = await systemLanguages.allConfiguredTextInputModeLanguages()
+
+        languages.forEach {
             if let languageCode = $0.primaryLanguage, !languageCodes.contains(languageCode) {
                 languageCodes.insert(languageCode)
                 result[id: $0.id] = $0
             }
         }
-        
+
         // move the current language out of the top spot (likely not the language the user is hoping to learn)
         if result.count > 1 {
             let current = systemLanguages.current()

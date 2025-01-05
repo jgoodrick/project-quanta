@@ -36,9 +36,9 @@ public extension Collection {
             by: {
                 guard let keyPath else { return true }
                 if reversed {
-                    return $0[keyPath: keyPath] < $1[keyPath: keyPath]
-                } else {
                     return $0[keyPath: keyPath] > $1[keyPath: keyPath]
+                } else {
+                    return $0[keyPath: keyPath] < $1[keyPath: keyPath]
                 }
             }
         )
