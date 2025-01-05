@@ -19,7 +19,7 @@ public struct AppModel: Sendable, Equatable {
 
     // Storage
     @Shared(.db) var db
-    @Shared(.settings) public var settings
+    @Shared(.settings) var settings
     @Shared(.config) var config
     
     public var date: DateGenerator {
@@ -39,10 +39,17 @@ public struct AppModel: Sendable, Equatable {
         if let injectedDB { self._db = injectedDB }
         if let injectedSettings { self._settings = injectedSettings }
         if let injectedConfig { self._config = injectedConfig }
-        seedWithSystemLanguages()
     }
-    
-    private mutating func seedWithSystemLanguages() {
+
+    public func prepareSharedValues() async {
+        if !settings.loaded {
+            let systemDefaultsValue = await Settings.systemDefaults()
+            $settings.withLock({ $0 = systemDefaultsValue })
+        }
+        seedDBWithSystemLanguages()
+    }
+
+    private func seedDBWithSystemLanguages() {
         ensureExistenceOf(language: settings.defaultNewEntryLanguage)
         ensureExistenceOf(language: settings.defaultTranslationLanguage)
     }
@@ -59,15 +66,6 @@ extension SharedReaderKey where Self == FileStorageKey<Database>.Default {
         Self[
             .fileStorage(URL.documentsDirectory.appending(component: "db.json")),
             default: .init()
-        ]
-    }
-}
-
-extension SharedReaderKey where Self == FileStorageKey<Settings>.Default {
-    fileprivate static var settings: Self {
-        Self[
-            .fileStorage(URL.documentsDirectory.appending(component: "settings.json")),
-            default: .defaultValue
         ]
     }
 }

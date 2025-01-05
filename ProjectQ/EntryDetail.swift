@@ -21,7 +21,8 @@ public struct EntryDetail {
         }
         
         @Shared(.model) var model
-        
+        @Shared(.settings) var settings
+
         @Shared var entryID: Entry.ID
         var textField: TextFieldState = .init()
         struct TextFieldState: Equatable {
@@ -44,6 +45,10 @@ public struct EntryDetail {
         var shouldLaunchTranslationsEditorImmediately: Bool = false
         
         @Presents var destination: Destination.State?
+
+        var availableLanguages: [Language] {
+            settings.languageSelectionList.elements
+        }
 
     }
     
@@ -333,7 +338,7 @@ public struct EntryDetailView: View {
     }
     
     @Bindable var store: StoreOf<EntryDetail>
-    
+
     public struct Style: EnvironmentKey {
         public static var defaultValue: Self = .init()
     }

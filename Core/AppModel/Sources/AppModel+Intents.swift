@@ -7,7 +7,7 @@ import StructuralModel
  */
 extension AppModel {
     
-    public mutating func createNewEntry(language: Language? = nil, builder: (inout Entry) -> Void) -> Entry {
+    public func createNewEntry(language: Language? = nil, builder: (inout Entry) -> Void) -> Entry {
         var new = Entry(id: .tagged(uuid()))
         builder(&new)
         precondition(!new.spelling.isEmpty)
@@ -20,7 +20,7 @@ extension AppModel {
         return new
     }
     
-    public mutating func createNewKeyword(builder: (inout Keyword) -> Void) -> Keyword {
+    public func createNewKeyword(builder: (inout Keyword) -> Void) -> Keyword {
         var new = Keyword(id: .tagged(uuid()))
         builder(&new)
         precondition(!new.title.isEmpty)
@@ -28,14 +28,14 @@ extension AppModel {
         return new
     }
     
-    public mutating func createNewNote(builder: (inout Note) -> Void = { _ in }) -> Note {
+    public func createNewNote(builder: (inout Note) -> Void = { _ in }) -> Note {
         var new = Note(id: .tagged(uuid()))
         builder(&new)
         $db.withLock { $0.create(.note(new), now: date.now) }
         return new
     }
     
-    public mutating func createNewUsage(language: Language? = nil, builder: (inout Usage) -> Void) -> Usage {
+    public func createNewUsage(language: Language? = nil, builder: (inout Usage) -> Void) -> Usage {
         var new = Usage(id: .tagged(uuid()))
         builder(&new)
         precondition(!new.value.isEmpty)
@@ -48,7 +48,7 @@ extension AppModel {
         return new
     }
     
-    public mutating func createNewEntryCollection(builder: (inout EntryCollection) -> Void) -> EntryCollection {
+    public func createNewEntryCollection(builder: (inout EntryCollection) -> Void) -> EntryCollection {
         var new = EntryCollection(id: .tagged(uuid()))
         builder(&new)
         precondition(!new.title.isEmpty)
@@ -56,7 +56,7 @@ extension AppModel {
         return new
     }
     
-    public mutating func ensureExistenceOf(language: Language) {
+    public func ensureExistenceOf(language: Language) {
         guard db[language: language.id] != nil else {
             $db.withLock { $0.create(.language(language), now: date.now) }
             return
@@ -94,7 +94,7 @@ extension AppModel {
         case cancel
     }
     
-    public mutating func attemptToAddNewEntry(
+    public func attemptToAddNewEntry(
         fromSpelling spelling: String,
         in language: Language.ID? = nil,
         autoAppliedSpellingConflictResolution: AutoConflictResolution? = nil
@@ -123,7 +123,7 @@ extension AppModel {
         return .success(entry)
     }
     
-    public mutating func attemptToAddNewTranslation(
+    public func attemptToAddNewTranslation(
         fromSpelling spelling: String,
         in language: Language.ID? = nil,
         forEntry translated: Entry.ID,
@@ -137,7 +137,7 @@ extension AppModel {
         return result
     }
     
-    public mutating func addExisting(translation: Entry.ID, toEntry translated: Entry.ID, bidirectional: Bool = true) {
+    public func addExisting(translation: Entry.ID, toEntry translated: Entry.ID, bidirectional: Bool = true) {
         $db.withLock {
             $0.connect(
                 translation: translation,
@@ -147,7 +147,7 @@ extension AppModel {
         }
     }
     
-    public mutating func attemptToAddNewKeyword(
+    public func attemptToAddNewKeyword(
         title: String,
         toEntry referenced: Entry.ID,
         autoAppliedTitleConflictResolution: AutoConflictResolution? = nil
@@ -176,12 +176,12 @@ extension AppModel {
         return .success(keyword)
     }
     
-    public mutating func addExisting(keyword: Keyword.ID, toEntry entry: Entry.ID) {
+    public func addExisting(keyword: Keyword.ID, toEntry entry: Entry.ID) {
         $db.withLock { $0.connect(keyword: keyword, toEntry: entry) }
     }
     
     
-    public mutating func attemptToAddNewNote(
+    public func attemptToAddNewNote(
         content value: String,
         toEntry referenced: Entry.ID
     ) -> Note {
@@ -192,11 +192,11 @@ extension AppModel {
         return note
     }
     
-    public mutating func addExisting(note: Note.ID, toEntry entry: Entry.ID) {
+    public func addExisting(note: Note.ID, toEntry entry: Entry.ID) {
         $db.withLock { $0.connect(note: note, toEntry: entry) }
     }
     
-    public mutating func attemptToAddNewNote(
+    public func attemptToAddNewNote(
         content value: String,
         toUsage referenced: Usage.ID
     ) -> Note {
@@ -207,11 +207,11 @@ extension AppModel {
         return note
     }
     
-    public mutating func addExisting(note: Note.ID, toUsage usage: Usage.ID) {
+    public func addExisting(note: Note.ID, toUsage usage: Usage.ID) {
         $db.withLock { $0.connect(note: note, toUsage: usage) }
     }
     
-    public mutating func attemptToAddNewUsage(
+    public func attemptToAddNewUsage(
         content value: String,
         toEntry referenced: Entry.ID,
         autoAppliedValueConflictResolution: AutoConflictResolution? = nil
@@ -240,11 +240,11 @@ extension AppModel {
         return .success(usage)
     }
     
-    public mutating func addExisting(usage: Usage.ID, toEntry entry: Entry.ID) {
+    public func addExisting(usage: Usage.ID, toEntry entry: Entry.ID) {
         $db.withLock { $0.connect(usage: usage, toEntry: entry) }
     }
     
-    public mutating func attemptToAddNewEntry(
+    public func attemptToAddNewEntry(
         fromSpelling spelling: String,
         in language: Language.ID? = nil,
         toEntryCollection collection: EntryCollection.ID,
@@ -260,21 +260,21 @@ extension AppModel {
         }
     }
     
-    public mutating func addExisting(entry: Entry.ID, toEntryCollection entryCollection: EntryCollection.ID, atOffset: Int? = nil) {
+    public func addExisting(entry: Entry.ID, toEntryCollection entryCollection: EntryCollection.ID, atOffset: Int? = nil) {
         $db.withLock {
             $0.connect(entry: entry, toCollection: entryCollection, atOffset: atOffset)
         }
     }
     
-    public mutating func addExisting(language: Language.ID, toEntry entry: Entry.ID) {
+    public func addExisting(language: Language.ID, toEntry entry: Entry.ID) {
         $db.withLock { $0.connect(language: language, toEntry: entry) }
     }
     
-    public mutating func addExisting(language: Language.ID, toUsage usage: Usage.ID) {
+    public func addExisting(language: Language.ID, toUsage usage: Usage.ID) {
         $db.withLock { $0.connect(language: language, toUsage: usage) }
     }
     
-    public mutating func attemptToAddNewRoot(
+    public func attemptToAddNewRoot(
         fromSpelling spelling: String,
         language: Language.ID? = nil,
         toEntry derived: Entry.ID,
@@ -288,11 +288,11 @@ extension AppModel {
         return result
     }
     
-    public mutating func addExisting(root: Entry.ID, toEntry entry: Entry.ID) {
+    public func addExisting(root: Entry.ID, toEntry entry: Entry.ID) {
         $db.withLock { $0.connect(root: root, toEntry: entry) }
     }
     
-    public mutating func attemptToAddNewSeeAlso(
+    public func attemptToAddNewSeeAlso(
         spelling: String,
         language: Language.ID? = nil,
         toEntry target: Entry.ID,
@@ -306,7 +306,7 @@ extension AppModel {
         return result
     }
     
-    public mutating func addExisting(seeAlso: Entry.ID, toEntry entry: Entry.ID) {
+    public func addExisting(seeAlso: Entry.ID, toEntry entry: Entry.ID) {
         $db.withLock { $0.connect(seeAlso: seeAlso, toEntry: entry) }
     }
     
@@ -337,7 +337,7 @@ extension AppModel {
     }
     
     @discardableResult
-    public mutating func remove(translation: Entry.ID, fromEntry translated: Entry.ID) -> RetainedRelationships {
+    public func remove(translation: Entry.ID, fromEntry translated: Entry.ID) -> RetainedRelationships {
         $db.withLock {
             $0.disconnect(translation: translation, fromEntry: translated, bidirectional: true)
         }
@@ -345,55 +345,55 @@ extension AppModel {
     }
     
     @discardableResult
-    public mutating func remove(keyword: Keyword.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
+    public func remove(keyword: Keyword.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
         $db.withLock { $0.disconnect(keyword: keyword, fromEntry: entry) }
         return retainedRelationships(for: .keyword(keyword))
     }
     
     @discardableResult
-    public mutating func remove(note: Note.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
+    public func remove(note: Note.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
         $db.withLock { $0.disconnect(note: note, fromEntry: entry) }
         return retainedRelationships(for: .note(note))
     }
     
     @discardableResult
-    public mutating func remove(note: Note.ID, fromUsage usage: Usage.ID) -> RetainedRelationships {
+    public func remove(note: Note.ID, fromUsage usage: Usage.ID) -> RetainedRelationships {
         $db.withLock { $0.disconnect(note: note, fromUsage: usage) }
         return retainedRelationships(for: .note(note))
     }
     
     @discardableResult
-    public mutating func remove(usage: Usage.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
+    public func remove(usage: Usage.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
         $db.withLock { $0.disconnect(usage: usage, fromEntry: entry) }
         return retainedRelationships(for: .usage(usage))
     }
     
     @discardableResult
-    public mutating func remove(entry: Entry.ID, fromEntryCollection entryCollection: EntryCollection.ID) -> RetainedRelationships {
+    public func remove(entry: Entry.ID, fromEntryCollection entryCollection: EntryCollection.ID) -> RetainedRelationships {
         $db.withLock { $0.disconnect(entry: entry, fromEntryCollection: entryCollection) }
         return retainedRelationships(for: .entry(entry))
     }
     
     @discardableResult
-    public mutating func remove(language: Language.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
+    public func remove(language: Language.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
         $db.withLock { $0.disconnect(language: language, fromEntry: entry) }
         return retainedRelationships(for: .language(language))
     }
     
     @discardableResult
-    public mutating func remove(language: Language.ID, fromUsage usage: Usage.ID) -> RetainedRelationships {
+    public func remove(language: Language.ID, fromUsage usage: Usage.ID) -> RetainedRelationships {
         $db.withLock { $0.disconnect(language: language, fromUsage: usage) }
         return retainedRelationships(for: .language(language))
     }
     
     @discardableResult
-    public mutating func remove(root: Entry.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
+    public func remove(root: Entry.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
         $db.withLock { $0.disconnect(root: root, fromEntry: entry) }
         return retainedRelationships(for: .entry(root))
     }
     
     @discardableResult
-    public mutating func remove(seeAlso: Entry.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
+    public func remove(seeAlso: Entry.ID, fromEntry entry: Entry.ID) -> RetainedRelationships {
         $db.withLock { $0.disconnect(seeAlso: seeAlso, fromEntry: entry) }
         return retainedRelationships(for: .entry(seeAlso))
     }
@@ -405,27 +405,27 @@ extension AppModel {
     
     
     
-    public mutating func moveTranslations(on entry: Entry.ID, fromOffsets: IndexSet, toOffset: Int) {
+    public func moveTranslations(on entry: Entry.ID, fromOffsets: IndexSet, toOffset: Int) {
         $db.withLock { $0.moveTranslations(on: entry, fromOffsets: fromOffsets, toOffset: toOffset) }
     }
     
-    public mutating func moveLanguages(onEntry entry: Entry.ID, fromOffsets: IndexSet, toOffset: Int) {
+    public func moveLanguages(onEntry entry: Entry.ID, fromOffsets: IndexSet, toOffset: Int) {
         $db.withLock { $0.moveLanguages(onEntry: entry, fromOffsets: fromOffsets, toOffset: toOffset) }
     }
     
-    public mutating func moveLanguages(onUsage usage: Usage.ID, fromOffsets: IndexSet, toOffset: Int) {
+    public func moveLanguages(onUsage usage: Usage.ID, fromOffsets: IndexSet, toOffset: Int) {
         $db.withLock { $0.moveLanguages(onUsage: usage, fromOffsets: fromOffsets, toOffset: toOffset) }
     }
     
-    public mutating func moveNotes(on entry: Entry.ID, fromOffsets: IndexSet, toOffset: Int) {
+    public func moveNotes(on entry: Entry.ID, fromOffsets: IndexSet, toOffset: Int) {
         $db.withLock { $0.moveNotes(on: entry, fromOffsets: fromOffsets, toOffset: toOffset) }
     }
     
-    public mutating func moveUsages(on entry: Entry.ID, fromOffsets: IndexSet, toOffset: Int) {
+    public func moveUsages(on entry: Entry.ID, fromOffsets: IndexSet, toOffset: Int) {
         $db.withLock { $0.moveUsages(on: entry, fromOffsets: fromOffsets, toOffset: toOffset) }
     }
     
-    public mutating func moveEntries(in entryCollection: EntryCollection.ID, fromOffsets: IndexSet, toOffset: Int) {
+    public func moveEntries(in entryCollection: EntryCollection.ID, fromOffsets: IndexSet, toOffset: Int) {
         $db.withLock { $0.moveEntries(in: entryCollection, fromOffsets: fromOffsets, toOffset: toOffset) }
     }
 
@@ -438,7 +438,7 @@ extension AppModel {
     
     // The following methods specify the field to update in the signature, because we expect these fields to generally be unique
     
-    public mutating func attemptToUpdateEntrySpelling(
+    public func attemptToUpdateEntrySpelling(
         of entry: Entry.ID,
         to newValue: String,
         autoAppliedSpellingConflictResolution: AutoConflictResolution? = nil
@@ -466,7 +466,7 @@ extension AppModel {
         return .success(result)
     }
 
-    public mutating func attemptToUpdateEntryCollectionTitle(
+    public func attemptToUpdateEntryCollectionTitle(
         of entryCollection: EntryCollection.ID,
         to newValue: String,
         autoAppliedTitleConflictResolution: AutoConflictResolution? = nil
@@ -494,7 +494,7 @@ extension AppModel {
         return .success(result)
     }
 
-    public mutating func attemptToUpdateKeywordTitle(
+    public func attemptToUpdateKeywordTitle(
         of keyword: Keyword.ID,
         to newValue: String,
         autoAppliedTitleConflictResolution: AutoConflictResolution? = nil
@@ -525,13 +525,13 @@ extension AppModel {
     
     // The following methods do not specify the field, because we do not care if other entities have the same values
 
-    public mutating func updateNote<T>(_ keyPath: WritableKeyPath<Note, T>, of note: Note.ID, to newValue: T) {
+    public func updateNote<T>(_ keyPath: WritableKeyPath<Note, T>, of note: Note.ID, to newValue: T) {
         guard var copy = db[note: note] else { preconditionFailure() }
         copy[keyPath: keyPath] = newValue
         $db.withLock { $0.update(.note(copy)) }
     }
 
-    public mutating func updateUsage<T>(_ keyPath: WritableKeyPath<Usage, T>, of usage: Usage.ID, to newValue: T) {
+    public func updateUsage<T>(_ keyPath: WritableKeyPath<Usage, T>, of usage: Usage.ID, to newValue: T) {
         guard var copy = db[usage: usage] else { preconditionFailure() }
         copy[keyPath: keyPath] = newValue
         $db.withLock { $0.update(.usage(copy)) }
@@ -539,26 +539,26 @@ extension AppModel {
 
 
     
-    public mutating func merge(entry incomingID: Entry.ID, into remainingID: Entry.ID) {
+    public func merge(entry incomingID: Entry.ID, into remainingID: Entry.ID) {
         $db.withLock { $0.merge(entry: incomingID, into: remainingID) }
     }
     
-    public mutating func merge(entryCollection incomingID: EntryCollection.ID, into remainingID: EntryCollection.ID) {
+    public func merge(entryCollection incomingID: EntryCollection.ID, into remainingID: EntryCollection.ID) {
         $db.withLock { $0.merge(entryCollection: incomingID, into: remainingID) }
     }
     
-    public mutating func merge(keyword incomingID: Keyword.ID, into remainingID: Keyword.ID) {
+    public func merge(keyword incomingID: Keyword.ID, into remainingID: Keyword.ID) {
         $db.withLock { $0.merge(keyword: incomingID, into: remainingID) }
     }
     
-    public mutating func merge(language incomingID: Language.ID, into remainingID: Language.ID) {
+    public func merge(language incomingID: Language.ID, into remainingID: Language.ID) {
         $db.withLock { $0.merge(language: incomingID, into: remainingID) }
     }
     
     
     
             
-    public mutating func delete(_ entity: Entity.ID) {
+    public func delete(_ entity: Entity.ID) {
         $db.withLock { $0.delete(entity) }
     }
 

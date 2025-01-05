@@ -10,62 +10,46 @@ import SwiftUI
 struct AddCustomLanguage {
     @ObservableState
     struct State: Equatable {
-        
+
         @Shared(.model) var model
-        
-//        var languageCode: String = ""
-////        var scriptCode: String = ""
-//        var regionCode: String = ""
-//        var isShowingCustomLanguageCodeField: Bool = false
-////        var isShowingCustomScriptCodeField: Bool = false
-//        var isShowingCustomRegionCodeField: Bool = false
-//        var isShowingCustomNameField: Bool = false
-//        var customNameForAllLanguages: String = ""
-//        
-//        var currentLocalizedName: String = ""
-//        var currentLanguageSelectedForLocalizedName: String? = nil
-//        var customLocalizedNamesByLanguageCode: [String: String] = [:]
-        
-//        @Presents var destination: Destination.State?
-        
-//        var resolvedBCP47Code: String? {
-//            
-//            guard !languageCode.isEmpty else { return nil }
-//            
-//            return [
-//                languageCode,
-////                scriptCode,
-//                regionCode
-//            ].compactMap({ $0.isEmpty ? nil : $0 }).joined(separator: "-")
-//                        
-//        }
-//
-//        var isValidForCreation: Bool {
-//            !languageCode.isEmpty
-//        }
-        
+        @Shared(.settings) var settings
+
+        var languageCode: String = ""
+        var scriptCode: String = ""
+        var regionCode: String = ""
+        var isShowingCustomLanguageCodeField: Bool = false
+        var isShowingCustomScriptCodeField: Bool = false
+        var isShowingCustomRegionCodeField: Bool = false
+        var isShowingCustomNameField: Bool = false
+        var customNameForAllLanguages: String = ""
+
+        var localizedNameInput: String = ""
+        var localizedNameLanguageCode: String? = nil
+        var localizedNamesByLanguageCode: [Language.ID: String] = [:]
+
+        @Presents var destination: Destination.State?
     }
-    
-//    @Reducer(state: .equatable)
-//    enum Destination {
-//        case alert(AlertState<Never>)
-//    }
+
+    @Reducer(state: .equatable)
+    enum Destination {
+        case alert(AlertState<Never>)
+    }
 
     enum Action: BindableAction {
         case binding(BindingAction<State>)
-//        case destination(PresentationAction<Destination.Action>)
-//        case creationConfirmedButtonTapped
-//        case addCustomNameButtonTapped
-//        case tappedCommonLanguageMenuItem(CommonLanguageCode?)
-////        case tappedCommonScriptMenuItem(CommonScriptCode?)
-//        case tappedCommonRegionMenuItem(CommonRegionCode?)
-//        case saveLocalizedNameButtonTapped
-//        case tappedAddLocalizedNameMenuItem(CommonLanguageCode)
-//        case clearCustomNameSelectionButtonTapped
-//        case clearLocalizedNameButtonTapped(String)
-//        case clearCustomLanguageCodeButtonTapped
-////        case clearCustomScriptCodeButtonTapped
-//        case clearCustomRegionCodeButtonTapped
+        case destination(PresentationAction<Destination.Action>)
+        case creationConfirmedButtonTapped
+        case addCustomNameButtonTapped
+        case tappedCommonLanguageMenuItem(CommonLanguageCode?)
+        case tappedCommonScriptMenuItem(CommonScriptCode?)
+        case tappedCommonRegionMenuItem(CommonRegionCode?)
+        case saveLocalizedNameButtonTapped
+        case tappedLocalizeMenuItem(CommonLanguageCode)
+        case clearCustomNameSelectionButtonTapped
+        case clearLocalizedNameButtonTapped(Language.ID)
+        case clearCustomLanguageCodeButtonTapped
+        case clearCustomScriptCodeButtonTapped
+        case clearCustomRegionCodeButtonTapped
     }
     
     var body: some Reducer<State, Action> {
@@ -75,131 +59,208 @@ struct AddCustomLanguage {
         Reduce<State, Action> { state, action in
             switch action {
             case .binding: return .none
-//            case .destination: return .none
-//            case .creationConfirmedButtonTapped:
-//                
-//                guard let newCode = state.resolvedBCP47Code else {
-//                    
-//                    state.destination = .alert(.init(title: { .init("Language cannot be empty")}))
-//                    
-//                    return .none
-//                }
-//                
-//                do {
-//                    
-//                    let newLanguage = try Language(bcp47: newCode)
-////                    newLanguage.customLocalizedNames = state.customLocalizedNamesByLanguageCode
-//                    state.model.ensureExistenceOf(language: newLanguage)
-//                    state.model.settings.languageSelectionList.append(newLanguage)
-//                    state.model.settings.focusedLanguage = newLanguage
-//                    
-//                } catch {
-//                    
-//                    state.destination = .alert(.failedToCreateLanguage(from: newCode))
-//                    
-//                }
-//                
-//                return .run { _ in
-//                    @Dependency(\.dismiss) var dismiss
-//                    await dismiss()
-//                }
-//                
-//            case .addCustomNameButtonTapped:
-//                
-//                state.isShowingCustomNameField = true
-//                
-//                return .none
-//             
-//            case .tappedCommonLanguageMenuItem(let languageCode):
-//                
-//                if let languageCode {
-//                    state.languageCode = languageCode.rawValue
-//                    state.isShowingCustomLanguageCodeField = false
-//                } else {
-//                    state.isShowingCustomLanguageCodeField = true
-//                }
-//                
-//                return .none
-//                
-////            case .tappedCommonScriptMenuItem(let scriptCode):
-////                
-////                if let scriptCode {
-////                    state.scriptCode = scriptCode.rawValue
-////                    state.isShowingCustomScriptCodeField = false
-////                } else {
-////                    state.isShowingCustomScriptCodeField = true
-////                }
-////
-////                return .none
-////                
-//            case .tappedCommonRegionMenuItem(let regionCode):
-//                
-//                if let regionCode {
-//                    state.regionCode = regionCode.rawValue
-//                    state.isShowingCustomRegionCodeField = false
-//                } else {
-//                    state.isShowingCustomRegionCodeField = true
-//                }
-//
-//                return .none
-//                
-//            case .saveLocalizedNameButtonTapped:
-//                
-//                guard let languageCode = state.currentLanguageSelectedForLocalizedName else { return .none }
-//                
-//                state.customLocalizedNamesByLanguageCode[languageCode] = state.currentLocalizedName
-//                
-//                state.currentLanguageSelectedForLocalizedName = .none
-//                state.currentLocalizedName = ""
-//                
-//                return .none
-//                
-//            case .tappedAddLocalizedNameMenuItem(let languageCode):
-//                
-//                state.isShowingCustomNameField = false
-//                state.customNameForAllLanguages = ""
-//                state.currentLanguageSelectedForLocalizedName = languageCode.rawValue
-//                
-//                return .none
-//                
-//            case .clearCustomNameSelectionButtonTapped:
-//                
-//                state.customNameForAllLanguages = ""
-//                state.isShowingCustomNameField = false
-//                
-//                return .none
-//                
-//            case .clearLocalizedNameButtonTapped(let code):
-//                
-//                state.customLocalizedNamesByLanguageCode[code] = nil
-//                
-//                return .none
-//                
-//            case .clearCustomLanguageCodeButtonTapped:
-//                
-//                state.languageCode = ""
-//                state.isShowingCustomLanguageCodeField = false
-//                
-//                return .none
-//                
-////            case .clearCustomScriptCodeButtonTapped:
-////
-////                state.scriptCode = ""
-////                state.isShowingCustomScriptCodeField = false
-////
-////                return .none
-////                
-//            case .clearCustomRegionCodeButtonTapped:
-//
-//                state.regionCode = ""
-//                state.isShowingCustomRegionCodeField = false
-//
-//                return .none
+            case .destination: return .none
+            case .creationConfirmedButtonTapped:
                 
+                guard let newCode = state.resolved?.value else {
+
+                    state.destination = .alert(.init(title: { .init("Language cannot be empty")}))
+                    
+                    return .none
+                }
+                
+                do {
+                    
+                    let newLanguage = try Language(bcp47: newCode)
+//                    newLanguage.customLocalizedNames = state.localizedNamesByLanguageCode
+                    state.model.ensureExistenceOf(language: newLanguage)
+                    _ = state.$settings.withLock({ $0.languageSelectionList.append(newLanguage) })
+//                    state.model.settings.focusedLanguage = newLanguage
+                    
+                } catch {
+                    
+                    state.destination = .alert(.failedToCreateLanguage(from: newCode))
+                    
+                }
+                
+                return .run { _ in
+                    @Dependency(\.dismiss) var dismiss
+                    await dismiss()
+                }
+                
+            case .addCustomNameButtonTapped:
+                
+                state.isShowingCustomNameField = true
+                
+                return .none
+             
+            case .tappedCommonLanguageMenuItem(let languageCode):
+                
+                if let languageCode {
+                    state.languageCode = languageCode.rawValue
+                    state.isShowingCustomLanguageCodeField = false
+                } else {
+                    state.isShowingCustomLanguageCodeField = true
+                }
+                
+                return .none
+                
+            case .tappedCommonScriptMenuItem(let scriptCode):
+                
+                if let scriptCode {
+                    state.scriptCode = scriptCode.rawValue
+                    state.isShowingCustomScriptCodeField = false
+                } else {
+                    state.isShowingCustomScriptCodeField = true
+                }
+
+                return .none
+                
+            case .tappedCommonRegionMenuItem(let regionCode):
+                
+                if let regionCode {
+                    state.regionCode = regionCode.rawValue
+                    state.isShowingCustomRegionCodeField = false
+                } else {
+                    state.isShowingCustomRegionCodeField = true
+                }
+
+                return .none
+                
+            case .saveLocalizedNameButtonTapped:
+                
+                guard let code = state.localizedNameLanguageCode else { return .none }
+
+                let languageID = Language.ID(rawValue: code)
+
+                state.localizedNamesByLanguageCode[languageID] = state.localizedNameInput
+
+                state.localizedNameLanguageCode = .none
+                state.localizedNameInput = ""
+                
+                return .none
+                
+            case .tappedLocalizeMenuItem(let languageCode):
+                
+                state.isShowingCustomNameField = false
+                state.customNameForAllLanguages = ""
+                state.localizedNameLanguageCode = languageCode.rawValue
+
+                return .none
+                
+            case .clearCustomNameSelectionButtonTapped:
+                
+                state.customNameForAllLanguages = ""
+                state.isShowingCustomNameField = false
+                
+                return .none
+                
+            case .clearLocalizedNameButtonTapped(let code):
+                
+                state.localizedNamesByLanguageCode[code] = nil
+
+                return .none
+                
+            case .clearCustomLanguageCodeButtonTapped:
+                
+                state.languageCode = ""
+                state.isShowingCustomLanguageCodeField = false
+                
+                return .none
+                
+            case .clearCustomScriptCodeButtonTapped:
+
+                state.scriptCode = ""
+                state.isShowingCustomScriptCodeField = false
+
+                return .none
+                
+            case .clearCustomRegionCodeButtonTapped:
+
+                state.regionCode = ""
+                state.isShowingCustomRegionCodeField = false
+
+                return .none
             }
         }
-//        .ifLet(\.$destination, action: \.destination)
+        .ifLet(\.$destination, action: \.destination)
     }
+}
+
+extension AddCustomLanguage.State {
+    var generator: BCP47CodeGenerator {
+        .init(
+            language: languageCode,
+            script: scriptCode,
+            region: regionCode
+        )
+    }
+
+    var resolved: ResolvedBCP47Code? {
+        generator.resolved
+    }
+
+    func valueAlreadyExists(for bcp47: String) -> Bool {
+        model.languages(.all).contains(where: { $0.bcp47 == .init(rawValue: bcp47) })
+    }
+
+    var isValidForCreation: Bool {
+        guard let resolvedValue = resolved?.value else { return false }
+        return valueAlreadyExists(for: resolvedValue)
+    }
+
+    func displayName(for commonLanguageCode: CommonLanguageCode) -> String? {
+        do {
+            let language = try Language(bcp47: commonLanguageCode.rawValue)
+            return model.displayName(for: language)
+        } catch {
+            reportIssue(error)
+            return nil
+        }
+    }
+
+    func displayName(for commonScriptCode: CommonScriptCode) -> String? {
+        do {
+            let language = try Language(bcp47: commonScriptCode.rawValue)
+            return model.displayName(for: language)
+        } catch {
+            reportIssue(error)
+            return nil
+        }
+    }
+
+    func displayName(for commonRegionCode: CommonRegionCode) -> String? {
+        do {
+            let language = try Language(bcp47: commonRegionCode.rawValue)
+            return model.displayName(for: language)
+        } catch {
+            reportIssue(error)
+            return nil
+        }
+    }
+
+    var availableLanguages: [CommonLanguageCode] {
+        CommonLanguageCode.allCases
+    }
+
+    var availableScripts: [CommonScriptCode] {
+        switch resolved?.language {
+        case .common(let commonLanguage):
+            commonLanguage.relevantScripts
+        default:
+            []
+        }
+    }
+
+    var availableRegions: [CommonRegionCode] {
+        switch resolved?.language {
+        case .common(let commonLanguage):
+            commonLanguage.relevantRegions
+        default:
+            []
+        }
+    }
+
 }
 
 fileprivate extension AlertState where Action == Never {
@@ -211,563 +272,399 @@ fileprivate extension AlertState where Action == Never {
 struct AddCustomLanguageView: View {
     
     @Bindable var store: StoreOf<AddCustomLanguage>
-    
-    @Environment(\.locale) var locale
-    
-    var body: some View {
-        VStack {
-            
-            
-//            if let resolved = store.resolvedBCP47Code {
-//                HStack {
-//                    Text("BCP 47: ")
-//                    Text(resolved)
-//                }
-//            }
-            
-            HStack {
-                Group {
-//                    VStack {
-//                        if store.isShowingCustomLanguageCodeField {
-//                            HStack {
-//                                TextField("Language", text: $store.languageCode)
-//                                Button(action: { store.send(.clearCustomLanguageCodeButtonTapped) }) {
-//                                    Image(systemName: "xmark.circle.fill")
-//                                }
-//                            }
-//                        } else {
-//                            HStack {
-//                                #if !os(watchOS)
-//                                Menu(locale.localizedString(forLanguageCode: store.languageCode) ?? "Language") {
-//                                    Button("Custom") {
-//                                        store.send(.tappedCommonLanguageMenuItem(.none))
-//                                    }
-//                                    ForEach(CommonLanguageCode.allCases) { code in
-//                                        Button(code.displayName(for: locale)) {
-//                                            store.send(.tappedCommonLanguageMenuItem(code))
-//                                        }
-//                                    }
-//                                }
-//                                #endif
-//                                if !store.languageCode.isEmpty {
-//                                    Button(action: { store.send(.clearCustomLanguageCodeButtonTapped) }) {
-//                                        Image(systemName: "xmark.circle.fill")
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                    
-//                    VStack {
-//                        if store.isShowingCustomScriptCodeField {
-//                            HStack {
-//                                TextField("Code", text: $store.scriptCode)
-//                                Button(action: { store.send(.clearCustomScriptCodeButtonTapped) }) {
-//                                    Image(systemName: "xmark.circle.fill")
-//                                }
-//                            }
-//                        } else {
-//                            HStack {
-//                                Menu(locale.localizedString(forScriptCode: store.scriptCode) ?? "Script") {
-//                                    Button("Custom") {
-//                                        store.send(.tappedCommonScriptMenuItem(.none))
-//                                    }
-//                                    ForEach(CommonScriptCode.allCases) { code in
-//                                        Button(code.displayName(for: locale)) {
-//                                            store.send(.tappedCommonScriptMenuItem(code))
-//                                        }
-//                                    }
-//                                }
-//                                if !store.scriptCode.isEmpty {
-//                                    Button(action: { store.send(.clearCustomScriptCodeButtonTapped) }) {
-//                                        Image(systemName: "xmark.circle.fill")
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
-//                    
-//                    VStack {
-//                        if store.isShowingCustomRegionCodeField {
-//                            HStack {
-//                                TextField("Code", text: $store.regionCode)
-//                                Button(action: { store.send(.clearCustomRegionCodeButtonTapped) }) {
-//                                    Image(systemName: "xmark.circle.fill")
-//                                }
-//                            }
-//                        } else {
-//                            HStack {
-//                                #if !os(watchOS)
-//                                Menu(locale.localizedString(forRegionCode: store.regionCode) ?? "Region") {
-//                                    Button("Custom") {
-//                                        store.send(.tappedCommonRegionMenuItem(.none))
-//                                    }
-//                                    ForEach(CommonRegionCode.allCases) { code in
-//                                        Button(code.displayName(for: locale)) {
-//                                            store.send(.tappedCommonRegionMenuItem(code))
-//                                        }
-//                                    }
-//                                }
-//                                #endif
-//                                if !store.regionCode.isEmpty {
-//                                    Button(action: { store.send(.clearCustomRegionCodeButtonTapped) }) {
-//                                        Image(systemName: "xmark.circle.fill")
-//                                    }
-//                                }
-//                            }
-//                        }
-//                    }
+
+    var resolvedLanguageID: ResolvedLanguageID? {
+        ResolvedLanguageID(store: store)
+    }
+    struct ResolvedLanguageID: View {
+        let store: StoreOf<AddCustomLanguage>
+
+        @Environment(\.locale) private var locale
+
+        var body: some View {
+            if let resolvedCode = store.resolved?.value {
+                Text("Draft:")
+                    .padding(.top)
+
+                HStack {
+                    if let title = locale.localizedString(forIdentifier: resolvedCode) {
+                        Text("\(title) (\(resolvedCode))")
+                    } else {
+                        Text(resolvedCode)
+                    }
+
+//                    customLanguageNameEditor
                 }
-                .padding()
+            } else {
+                Text("Add a new language below")
+                    .font(.headline)
             }
-            
-//            if store.isShowingCustomNameField {
-//                HStack {
-//                    TextField("Custom Name (in all languages)", text: $store.customNameForAllLanguages)
-//                    Button(action: { store.send(.clearCustomNameSelectionButtonTapped) }) {
-//                        Image(systemName: "xmark.circle.fill")
-//                    }
-//                }
-//            } else if store.currentLanguageSelectedForLocalizedName == nil, store.customLocalizedNamesByLanguageCode.isEmpty {
-//                
-//                Button("+ Add Custom Name") {
-//                    store.send(.addCustomNameButtonTapped)
-//                }
-//                
-//            }
-//
-//            ForEach(store.customLocalizedNamesByLanguageCode.keys.sorted(), id: \.self) { key in
-//                HStack {
-//                    Text("\(locale.localizedString(forLanguageCode: key) ?? key): \(store.customLocalizedNamesByLanguageCode[key] ?? "[none]")")
-//                    Button(action: { store.send(.clearLocalizedNameButtonTapped(key)) }) {
-//                        Image(systemName: "xmark.circle.fill")
-//                    }
-//                }
-//            }
-//
-//            if let code = store.currentLanguageSelectedForLocalizedName {
-//                HStack {
-//                    Text(locale.localizedString(forLanguageCode: code) ?? code)
-//                    TextField("Name", text: $store.currentLocalizedName)
-//                        .frame(maxWidth: 200)
-//                    Button("Save") {
-//                        store.send(.saveLocalizedNameButtonTapped)
-//                    }
-//                }
-//            } else if !store.isShowingCustomNameField {
-//                #if !os(watchOS)
-//                Menu("+ Add Localized Name") {
-//                    ForEach(CommonLanguageCode.allCases) { code in
-//                        Button(code.displayName(for: locale)) {
-//                            store.send(.tappedAddLocalizedNameMenuItem(code))
-//                        }
-//                    }
-//                }
-//                #endif
-//            }
-//
-//
-//            Button("Create") {
-//                store.send(.creationConfirmedButtonTapped)
-//            }
-//            .buttonStyle(.borderedProminent)
-//            .disabled(!store.isValidForCreation)
-//            .padding()
-            
         }
+    }
+
+    var body: some View {
+        VStack(spacing: 32) {
+
+            VStack {
+                Text("Already Added:")
+                ForEach(store.model.languages(.all)) { language in
+                    Text("\(store.model.displayName(for: language)) (\(language.bcp47.rawValue))")
+                }
+            }
+
+            resolvedLanguageID
+
+            VStack {
+                languageIDEditor
+
+                Button("Create") {
+                    store.send(.creationConfirmedButtonTapped)
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!store.isValidForCreation)
+            }
+        }
+        .padding()
         .presentationDetents([.medium])
         #if os(tvOS)
         .textFieldStyle(.automatic)
         #elseif !os(watchOS)
         .textFieldStyle(.roundedBorder)
         #endif
-//        .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
+        .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
     }
 }
 
-#Preview { Preview }
-private var Preview: some View {
-    AddCustomLanguageView(store: .init(initialState: .init(), reducer: { AddCustomLanguage() }))
-}
-
-public enum CommonLanguageCode: String, Identifiable, CaseIterable {
-    public var id: Self { self }
-    public func displayName(for locale: Locale) -> String {
-        locale.localizedString(forLanguageCode: rawValue) ?? rawValue
+extension AddCustomLanguageView {
+    var languageIDEditor: LanguageIDEditor {
+        LanguageIDEditor(store: store)
     }
-    case Chinese = "zh"
-    case Spanish = "es"
-    case English = "en"
-    case Hindi = "hi"
-    case Arabic = "ar"
-    case Bengali = "bn"
-    case Portuguese = "pt"
-    case Russian = "ru"
-    case Japanese = "ja"
-    case Punjabi = "pa"
-    case German = "de"
-    case Javanese = "jv"
-    case Korean = "ko"
-    case French = "fr"
-    case Telugu = "te"
-    case Marathi = "mr"
-    case Tamil = "ta"
-    case Vietnamese = "vi"
-    case Urdu = "ur"
-    case Italian = "it"
-    case Turkish = "tr"
-    case Persian = "fa"
-    case Thai = "th"
-    case Gujarati = "gu"
-    case Kannada = "kn"
-    case Polish = "pl"
-    case Amharic = "am"
-    case Burmese = "my"
-    case Odia = "or"
-    case Malayalam = "ml"
-    case Sindhi = "sd"
-    case Nepali = "ne"
-    case Sinhala = "si"
-    case Hausa = "ha"
-    case Ukrainian = "uk"
-    case Romanian = "ro"
-    case Dutch = "nl"
-    case Greek = "el"
-    case Hungarian = "hu"
-    case Azerbaijani = "az"
-    case Hebrew = "he"
-    case Uzbek = "uz"
-    case Catalan = "ca"
-    case Khmer = "km"
-    case Tajik = "tg"
-    case Somali = "so"
-    case Czech = "cs"
-    case Swedish = "sv"
-    case Serbian = "sr"
-    case Danish = "da"
-    case Finnish = "fi"
-    case Slovak = "sk"
-    case Norwegian = "no"
-    case Slovenian = "sl"
-    case Croatian = "hr"
-    case Lithuanian = "lt"
-    case Latvian = "lv"
-    case Ewe = "ee"
-    case Afrikaans = "af"
-    case Bulgarian = "bg"
-    case Estonian = "et"
-    case Macedonian = "mk"
-    case Albanian = "sq"
-    case Icelandic = "is"
-    case Irish = "ga"
-    case Maltese = "mt"
-    case Welsh = "cy"
-    case Scottish_Gaelic = "gd"
-    case Armenian = "hy"
-    case Georgian = "ka"
-}
+    struct LanguageIDEditor: View {
+        @Bindable var store: StoreOf<AddCustomLanguage>
 
-public enum CommonScriptCode: String, Identifiable, CaseIterable {
-    public var id: Self { self }
-    public func displayName(for locale: Locale) -> String {
-        locale.localizedString(forScriptCode: rawValue) ?? rawValue
-    }
-    case Latin = "Latn"
-    case Cyrillic = "Cyrl"
-    case Arabic = "Arab"
-    case Devanagari = "Deva"
-    case Han_Simplified = "Hans"
-    case Han_Traditional = "Hant"
-    case Bengali = "Beng"
-    case Gurmukhi = "Guru"
-    case Japanese = "Jpan"
-    case Korean = "Kore"
-    case Greek = "Grek"
-    case Ethiopic = "Ethi"
-    case Hebrew = "Hebr"
-    case Thaana = "Thaa"
-    case Armenian = "Armn"
-    case Unified_Canadian_Aboriginal_Syllabics = "Cans"
-    case Cherokee = "Cher"
-    case Coptic = "Copt"
-    case Cypriot = "Cprt"
-    case Georgian = "Geor"
-    case Glagolitic = "Glag"
-    case Gothic = "Goth"
-    case Gujarati = "Gujr"
-    case Hangul = "Hang"
-    case Han = "Hani"
-    case Old_Italic = "Ital"
-    case Javanese = "Java"
-    case Kayah_Li = "Kali"
-    case Katakana = "Kana"
-    case Khmer = "Khmr"
-    case Kannada = "Knda"
-    case Lao = "Lao"
-    case Latin_Fraktur = "Latf"
-    case Latin_Gaelic = "Latg"
-    case Malayalam = "Mlym"
-    case Mongolian = "Mong"
-    case Myanmar = "Mymr"
-    case N_Ko = "Nkoo"
-    case Oriya = "Orya"
-    case Runic = "Runr"
-    case Sinhala = "Sinh"
-    case Syriac = "Syrc"
-    case Tamil = "Taml"
-    case Telugu = "Telu"
-    case Tifinagh = "Tfng"
-    case Thai = "Thai"
-    case Tibetan = "Tibt"
-    case Vai = "Vaii"
-    case Yi = "Yiii"
-}
+        struct ClearableCustomPicker<Option>: View {
+            let title: String
+            let onCustomSelected: () -> Void
+            let availableOptions: [Option]
+            let disabledReason: (Option) -> String?
+            let selectedOption: Option?
+            let optionTitle: (Option) -> String?
+            let onOptionSelected: (Option) -> Void
+            let onClear: () -> Void
 
-public enum CommonRegionCode: String, Identifiable, CaseIterable {
-    public var id: Self { self }
-    public func displayName(for locale: Locale) -> String {
-        locale.localizedString(forRegionCode: rawValue) ?? rawValue
-    }
-    case United_States = "US"
-    case China = "CN"
-    case India = "IN"
-    case Indonesia = "ID"
-    case Brazil = "BR"
-    case Pakistan = "PK"
-    case Nigeria = "NG"
-    case Bangladesh = "BD"
-    case Russia = "RU"
-    case Mexico = "MX"
-    case Japan = "JP"
-    case Philippines = "PH"
-    case Ethiopia = "ET"
-    case Egypt = "EG"
-    case Vietnam = "VN"
-    case Democratic_Republic_of_the_Congo = "CD"
-    case Turkey = "TR"
-    case Iran = "IR"
-    case Germany = "DE"
-    case Thailand = "TH"
-    case United_Kingdom = "GB"
-    case France = "FR"
-    case Italy = "IT"
-    case Tanzania = "TZ"
-    case South_Africa = "ZA"
-    case Myanmar = "MM"
-    case Kenya = "KE"
-    case South_Korea = "KR"
-    case Colombia = "CO"
-    case Spain = "Sp"
-    case Uganda = "UG"
-    case Argentina = "AR"
-    case Ukraine = "UA"
-    case Sudan = "SD"
-    case Algeria = "DZ"
-    case Poland = "PL"
-    case Iraq = "IQ"
-    case Canada = "CA"
-    case Morocco = "MA"
-    case Uzbekistan = "UZ"
-    case Saudi_Arabia = "SA"
-    case Afghanistan = "AF"
-    case Malaysia = "MY"
-    case Peru = "PE"
-    case Angola = "AO"
-    case Ghana = "GH"
-    case Mozambique = "MZ"
-    case Yemen = "YE"
-    case Nepal = "NP"
-    case Netherlands = "NL"
-    case Romania = "RO"
-    case Greece = "GR"
-    case Hungary = "HU"
-    case Israel = "IL"
-    case Sweden = "SE"
-    case Finland = "FI"
-    case Norway = "NO"
-    case Denmark = "DK"
-    case Czech_Republic = "CZ"
-    case Slovakia = "SK"
-    case Bulgaria = "BG"
-    case Serbia = "RS"
-    case Croatia = "HR"
-    case Slovenia = "SI"
-    case Lithuania = "LT"
-    case Latvia = "LV"
-    case Estonia = "EE"
-    case Macedonia = "MK"
-    case Albania = "AL"
-    case Iceland = "IS"
-    case Ireland = "IE"
-    case Malta = "MT"
-    case Cyprus = "CY"
-    case Armenia = "AM"
-    case Georgia = "GE"
-    case Portugal = "PT"
-    case Sri_Lanka = "LK"
-    case Azerbaijan = "AZ"
-    case Cambodia = "KH"
-    case Tajikistan = "TJ"
-    case Somalia = "SO"
-    case Togo = "TG"
-}
+            @Binding var shouldShowCustomField: Bool
+            @Binding var custom: String
+            let onCustomClear: () -> Void
 
-struct BCP47CodeGenerator {
-    let language: CommonLanguageCode
-    let script: CommonScriptCode
-    let region: CommonRegionCode
-    
-    init?(language: CommonLanguageCode, script: CommonScriptCode, region: CommonRegionCode) {
-        self.language = language
-        self.script = script
-        self.region = region
-        guard isValidCombination else {
-            return nil
+            var customField: CustomField {
+                .init(title: title, text: $custom, onClear: onCustomClear)
+            }
+
+            struct CustomField: View {
+                let title: String
+                @Binding var text: String
+                let onClear: () -> Void
+
+                var body: some View {
+                    HStack {
+                        TextField(title, text: $text)
+                        Button(action: onClear) {
+                            Image(systemName: "xmark.circle.fill")
+                        }
+                    }
+                }
+            }
+
+            var customPicker: CustomPicker {
+                CustomPicker(
+                    fallbackTitle: title,
+                    onCustomSelected: onCustomSelected,
+                    availableOptions: availableOptions,
+                    disabledReason: disabledReason,
+                    selectedOption: selectedOption,
+                    optionTitle: optionTitle,
+                    onOptionSelected: onOptionSelected,
+                    onClear: onClear
+                )
+            }
+            struct CustomPicker: View {
+                let fallbackTitle: String
+                let onCustomSelected: () -> Void
+                let availableOptions: [Option]
+                let disabledReason: (Option) -> String?
+                let selectedOption: Option?
+                let optionTitle: (Option) -> String?
+                let onOptionSelected: (Option) -> Void
+                let onClear: () -> Void
+
+                struct Cell: View {
+                    let title: String
+                    let disabledTitle: String?
+                    let action: () -> Void
+                    var body: some View {
+                        if let disabledTitle {
+                            Button(disabledTitle, action: {})
+                                .disabled(true)
+                        } else {
+                            Button(title, action: action)
+                        }
+                    }
+                }
+
+                var sortedOptions: [SortableOption] {
+                    availableOptions.compactMap({
+                        guard let title = optionTitle($0) else { return nil }
+                        return SortableOption(title: title, option: $0)
+                    })
+                    .sorted(by: \.title)
+                }
+                struct SortableOption: Identifiable {
+                    var id: String { title }
+                    let title: String
+                    let option: Option
+                }
+
+                var body: some View {
+                    HStack {
+                        #if !os(watchOS)
+                        Menu {
+                            Button("Custom", action: onCustomSelected)
+                            ForEach(sortedOptions) { sorted in
+                                Cell(
+                                    title: sorted.title,
+                                    disabledTitle: disabledReason(sorted.option).map({
+                                        "\(sorted.title) (\($0))"
+                                    })
+                                ) {
+                                    onOptionSelected(sorted.option)
+                                }
+                            }
+                        } label: {
+                            Text(selectedOption.flatMap(optionTitle) ?? fallbackTitle)
+                                .fixedSize()
+                        }
+                        #endif
+                        if selectedOption != nil {
+                            Button(action: onClear) {
+                                Image(systemName: "xmark.circle.fill")
+                            }
+                        }
+                    }
+                }
+            }
+
+            var body: some View {
+                VStack {
+                    if shouldShowCustomField {
+                        customField
+                    } else {
+                        customPicker
+                    }
+                }
+            }
+        }
+
+        var languageField: LanguageField {
+            LanguageField(store: store)
+        }
+        struct LanguageField: View {
+            @Bindable var store: StoreOf<AddCustomLanguage>
+
+            @Environment(\.locale) private var locale
+
+            var body: some View {
+                ClearableCustomPicker<CommonLanguageCode>.init(
+                    title: "Choose Language",
+                    onCustomSelected: {
+                        store.send(.tappedCommonLanguageMenuItem(.none))
+                    },
+                    availableOptions: CommonLanguageCode.allCases,
+                    disabledReason: { _ in nil },
+                    selectedOption: CommonLanguageCode(rawValue: store.languageCode),
+                    optionTitle: store.state.displayName(for:),
+                    onOptionSelected: {
+                        store.send(.tappedCommonLanguageMenuItem($0))
+                    },
+                    onClear: {
+                        store.send(.clearCustomLanguageCodeButtonTapped)
+                    },
+                    shouldShowCustomField: $store.isShowingCustomLanguageCodeField,
+                    custom: $store.languageCode,
+                    onCustomClear: {
+                        store.send(.clearCustomLanguageCodeButtonTapped)
+                    }
+                )
+            }
+        }
+
+        var scriptField: ScriptField {
+            ScriptField(store: store)
+        }
+        struct ScriptField: View {
+            @Bindable var store: StoreOf<AddCustomLanguage>
+
+            @Environment(\.locale) private var locale
+
+            var body: some View {
+                ClearableCustomPicker<CommonScriptCode>.init(
+                    title: "Specify Script",
+                    onCustomSelected: {
+                        store.send(.tappedCommonScriptMenuItem(.none))
+                    },
+                    availableOptions: store.availableScripts,
+                    disabledReason: { _ in nil },
+                    selectedOption: CommonScriptCode(rawValue: store.scriptCode),
+                    optionTitle: store.state.displayName(for:),
+                    onOptionSelected: {
+                        store.send(.tappedCommonScriptMenuItem($0))
+                    },
+                    onClear: {
+                        store.send(.clearCustomScriptCodeButtonTapped)
+                    },
+                    shouldShowCustomField: $store.isShowingCustomScriptCodeField,
+                    custom: $store.scriptCode,
+                    onCustomClear: {
+                        store.send(.clearCustomScriptCodeButtonTapped)
+                    }
+                )
+            }
+        }
+
+        var regionField: RegionField {
+            RegionField(store: store)
+        }
+        struct RegionField: View {
+            @Bindable var store: StoreOf<AddCustomLanguage>
+
+            @Environment(\.locale) private var locale
+
+            var body: some View {
+                ClearableCustomPicker<CommonRegionCode>.init(
+                    title: "Add Region",
+                    onCustomSelected: {
+                        store.send(.tappedCommonRegionMenuItem(.none))
+                    },
+                    availableOptions: store.availableRegions,
+                    disabledReason: { _ in nil },
+                    selectedOption: CommonRegionCode(rawValue: store.regionCode),
+                    optionTitle: store.state.displayName(for:),
+                    onOptionSelected: {
+                        store.send(.tappedCommonRegionMenuItem($0))
+                    },
+                    onClear: {
+                        store.send(.clearCustomRegionCodeButtonTapped)
+                    },
+                    shouldShowCustomField: $store.isShowingCustomRegionCodeField,
+                    custom: $store.regionCode,
+                    onCustomClear: {
+                        store.send(.clearCustomRegionCodeButtonTapped)
+                    }
+                )
+            }
+        }
+
+        var body: some View {
+            HStack {
+                Group {
+
+                    languageField
+
+                    if store.resolved?.language != nil {
+
+                        regionField
+
+                        scriptField
+
+                    }
+
+                }
+                .padding()
+            }
         }
     }
-    
-    var isValidCombination: Bool {
-        switch language {
-        case .English:
-            return script == .Latin && [.United_States, .United_Kingdom].contains(region)
-        case .Chinese:
-            return (script == .Han_Simplified || script == .Han_Traditional) && region == .China
-        case .Spanish:
-            return script == .Latin && [.Spain, .Mexico, .Argentina].contains(region)
-        case .Hindi:
-            return script == .Devanagari && region == .India
-        case .Arabic:
-            return script == .Arabic && [.Egypt, .Saudi_Arabia].contains(region)
-        case .Bengali:
-            return script == .Bengali && region == .Bangladesh
-        case .Portuguese:
-            return script == .Latin && [.Brazil, .Portugal].contains(region)
-        case .Russian:
-            return script == .Cyrillic && region == .Russia
-        case .Japanese:
-            return script == .Japanese && region == .Japan
-        case .Punjabi:
-            return (script == .Gurmukhi || script == .Arabic) && region == .India
-        case .German:
-            return script == .Latin && region == .Germany
-        case .Javanese:
-            return script == .Javanese && region == .Indonesia
-        case .Korean:
-            return script == .Korean && region == .South_Korea
-        case .French:
-            return script == .Latin && region == .France
-        case .Telugu:
-            return script == .Telugu && region == .India
-        case .Marathi:
-            return script == .Devanagari && region == .India
-        case .Tamil:
-            return script == .Tamil && region == .India
-        case .Vietnamese:
-            return script == .Latin && region == .Vietnam
-        case .Urdu:
-            return script == .Arabic && region == .Pakistan
-        case .Italian:
-            return script == .Latin && region == .Italy
-        case .Turkish:
-            return script == .Latin && region == .Turkey
-        case .Persian:
-            return script == .Arabic && region == .Iran
-        case .Thai:
-            return script == .Thai && region == .Thailand
-        case .Gujarati:
-            return script == .Gujarati && region == .India
-        case .Kannada:
-            return script == .Kannada && region == .India
-        case .Polish:
-            return script == .Latin && region == .Poland
-        case .Amharic:
-            return script == .Ethiopic && region == .Ethiopia
-        case .Burmese:
-            return script == .Myanmar && region == .Myanmar
-        case .Odia:
-            return script == .Oriya && region == .India
-        case .Malayalam:
-            return script == .Malayalam && region == .India
-        case .Sindhi:
-            return script == .Arabic && region == .Pakistan
-        case .Nepali:
-            return script == .Devanagari && region == .Nepal
-        case .Sinhala:
-            return script == .Sinhala && region == .Sri_Lanka
-        case .Hausa:
-            return script == .Latin && region == .Nigeria
-        case .Ukrainian:
-            return script == .Cyrillic && region == .Ukraine
-        case .Romanian:
-            return script == .Latin && region == .Romania
-        case .Dutch:
-            return script == .Latin && region == .Netherlands
-        case .Greek:
-            return script == .Greek && region == .Greece
-        case .Hungarian:
-            return script == .Latin && region == .Hungary
-        case .Azerbaijani:
-            return script == .Latin && region == .Azerbaijan
-        case .Hebrew:
-            return script == .Hebrew && region == .Israel
-        case .Uzbek:
-            return script == .Latin && region == .Uzbekistan
-        case .Catalan:
-            return script == .Latin && region == .Spain
-        case .Khmer:
-            return script == .Khmer && region == .Cambodia
-        case .Tajik:
-            return script == .Cyrillic && region == .Tajikistan
-        case .Somali:
-            return script == .Latin && region == .Somalia
-        case .Czech:
-            return script == .Latin && region == .Czech_Republic
-        case .Swedish:
-            return script == .Latin && region == .Sweden
-        case .Serbian:
-            return script == .Cyrillic && region == .Serbia
-        case .Danish:
-            return script == .Latin && region == .Denmark
-        case .Finnish:
-            return script == .Latin && region == .Finland
-        case .Slovak:
-            return script == .Latin && region == .Slovakia
-        case .Norwegian:
-            return script == .Latin && region == .Norway
-        case .Slovenian:
-            return script == .Latin && region == .Slovenia
-        case .Croatian:
-            return script == .Latin && region == .Croatia
-        case .Lithuanian:
-            return script == .Latin && region == .Lithuania
-        case .Latvian:
-            return script == .Latin && region == .Latvia
-        case .Ewe:
-            return script == .Latin && region == .Togo
-        case .Afrikaans:
-            return script == .Latin && region == .South_Africa
-        case .Bulgarian:
-            return script == .Cyrillic && region == .Bulgaria
-        case .Estonian:
-            return script == .Latin && region == .Estonia
-        case .Macedonian:
-            return script == .Cyrillic && region == .Macedonia
-        case .Albanian:
-            return script == .Latin && region == .Albania
-        case .Icelandic:
-            return script == .Latin && region == .Iceland
-        case .Irish:
-            return script == .Latin && region == .Ireland
-        case .Maltese:
-            return script == .Latin && region == .Malta
-        case .Welsh:
-            return script == .Latin && region == .United_Kingdom
-        case .Scottish_Gaelic:
-            return script == .Latin && region == .United_Kingdom
-        case .Armenian:
-            return script == .Armenian && region == .Armenia
-        case .Georgian:
-            return script == .Georgian && region == .Georgia
+}
+
+extension AddCustomLanguageView.ResolvedLanguageID {
+    var customLanguageNameEditor: CustomLanguageNameEditor {
+        CustomLanguageNameEditor(store: store)
+    }
+    struct CustomLanguageNameEditor: View {
+        @Bindable var store: StoreOf<AddCustomLanguage>
+
+        @Environment(\.locale) private var locale
+
+        var localizeButton: LocalizeButton {
+            LocalizeButton(store: store)
         }
+        struct LocalizeButton: View {
+            let store: StoreOf<AddCustomLanguage>
+
+            var body: some View {
+                #if !os(watchOS)
+                Menu("Localize") {
+                    ForEach(store.availableLanguages) { code in
+                        Button(code.displayName(for: .current)) {
+                            store.send(.tappedLocalizeMenuItem(code))
+                        }
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                #endif
+            }
+        }
+
+        var body: some View {
+            if store.isShowingCustomNameField {
+                HStack {
+                    TextField("Custom Name", text: $store.customNameForAllLanguages)
+
+//                    localizeButton
+
+                    Button(action: { store.send(.clearCustomNameSelectionButtonTapped) }) {
+                        Image(systemName: "xmark.circle.fill")
+                    }
+                }
+                .padding()
+
+                ForEach(store.localizedNamesByLanguageCode.keys.sorted(), id: \.self) { key in
+                    HStack {
+                        Text("\(locale.localizedString(forLanguageCode: key.rawValue) ?? key.rawValue): \(store.localizedNamesByLanguageCode[key] ?? "[none]")")
+                        Button(action: { store.send(.clearLocalizedNameButtonTapped(key)) }) {
+                            Image(systemName: "xmark.circle.fill")
+                        }
+                    }
+                }
+
+                if let code = store.localizedNameLanguageCode {
+                    HStack {
+                        Text(locale.localizedString(forLanguageCode: code) ?? code)
+                        TextField("Name", text: $store.localizedNameInput)
+                            .frame(maxWidth: 200)
+                        Button("Save") {
+                            store.send(.saveLocalizedNameButtonTapped)
+                        }
+                    }
+                } else {
+                }
+
+            } else if store.localizedNameLanguageCode == nil, store.localizedNamesByLanguageCode.isEmpty {
+
+                Button("Edit") {
+                    store.send(.addCustomNameButtonTapped)
+                }
+
+            }
+        }
+    }
+}
+
+#Preview {
+    @Shared(.model) var model = .init()
+    AddCustomLanguageView(store: .init(
+        initialState: .init(),
+        reducer: { AddCustomLanguage() }
+    ))
+    .task {
+        await model.prepareSharedValues()
     }
 }

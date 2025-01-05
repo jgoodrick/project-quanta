@@ -14,6 +14,7 @@ struct SettingsEditor {
     @ObservableState
     struct State: Equatable {
         @Shared(.model) var model
+        @Shared(.settings) var settings
         @Presents var destination: Destination.State?
     }
     
@@ -21,6 +22,7 @@ struct SettingsEditor {
     enum Destination {
         case alert(AlertState<Never>)
         case addCustomLanguage(AddCustomLanguage)
+        case howToAddSystemLanguage(HowToAddSystemLanguage)
     }
     
     enum Action {
@@ -28,6 +30,7 @@ struct SettingsEditor {
         case destructiveSwipeButtonTapped(Language)
         case addLanguageMenuItemSelected(Language)
         case addCustomLanguageMenuItemTapped
+        case addSystemLanguageMenuItemTapped
         case languageListItemTapped(Language)
         case moved(fromOffsets: IndexSet, toOffset: Int)
     }
@@ -38,18 +41,18 @@ struct SettingsEditor {
             case .destination: return .none
             case .destructiveSwipeButtonTapped(let selected):
                 
-                state.model.$settings.withLock({
+                state.$settings.withLock({
                     $0.languageSelectionList.removeAll(where: { $0 == selected })
                 })
 
                 // if the focused language is the one that was just removed, default it to the top language:
                 
-                if state.model.settings.defaultNewEntryLanguage == selected {
-                    if let topLanguage = state.model.settings.languageSelectionList.first {
-                        state.model.$settings.withLock({ $0.defaultNewEntryLanguage = topLanguage })
+                if state.settings.defaultNewEntryLanguage == selected {
+                    if let topLanguage = state.settings.languageSelectionList.first {
+                        state.$settings.withLock({ $0.defaultNewEntryLanguage = topLanguage })
                     } else {
                         @Dependency(\.systemLanguages) var systemLanguages
-                        state.model.$settings.withLock({ $0.defaultNewEntryLanguage = systemLanguages.current() })
+                        state.$settings.withLock({ $0.defaultNewEntryLanguage = systemLanguages.current() })
                     }
                 }
                 
@@ -58,8 +61,8 @@ struct SettingsEditor {
             case .addLanguageMenuItemSelected(let selected):
                 
                 state.$model.withLock({ $0.ensureExistenceOf(language: selected) })
-                _ = state.model.$settings.withLock({ $0.languageSelectionList.append(selected) })
-                state.model.$settings.withLock({ $0.defaultNewEntryLanguage = selected })
+                _ = state.$settings.withLock({ $0.languageSelectionList.append(selected) })
+                state.$settings.withLock({ $0.defaultNewEntryLanguage = selected })
 
                 return .none
 
@@ -69,15 +72,21 @@ struct SettingsEditor {
                 
                 return .none
                 
+            case .addSystemLanguageMenuItemTapped:
+
+                state.destination = .howToAddSystemLanguage(.init())
+
+                return .none
+                
             case .languageListItemTapped(let selected):
                 
-                state.model.$settings.withLock({ $0.defaultNewEntryLanguage = selected })
+                state.$settings.withLock({ $0.defaultNewEntryLanguage = selected })
 
                 return .none
                 
             case .moved(let fromOffsets, let toOffset):
                                 
-                state.model.$settings.withLock({ $0.languageSelectionList.move(fromOffsets: fromOffsets, toOffset: toOffset) })
+                state.$settings.withLock({ $0.languageSelectionList.move(fromOffsets: fromOffsets, toOffset: toOffset) })
 
                 return .none
                 
@@ -96,17 +105,21 @@ fileprivate extension AlertState where Action == Never {
 struct SettingsEditorView: View {
     
     @Bindable var store: StoreOf<SettingsEditor>
-        
+
+    private var additionalLanguagesAvailable: IdentifiedArrayOf<Language> {
+        store.settings.additionalSystemLanguagesAvailable
+    }
+
     var body: some View {
         List {
             Section {
-                ForEach(store.model.settings.languageSelectionList) { language in
+                ForEach(store.settings.languageSelectionList) { language in
                     HStack {
-//                        Button(action: { store.send(.languageListItemTapped(language)) }) {
-//                            Text("language.displayName(locale: .current)".capitalized)
-//                        }
-//                        Spacer()
-//                        Image(systemName: "line.3.horizontal").foregroundStyle(.secondary)
+                        Button(action: { store.send(.languageListItemTapped(language)) }) {
+                            Text("\(store.model.displayName(for: language))".capitalized)
+                        }
+                        Spacer()
+                        Image(systemName: "line.3.horizontal").foregroundStyle(.secondary)
                     }
                     .modifier(DeleteSwipeAction_tvOS_excluded {
                         store.send(.destructiveSwipeButtonTapped(language))
@@ -124,12 +137,16 @@ struct SettingsEditorView: View {
                     Spacer()
                     
                     Menu {
-//                        ForEach(store.model.settings.additionalLanguagesAvailable) { availableLanguage in
-//                            Button(action: { store.send(.addLanguageMenuItemSelected(availableLanguage)) }) {
-//                                Text("availableLanguage.displayName")
-//                                    .textCase(.none)
-//                            }
-//                        }
+                        ForEach(additionalLanguagesAvailable) { availableLanguage in
+                            Button(action: { store.send(.addLanguageMenuItemSelected(availableLanguage)) }) {
+                                Text("\(store.model.displayName(for: availableLanguage))")
+                                    .textCase(.none)
+                            }
+                        }
+                        Button(action: { store.send(.addSystemLanguageMenuItemTapped) }) {
+                            Text("Add System Language")
+                                .textCase(.none)
+                        }
                         Button(action: { store.send(.addCustomLanguageMenuItemTapped) }) {
                             Text("Add Custom Language")
                                 .textCase(.none)
@@ -144,6 +161,9 @@ struct SettingsEditorView: View {
             }
         }
         .alert($store.scope(state: \.destination?.alert, action: \.destination.alert))
+        .sheet(item: $store.scope(state: \.destination?.howToAddSystemLanguage, action: \.destination.howToAddSystemLanguage)) { scoped in
+            HowToAddSystemLanguageView(store: scoped)
+        }
         .sheet(item: $store.scope(state: \.destination?.addCustomLanguage, action: \.destination.addCustomLanguage)) { scoped in
             AddCustomLanguageView(store: scoped)
         }

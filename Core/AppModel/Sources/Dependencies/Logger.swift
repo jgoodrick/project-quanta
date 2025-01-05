@@ -9,7 +9,7 @@ extension DependencyValues {
     }
 }
 
-extension Logger: DependencyKey {
+extension Logger: @retroactive DependencyKey {
     public static var liveValue: Logger { Logger() }
     public static var testValue: Logger { Logger() }
     public static var previewValue: Logger { Logger() }

@@ -84,10 +84,6 @@ extension EntryDetail.State {
         model.languages(.of(.entry(entryID)))
     }
     
-    var availableLanguages: [Language] {
-        model.settings.languageSelectionList.map({ $0 })
-    }
-
     var entry: Entry? {
         model[entry: entryID]
     }
@@ -252,11 +248,11 @@ extension EntryDetail.State {
         case .disconnectOnly:
             switch resolution.target {
             case .translation(let translation):
-                $model.withLock({ $0.remove(translation: translation.id, fromEntry: entryID) })
+                _ = $model.withLock({ $0.remove(translation: translation.id, fromEntry: entryID) })
             case .usage(let usage):
-                $model.withLock({ $0.remove(usage: usage.id, fromEntry: entryID) })
+                _ = $model.withLock({ $0.remove(usage: usage.id, fromEntry: entryID) })
             case .note(let note):
-                $model.withLock({ $0.remove(note: note.id, fromEntry: entryID) })
+                _ = $model.withLock({ $0.remove(note: note.id, fromEntry: entryID) })
             }
         }
 

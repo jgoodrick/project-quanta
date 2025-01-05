@@ -22,7 +22,9 @@ struct Home {
             print("resetting toolbar")
         }
 
-        @Shared(.model) var model
+        @Shared(.model) fileprivate var model
+        @Shared(.settings) fileprivate var settings
+
         @Presents var destination: Destination.State?
         
         var displayedEntries: [Item] {
@@ -142,7 +144,7 @@ struct Home {
                 
             case .selectedInputLanguage(let selected):
                 
-                state.model.$settings.withLock({ $0.defaultNewEntryLanguage = selected })
+                state.$settings.withLock({ $0.defaultNewEntryLanguage = selected })
 
                 return .none
                 
@@ -313,7 +315,7 @@ struct HomeStackRootView: View {
         .modifier(
             ToolbarTextFieldInstaller(
                 placeholder: "New Entry",
-                language: store.model.settings.defaultNewEntryLanguage,
+                language: store.settings.defaultNewEntryLanguage,
                 text: $store.toolbarText,
                 focused: $store.toolbarTextFieldIsFocused,
                 installed: !isSearching,
@@ -341,12 +343,10 @@ struct HomeStackRootView: View {
 
 struct PresentsSettingsMenuInToolbar: ViewModifier {
     
-    init(store: StoreOf<Home>) {
-        self.store = store
-    }
-    
-    @Bindable var store: StoreOf<Home>
-    
+    let store: StoreOf<Home>
+
+    @Shared(.settings) var settings
+
     func body(content: Content) -> some View {
         content
             .toolbar {
@@ -357,11 +357,11 @@ struct PresentsSettingsMenuInToolbar: ViewModifier {
                             Text("All Settings")
                         }
                         
-                        ForEach(store.model.settings.languageSelectionList) { availableLanguage in
+                        ForEach(settings.languageSelectionList) { availableLanguage in
                             Button(action: {
                                 store.send(.selectedInputLanguage(availableLanguage))
                             }) {
-                                Label("availableLanguage.displayName(locale: .current)".capitalized, systemImage: "flag")
+                                Label("\(store.model.displayName(for: availableLanguage))".capitalized, systemImage: "flag")
                             }
                         }
                         
@@ -381,6 +381,9 @@ struct HomeStackView: View {
         NavigationStack {
             HomeStackRootView(store: store)
                 .searchable(text: $store.searchField)
+        }
+        .task {
+            await store.model.prepareSharedValues()
         }
     }
 }
