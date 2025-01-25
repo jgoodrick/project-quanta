@@ -66,7 +66,8 @@ struct PronunciationButtonOrMenu: View {
                 AddPronunciationButton(action: onAddButtonTapped)
             }
         }
-        .buttonStyle(.roundedTwoTone(square: compact))
+        .buttonStyle(.roundedTwoTone())
+        .environment(\.roundedTwoToneButton.square, compact)
         .modifier(OverrideIf(compact, \.adaptiveTwoTone.lightMode.standard.background, .clear))
         .modifier(OverrideIf(compact, \.adaptiveTwoTone.darkMode.standard.background, .clear))
     }

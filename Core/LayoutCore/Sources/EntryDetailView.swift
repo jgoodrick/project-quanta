@@ -3,6 +3,7 @@ import StructuralModel
 import SwiftUI
 import Combine
 
+@MainActor
 @Observable
 @dynamicMemberLookup
 class EntryDetailStore {
@@ -224,8 +225,8 @@ public struct NewEntryDetailView: View {
     }
 }
 
-public struct AppAccentColor: EnvironmentKey {
-    public static var defaultValue: Color = .indigo
+public struct AppAccentColor: EnvironmentKey, Sendable {
+    public static let defaultValue: Color = .indigo
 }
 
 extension EnvironmentValues {
@@ -236,11 +237,11 @@ extension EnvironmentValues {
 }
 
 
-public struct NewEntryDetailViewStyle: EnvironmentKey {
-    public static var defaultValue: NewEntryDetailViewStyle = .init()
+public struct NewEntryDetailViewStyle: EnvironmentKey, Sendable {
+    public static let defaultValue: NewEntryDetailViewStyle = .init()
     public var buttonTextAlignment: HorizontalAlignment = .leading
     public var primarySectionColors: PrimarySectionColors = .uniform(AppAccentColor.defaultValue)
-    public struct PrimarySectionColors {
+    public struct PrimarySectionColors: Sendable {
         public static func uniform(_ color: Color) -> Self {
             Self.init(
                 additionalContext: color,

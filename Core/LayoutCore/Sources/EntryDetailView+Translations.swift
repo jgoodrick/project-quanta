@@ -97,7 +97,8 @@ struct AddTranslationButton: View {
                 Image(systemName: "character.book.closed.fill")
             }
         }
-        .buttonStyle(.roundedTwoTone(square: compact))
+        .buttonStyle(.roundedTwoTone())
+        .environment(\.roundedTwoToneButton.square, compact)
     }
 }
 

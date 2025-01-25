@@ -36,7 +36,8 @@ struct EntryDetailHeader: View {
                         }
                     }
                 )
-                .buttonStyle(.roundedTwoTone(square: true))
+                .buttonStyle(.roundedTwoTone())
+                .environment(\.roundedTwoToneButton.square, true)
                 .foregroundStyle(style.primarySectionColors.additionalContext)
             }
         }

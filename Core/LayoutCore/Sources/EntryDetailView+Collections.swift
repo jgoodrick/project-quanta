@@ -69,7 +69,8 @@ struct AddToCollectionButton: View {
                 Image(systemName: "rectangle.stack.badge.plus")
             }
         }
-        .buttonStyle(.roundedTwoTone(square: compact))
+        .buttonStyle(.roundedTwoTone())
+        .environment(\.roundedTwoToneButton.square, compact)
     }
 }
 
@@ -136,7 +137,8 @@ struct IndividualCollectionMembershipButton: View {
 
             }
         }
-        .buttonStyle(.roundedTwoTone(highlighted: false, square: false))
+        .buttonStyle(.roundedTwoTone(highlighted: false))
+        .environment(\.roundedTwoToneButton.square, false)
     }
 }
 

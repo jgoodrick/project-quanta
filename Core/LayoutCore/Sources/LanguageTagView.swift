@@ -101,7 +101,7 @@ struct LanguageTagButtonStyle: ButtonStyle {
 }
 
 public struct LanguageTagMenuAvailableLanguages: EnvironmentKey {
-    public static var defaultValue: [Language] = {
+    public static let defaultValue: [Language] = {
         Locale.preferredLanguages.compactMap({ try? Language.init(bcp47: $0) })
     }()
 }
@@ -113,8 +113,8 @@ extension EnvironmentValues {
     }
 }
 
-public struct LanguageTagStyle: EnvironmentKey {
-    public static var defaultValue: LanguageTagStyle = .init()
+public struct LanguageTagStyle: EnvironmentKey, Sendable {
+    public static let defaultValue: LanguageTagStyle = .init()
     public var primaryColor: Color = AppAccentColor.defaultValue.opacity(0.6)
 }
 
@@ -125,8 +125,8 @@ extension EnvironmentValues {
     }
 }
 
-public struct LanguageNameFormatter: EnvironmentKey {
-    public static var defaultValue: Self = .init()
+public struct LanguageNameFormatter: EnvironmentKey, @unchecked Sendable {
+    public static let defaultValue: Self = .init()
     public enum Style {
         case full, short
     }

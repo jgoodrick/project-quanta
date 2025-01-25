@@ -46,7 +46,8 @@ struct SplashImageButtonOrMenu: View {
                 AddSplashImageButton(action: onAddButtonTapped)
             }
         }
-        .buttonStyle(.roundedTwoTone(square: compact))
+        .buttonStyle(.roundedTwoTone())
+        .environment(\.roundedTwoToneButton.square, compact)
     }
 }
 

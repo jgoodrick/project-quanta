@@ -109,7 +109,8 @@ struct AddExampleMenu: View {
             },
             primaryAction: primaryAction
         )
-        .buttonStyle(.roundedTwoTone(square: true))
+        .buttonStyle(.roundedTwoTone())
+        .environment(\.roundedTwoToneButton.square, true)
     }
 }
 

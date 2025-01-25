@@ -67,7 +67,8 @@ struct AddTagButton: View {
                 Image(systemName: "tag")
             }
         }
-        .buttonStyle(.roundedTwoTone(square: compact))
+        .buttonStyle(.roundedTwoTone())
+        .environment(\.roundedTwoToneButton.square, compact)
     }
 }
 
@@ -135,7 +136,8 @@ struct IndividualTagButton: View {
                 
             }
         }
-        .buttonStyle(.roundedTwoTone(highlighted: false, square: false))
+        .buttonStyle(.roundedTwoTone(highlighted: false))
+        .environment(\.roundedTwoToneButton.square, false)
     }
 }
 

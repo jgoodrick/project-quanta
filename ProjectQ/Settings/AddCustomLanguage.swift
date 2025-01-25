@@ -131,15 +131,20 @@ struct AddCustomLanguage {
                 
                 guard let code = state.localizedNameLanguageCode else { return .none }
 
-                let languageID = Language.ID(rawValue: code)
+                do {
+                    let languageID = try Language.ID(bcp47: code)
 
-                state.localizedNamesByLanguageCode[languageID] = state.localizedNameInput
+                    state.localizedNamesByLanguageCode[languageID] = state.localizedNameInput
 
-                state.localizedNameLanguageCode = .none
-                state.localizedNameInput = ""
+                    state.localizedNameLanguageCode = .none
+                    state.localizedNameInput = ""
+
+                } catch {
+                    reportIssue(error)
+                }
                 
                 return .none
-                
+
             case .tappedLocalizeMenuItem(let languageCode):
                 
                 state.isShowingCustomNameField = false
@@ -626,14 +631,14 @@ extension AddCustomLanguageView.ResolvedLanguageID {
                 }
                 .padding()
 
-                ForEach(store.localizedNamesByLanguageCode.keys.sorted(), id: \.self) { key in
-                    HStack {
-                        Text("\(locale.localizedString(forLanguageCode: key.rawValue) ?? key.rawValue): \(store.localizedNamesByLanguageCode[key] ?? "[none]")")
-                        Button(action: { store.send(.clearLocalizedNameButtonTapped(key)) }) {
-                            Image(systemName: "xmark.circle.fill")
-                        }
-                    }
-                }
+//                ForEach(store.localizedNamesByLanguageCode.keys.sorted(), id: \.self) { key in
+//                    HStack {
+//                        Text("\(locale.localizedString(forLanguageCode: key.rawValue) ?? key.rawValue): \(store.localizedNamesByLanguageCode[key] ?? "[none]")")
+//                        Button(action: { store.send(.clearLocalizedNameButtonTapped(key)) }) {
+//                            Image(systemName: "xmark.circle.fill")
+//                        }
+//                    }
+//                }
 
                 if let code = store.localizedNameLanguageCode {
                     HStack {
