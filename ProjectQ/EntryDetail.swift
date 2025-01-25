@@ -340,7 +340,7 @@ public struct EntryDetailView: View {
     @Bindable var store: StoreOf<EntryDetail>
 
     public struct Style: EnvironmentKey {
-        public static var defaultValue: Self = .init()
+        public static let defaultValue: Self = .init()
     }
     
     @Environment(\.entryDetail) private var style

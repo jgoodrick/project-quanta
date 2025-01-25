@@ -60,7 +60,8 @@ struct AddRelatedEntryButton: View {
                 Image(systemName: "link.badge.plus")
             }
         }
-        .buttonStyle(.roundedTwoTone(square: compact))
+        .buttonStyle(.roundedTwoTone())
+        .environment(\.roundedTwoToneButton.square, compact)
     }
 }
 
@@ -125,7 +126,8 @@ struct IndividualRelatedEntryButton: View {
 
             }
         }
-        .buttonStyle(.roundedTwoTone(highlighted: false, square: false))
+        .buttonStyle(.roundedTwoTone(highlighted: false))
+        .environment(\.roundedTwoToneButton.square, false)
     }
 }
 

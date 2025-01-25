@@ -27,13 +27,12 @@ struct ProjectQ: App {
                 HomeStackView(store: Self.store)
             }
 //            HomeStackView(store: Self.store)
-            NavigationStack {
-                Text("Root").navigationDestination(isPresented: $destinationIsShowing) {
-                    NewEntryDetailView()
-                    .toolbar { EditButton() }
-                }
-            }
-
+//            NavigationStack {
+//                Text("Root").navigationDestination(isPresented: $destinationIsShowing) {
+//                    NewEntryDetailView()
+//                    .toolbar { EditButton() }
+//                }
+//            }
         }
     }
 }

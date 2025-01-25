@@ -5,7 +5,7 @@ struct RoundedTwoToneButton: ButtonStyle {
     
     var highlighted: Bool = false
     struct Style: EnvironmentKey, Sendable {
-        static var defaultValue: Self = .init()
+        static let defaultValue: Self = .init()
         var dimension: CGFloat? = 44
         var square: Bool = false
         var maxWidth: CGFloat? = .infinity
@@ -28,8 +28,8 @@ struct RoundedTwoToneButton: ButtonStyle {
             .modifier(AdaptiveHighlightableTwoToneModifier(highlighted: highlighted))
             .clipShape(.buttonBorder)
             .opacity(configuration.isPressed ? 0.6 : 1.0)
-            .labelStyle(iconOnly: square != nil)
-            .frame(width: square ?? style.width, height: square ?? style.height)
+            .labelStyle(iconOnly: style.square != nil)
+            .frame(width: style.square ? nil : style.dimension, height: style.square ? nil : style.dimension)
             .fontWeight(style.fontWeight)
     }
 }
@@ -53,8 +53,8 @@ extension View {
 }
 
 extension ButtonStyle where Self == RoundedTwoToneButton {
-    static func roundedTwoTone(highlighted: Bool = false, square: Bool = false) -> Self {
-        Self(highlighted: highlighted, square: square ? 44 : .none)
+    static func roundedTwoTone(highlighted: Bool = false) -> Self {
+        Self(highlighted: highlighted)
     }
 }
 

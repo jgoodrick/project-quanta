@@ -100,7 +100,8 @@ struct AddNoteButton: View {
                 Image(systemName: "pencil.tip.crop.circle.badge.plus")
             }
         }
-        .buttonStyle(.roundedTwoTone(square: compact))
+        .buttonStyle(.roundedTwoTone())
+        .environment(\.roundedTwoToneButton.square, compact)
     }
 }
 
