@@ -86,15 +86,15 @@ playground.xcworkspace
 build/**
 
 # Tuist makes committing projects and workspaces undesirable
-**/*.xcodeproj
-**/*.xcworkspace
-xcschemes/
-TuistCloud
+# **/*.xcodeproj
+# **/*.xcworkspace
+# xcschemes/
+# TuistCloud
 
 # Tuist generated files
-**/Derived/
-Tuist/Dependencies/SwiftPackageManager
-Tuist/Dependencies/graph.json
+# **/Derived/
+# Tuist/Dependencies/SwiftPackageManager
+# Tuist/Dependencies/graph.json
 
 # VSCode Settings
 .vscode/launch.json
