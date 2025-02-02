@@ -24,6 +24,9 @@ let package = Package(
         .library(
             name: "StructuralModel",
             targets: ["StructuralModel"]),
+        .library(
+            name: "VanillaApp",
+            targets: ["VanillaApp"]),
     ],
     dependencies: [
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture", branch: "main"),
@@ -55,6 +58,10 @@ let package = Package(
             name: "StructuralModel",
             dependencies: [],
             path: "StructuralModel/Sources"),
+        .target(
+            name: "VanillaApp",
+            dependencies: ["LayoutCore", "RelationalModel"],
+            path: "VanillaApp/Sources"),
 
         // Test Targets
 
@@ -78,5 +85,9 @@ let package = Package(
             name: "StructuralModelTests",
             dependencies: ["StructuralModel"],
             path: "StructuralModel/Tests"),
+        .testTarget(
+            name: "VanillaAppTests",
+            dependencies: ["VanillaApp"],
+            path: "VanillaApp/Tests"),
     ]
 )
