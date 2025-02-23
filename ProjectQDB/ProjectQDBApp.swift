@@ -5,13 +5,23 @@
 //  Created by Goodrick,Joseph on 2/16/25.
 //
 
+import Dependencies
+import GRDB
 import SwiftUI
 
 @main
-struct ProjectQDBApp: App {
+struct RemindersApp: App {
+    init() {
+        try! prepareDependencies {
+            $0.defaultDatabase = try ProjectQDB.appDatabase()
+        }
+    }
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationStack {
+                EntriesListsView()
+            }
         }
     }
 }

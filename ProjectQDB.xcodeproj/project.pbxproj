@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		E9ED4E2F2D63A6DB00E38C49 /* SharingGRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E9ED4E2E2D63A6DB00E38C49 /* SharingGRDB */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		E9ED4E082D62699200E38C49 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -39,6 +43,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E9ED4E2F2D63A6DB00E38C49 /* SharingGRDB in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -90,6 +95,7 @@
 			);
 			name = ProjectQDB;
 			packageProductDependencies = (
+				E9ED4E2E2D63A6DB00E38C49 /* SharingGRDB */,
 			);
 			productName = ProjectQDB;
 			productReference = E9ED4DF62D62699100E38C49 /* ProjectQDB.app */;
@@ -146,6 +152,9 @@
 			);
 			mainGroup = E9ED4DED2D62699100E38C49;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E9ED4E2D2D63A6DB00E38C49 /* XCRemoteSwiftPackageReference "sharing-grdb" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E9ED4DF72D62699100E38C49 /* Products */;
 			projectDirPath = "";
@@ -467,6 +476,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E9ED4E2D2D63A6DB00E38C49 /* XCRemoteSwiftPackageReference "sharing-grdb" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/pointfreeco/sharing-grdb";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E9ED4E2E2D63A6DB00E38C49 /* SharingGRDB */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E9ED4E2D2D63A6DB00E38C49 /* XCRemoteSwiftPackageReference "sharing-grdb" */;
+			productName = SharingGRDB;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E9ED4DEE2D62699100E38C49 /* Project object */;
 }
