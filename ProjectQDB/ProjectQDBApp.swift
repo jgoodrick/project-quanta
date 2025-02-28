@@ -20,7 +20,7 @@ struct RemindersApp: App {
     var body: some Scene {
         WindowGroup {
             NavigationStack {
-//                EntryCollections()
+                EntryCollections()
             }
         }
     }

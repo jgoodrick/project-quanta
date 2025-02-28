@@ -1,70 +1,71 @@
-////
-////  EntriesList.swift
-////  ProjectQDB
-////
-////  Created by Goodrick,Joseph on 2/22/25.
-////
 //
-//import Dependencies
-//import GRDB
-//import Sharing
-//import SharingGRDB
-//import SwiftUI
+//  EntriesList.swift
+//  ProjectQDB
 //
-//struct EntryCollections: View {
+//  Created by Goodrick,Joseph on 2/22/25.
+//
+
+import Dependencies
+import GRDB
+import Sharing
+import SharingGRDB
+import SwiftUI
+
+struct EntryCollections: View {
 //    @SharedReader(.fetch(EntriesLists(), animation: .default)) private var lists
 //    @SharedReader(.fetch(Stats())) private var stats = Stats.Value()
-//
-//    @State private var isAddListPresented = false
-//    @State private var searchText = ""
-//
-//    @Dependency(\.defaultDatabase) private var database
-//
-//    var body: some View {
-//        List {
-//            if searchText.isEmpty {
-//                Section {
-//                    Grid(horizontalSpacing: 16, verticalSpacing: 16) {
-//                        GridRow {
-//                            EntryGridCell(
-//                                color: .blue,
-//                                count: stats.todayCount,
-//                                iconName: "calendar.circle.fill",
-//                                title: "Today"
-//                            ) {}
-//                            EntryGridCell(
-//                                color: .red,
-//                                count: stats.scheduledCount,
-//                                iconName: "calendar.circle.fill",
-//                                title: "Scheduled"
-//                            ) {}
-//                        }
-//                        GridRow {
-//                            EntryGridCell(
-//                                color: .gray,
-//                                count: stats.allCount,
-//                                iconName: "tray.circle.fill",
-//                                title: "All"
-//                            ) {}
-//                            EntryGridCell(
-//                                color: .orange,
-//                                count: stats.flaggedCount,
-//                                iconName: "flag.circle.fill",
-//                                title: "Flagged"
-//                            ) {}
-//                        }
-//                        GridRow {
-//                            EntryGridCell(
-//                                color: .gray,
-//                                count: stats.completedCount,
-//                                iconName: "checkmark.circle.fill",
-//                                title: "Completed"
-//                            ) {}
-//                        }
-//                    }
-//                }
-//                .buttonStyle(.plain)
-//
+
+    private let stats = Stats.Value()
+    @State private var isAddListPresented = false
+    @State private var searchText = ""
+
+    @Dependency(\.defaultDatabase) private var database
+
+    var body: some View {
+        List {
+            if searchText.isEmpty {
+                Section {
+                    Grid(horizontalSpacing: 16, verticalSpacing: 16) {
+                        GridRow {
+                            EntryGridCell(
+                                color: .blue,
+                                count: stats.todayCount,
+                                iconName: "calendar.circle.fill",
+                                title: "Today"
+                            ) {}
+                            EntryGridCell(
+                                color: .red,
+                                count: stats.scheduledCount,
+                                iconName: "calendar.circle.fill",
+                                title: "Scheduled"
+                            ) {}
+                        }
+                        GridRow {
+                            EntryGridCell(
+                                color: .gray,
+                                count: stats.allCount,
+                                iconName: "tray.circle.fill",
+                                title: "All"
+                            ) {}
+                            EntryGridCell(
+                                color: .orange,
+                                count: stats.flaggedCount,
+                                iconName: "flag.circle.fill",
+                                title: "Flagged"
+                            ) {}
+                        }
+                        GridRow {
+                            EntryGridCell(
+                                color: .gray,
+                                count: stats.completedCount,
+                                iconName: "checkmark.circle.fill",
+                                title: "Completed"
+                            ) {}
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+
 //                Section {
 //                    ForEach(lists, id: \.entryCollection.id) { state in
 //                        NavigationLink {
@@ -82,18 +83,18 @@
 //                        .bold()
 //                        .foregroundStyle(.black)
 //                }
-//            } else {
+            } else {
 //                SearchEntriesView(searchText: searchText)
-//            }
-//        }
-//        // NB: This explicit view identity works around a bug with 'List' view state not getting reset.
-//        .id(searchText)
-//        .listStyle(.plain)
-//        .toolbar {
-//            Button("Add list") {
-//                isAddListPresented = true
-//            }
-//        }
+            }
+        }
+        // NB: This explicit view identity works around a bug with 'List' view state not getting reset.
+        .id(searchText)
+        .listStyle(.plain)
+        .toolbar {
+            Button("Add list") {
+                isAddListPresented = true
+            }
+        }
 //        .sheet(isPresented: $isAddListPresented) {
 //            NavigationStack {
 //                EntriesListForm()
@@ -108,9 +109,9 @@
 //            }
 //            .presentationDetents([.medium])
 //        }
-//        .searchable(text: $searchText)
-//    }
-//
+        .searchable(text: $searchText)
+    }
+
 //    private struct EntriesLists: FetchKeyRequest {
 //        func fetch(_ db: Database) throws -> [Record] {
 //            try Record.fetchAll(
@@ -128,6 +129,7 @@
 //            var entryCollection: EntryCollection
 //        }
 //    }
+    private struct Stats {
 //    private struct Stats: FetchKeyRequest {
 //        func fetch(_ db: Database) throws -> Value {
 //            let todayCount = try Int.fetchOne(db, sql: """
@@ -151,52 +153,52 @@
 //                todayCount: todayCount
 //            )
 //        }
-//        struct Value {
-//            var allCount = 0
-//            var completedCount = 0
-//            var flaggedCount = 0
-//            var scheduledCount = 0
-//            var todayCount = 0
-//        }
-//    }
-//}
-//
-//private struct EntryGridCell: View {
-//    let color: Color
-//    let count: Int
-//    let iconName: String
-//    let title: String
-//    let action: () -> Void
-//
-//    var body: some View {
-//        Button(action: action) {
-//            HStack(alignment: .top) {
-//                VStack(alignment: .leading) {
-//                    Image(systemName: iconName)
-//                        .font(.largeTitle)
-//                        .bold()
-//                        .foregroundStyle(color)
-//                    Text(title)
-//                        .bold()
-//                }
-//                Spacer()
-//                Text("\(count)")
-//                    .font(.largeTitle)
-//                    .fontDesign(.rounded)
-//                    .bold()
-//            }
-//            .padding()
-//            .background(.black.opacity(0.05))
-//            .cornerRadius(10)
-//        }
-//    }
-//}
-//
-//#Preview {
-//    let _ = try! prepareDependencies {
-//        $0.defaultDatabase = try ProjectQDB.appDatabase()
-//    }
-//    NavigationStack {
-//        EntryCollections()
-//    }
-//}
+        struct Value {
+            var allCount = 0
+            var completedCount = 0
+            var flaggedCount = 0
+            var scheduledCount = 0
+            var todayCount = 0
+        }
+    }
+}
+
+private struct EntryGridCell: View {
+    let color: Color
+    let count: Int
+    let iconName: String
+    let title: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading) {
+                    Image(systemName: iconName)
+                        .font(.largeTitle)
+                        .bold()
+                        .foregroundStyle(color)
+                    Text(title)
+                        .bold()
+                }
+                Spacer()
+                Text("\(count)")
+                    .font(.largeTitle)
+                    .fontDesign(.rounded)
+                    .bold()
+            }
+            .padding()
+            .background(.black.opacity(0.05))
+            .cornerRadius(10)
+        }
+    }
+}
+
+#Preview {
+    let _ = try! prepareDependencies {
+        $0.defaultDatabase = try DB.appDatabase()
+    }
+    NavigationStack {
+        EntryCollections()
+    }
+}

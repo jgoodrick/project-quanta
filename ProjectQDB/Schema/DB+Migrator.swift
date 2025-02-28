@@ -51,10 +51,12 @@ extension DatabaseMigrator {
 
     mutating func join<T: Join>(
         table type: T.Type,
+        migrationName: String? = nil,
+        tableName: String? = nil,
         finishDefining: @escaping (TableDefinition) throws -> Void = { _ in }
     ) where T: Join {
-        registerMigration(T.joinMigrationName) { db in
-            try db.create(table: T.tableName) { t in
+        registerMigration(migrationName ?? T.joinMigrationName) { db in
+            try db.create(table: tableName ?? T.tableName) { t in
                 t.column(T.lhsReference, .integer).notNull()
                     .indexed()
                     .references(
@@ -82,10 +84,18 @@ extension DatabaseMigrator {
         relationship: KeyPath<T, T.Relationship>,
         finishDefining: @escaping (TableDefinition) throws -> Void = { _ in }
     ) {
-        join(table: table) { t in
+        join(
+            table: table,
+            migrationName: String(describing: T.self),
+            tableName: String(describing: T.self)
+        ) { t in
             t.column(relationship.column, .text)
                 .notNull()
-                .check(sql: "\(relationship.column) in \(T.Relationship.allCases.map(\.rawValue).joined(separator: ", "))"
+                .check(
+                    sql: inStatement(
+                        value: relationship.column,
+                        cases: T.Relationship.allCases.map(\.rawValue)
+                    )
                 )
 
             t.uniqueKey([T.lhsReference, T.rhsReference, relationship.column])
@@ -93,6 +103,17 @@ extension DatabaseMigrator {
             try finishDefining(t)
         }
     }
+}
+
+private func inStatement(
+    value: String,
+    cases: [String]
+) -> String {
+    let quotedList = cases
+        .map({ "'\($0)'" })
+        .joined(separator: ", ")
+    let parenthetical = "(\(quotedList))"
+    return "\(value) in \(parenthetical)"
 }
 
 extension KeyPath {
