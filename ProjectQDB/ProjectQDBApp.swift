@@ -13,14 +13,14 @@ import SwiftUI
 struct RemindersApp: App {
     init() {
         try! prepareDependencies {
-            $0.defaultDatabase = try ProjectQDB.appDatabase()
+            $0.defaultDatabase = try DB.appDatabase()
         }
     }
 
     var body: some Scene {
         WindowGroup {
             NavigationStack {
-                EntriesListsView()
+//                EntryCollections()
             }
         }
     }
