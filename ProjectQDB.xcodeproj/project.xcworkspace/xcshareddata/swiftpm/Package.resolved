@@ -1,5 +1,5 @@
 {
-  "originHash" : "c3b1dea453925646488676213c41548779652ac7e622c94a3a3ca223dad8948d",
+  "originHash" : "e39a79f456fb850d42581bc6da8fcf1c946de92752129d2dacc5bbe09d08b2f7",
   "pins" : [
     {
       "identity" : "combine-schedulers",
@@ -24,8 +24,17 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/sharing-grdb",
       "state" : {
-        "revision" : "9e8f5afd2935cf0ebf1b5fddd1b72189bb0ff5e1",
-        "version" : "0.4.0"
+        "branch" : "main",
+        "revision" : "9e8f5afd2935cf0ebf1b5fddd1b72189bb0ff5e1"
+      }
+    },
+    {
+      "identity" : "swift-case-paths",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-case-paths",
+      "state" : {
+        "branch" : "main",
+        "revision" : "41b89b8b68d8c56c622dbb7132258f1a3e638b25"
       }
     },
     {
@@ -83,6 +92,15 @@
       }
     },
     {
+      "identity" : "swift-navigation",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-navigation",
+      "state" : {
+        "branch" : "main",
+        "revision" : "8ce67bc7ff4906aa7c0bbd290a5590b68068860c"
+      }
+    },
+    {
       "identity" : "swift-perception",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-perception",
@@ -105,8 +123,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-snapshot-testing",
       "state" : {
-        "revision" : "37230a37e83f1b7023be08e1b1a2603fcb1567fb",
-        "version" : "1.18.4"
+        "branch" : "main",
+        "revision" : "37230a37e83f1b7023be08e1b1a2603fcb1567fb"
       }
     },
     {
@@ -114,8 +132,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-structured-queries",
       "state" : {
-        "revision" : "13ce4ee7d9187a8285d9b70edc6e329239328633",
-        "version" : "0.4.0"
+        "branch" : "main",
+        "revision" : "3f685cee2acb75056c743e0016d80d14ee0f5876"
       }
     },
     {

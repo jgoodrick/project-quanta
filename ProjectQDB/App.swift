@@ -5,22 +5,25 @@
 //  Created by Goodrick,Joseph on 2/16/25.
 //
 
-import Dependencies
-import GRDB
+import SharingGRDB
 import SwiftUI
 
 @main
-struct RemindersApp: App {
+struct ProjectQDBApp: App {
+    static let controller = AppController()
+
     init() {
-        try! prepareDependencies {
-            $0.defaultDatabase = try DB.shared()
+        if !isTesting {
+            try! prepareDependencies {
+                $0.defaultDatabase = try Exploration.appDatabase()
+            }
         }
     }
 
     var body: some Scene {
         WindowGroup {
-            NavigationStack {
-//                EntryCollections()
+            if !isTesting {
+                AppView(controller: Self.controller)
             }
         }
     }
