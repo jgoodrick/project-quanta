@@ -13,8 +13,26 @@
 //import SwiftUI
 //
 //struct EntryFormView: View {
-//    @SharedReader(.fetchAll(sql: #"SELECT * FROM "entryCollections" ORDER BY "spelling" ASC"#))
-//    var entryCollections: [EntryCollection]
+//    struct EntryCollection {
+//        var id: Int64?
+//        var title: String = ""
+//    }
+//    struct Entry {
+//        var id: Int64?
+//        var spelling: String = ""
+//    }
+//    struct Tag {
+//        var id: Int64?
+//        var title: String = ""
+//    }
+//    struct TagsView: View {
+//        @Binding var selectedTags: [Tag]
+//        var body: some View {
+//            Text("TagsView")
+//        }
+//    }
+////    @SharedReader(.fetchAll(sql: #"SELECT * FROM "entryCollections" ORDER BY "spelling" ASC"#))
+//    var entryCollections: [EntryCollection] = []
 //
 //    @State var isPresentingTagsPopover = false
 //    @State var entryCollection: EntryCollection
@@ -81,20 +99,20 @@
 ////                }
 //            }
 //        }
-//        .task { [entryID = entry.id] in
-//            do {
-//                selectedTags = try await database.read { db in
-//                    try Tag.all()
-//                        .joining(optional: Tag.hasMany(Entry_Tag.self))
-//                        .filter(Column("entryID").detached == entryID)
-//                        .order(Column("spelling"))
-//                        .fetchAll(db)
-//                }
-//            } catch {
-//                selectedTags = []
-//                reportIssue(error)
-//            }
-//        }
+////        .task { [entryID = entry.id] in
+////            do {
+////                selectedTags = try await database.read { db in
+////                    try Tag.all()
+////                        .joining(optional: Tag.hasMany(Entry_Tag.self))
+////                        .filter(Column("entryID").detached == entryID)
+////                        .order(Column("spelling"))
+////                        .fetchAll(db)
+////                }
+////            } catch {
+////                selectedTags = []
+////                reportIssue(error)
+////            }
+////        }
 //        .navigationTitle(entryCollection.title)
 //        .toolbar {
 //            ToolbarItem {
@@ -117,15 +135,15 @@
 //    }
 //
 //    private func saveButtonTapped() {
-//        withErrorReporting {
-//            try database.write { db in
-//                try entry.save(db)
-//                try Entry_Tag.filter(Column("entryID") == entry.id!).deleteAll(db)
-//                for tag in selectedTags {
-//                    _ = try Entry_Tag(entryID: entry.id!, tagID: tag.id!).saved(db)
-//                }
-//            }
-//        }
+////        withErrorReporting {
+////            try database.write { db in
+////                try entry.save(db)
+////                try Entry_Tag.filter(Column("entryID") == entry.id!).deleteAll(db)
+////                for tag in selectedTags {
+////                    _ = try Entry_Tag(entryID: entry.id!, tagID: tag.id!).saved(db)
+////                }
+////            }
+////        }
 //        dismiss()
 //    }
 //}
@@ -137,18 +155,18 @@
 //    }
 //}
 //
-//#Preview {
-//    let (entryCollection, entry) = try! prepareDependencies {
-//        $0.defaultDatabase = try ProjectQDB.appDatabase()
-//        return try $0.defaultDatabase.write { db in
-//            let entryCollection = try EntryCollection.fetchOne(db)!
-//            return (
-//                entryCollection,
-//                try Entry.filter(Column("listID") == entryCollection.id).fetchOne(db)!
-//            )
-//        }
-//    }
-//    NavigationStack {
-//        EntryFormView(existingEntry: entry, entryCollection: entryCollection)
-//    }
-//}
+////#Preview {
+////    let (entryCollection, entry) = try! prepareDependencies {
+////        $0.defaultDatabase = try ProjectQDB.appDatabase()
+////        return try $0.defaultDatabase.write { db in
+////            let entryCollection = try EntryCollection.fetchOne(db)!
+////            return (
+////                entryCollection,
+////                try Entry.filter(Column("listID") == entryCollection.id).fetchOne(db)!
+////            )
+////        }
+////    }
+////    NavigationStack {
+////        EntryFormView(existingEntry: entry, entryCollection: entryCollection)
+////    }
+////}

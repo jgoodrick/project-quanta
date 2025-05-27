@@ -1,5 +1,5 @@
 //
-//  ProjectQDBApp.swift
+//  App.swift
 //  ProjectQDB
 //
 //  Created by Goodrick,Joseph on 2/16/25.
@@ -13,14 +13,14 @@ import SwiftUI
 struct RemindersApp: App {
     init() {
         try! prepareDependencies {
-            $0.defaultDatabase = try DB.appDatabase()
+            $0.defaultDatabase = try DB.shared()
         }
     }
 
     var body: some Scene {
         WindowGroup {
             NavigationStack {
-                EntryCollections()
+//                EntryCollections()
             }
         }
     }
