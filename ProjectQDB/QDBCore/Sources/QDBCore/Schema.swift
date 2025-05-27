@@ -93,8 +93,7 @@ enum DB {
         let id: Int
         let spelling: Spelling.ID
         let language: DB.Language.Name.ID
-
-        @Column(as: Date.ISO8601Representation.self) var recorded: Date
+        var recorded: Date
     }
 }
 

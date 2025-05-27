@@ -5,6 +5,7 @@
 //  Created by Goodrick,Joseph on 2/16/25.
 //
 
+import QDBCore
 import SharingGRDB
 import SwiftUI
 
@@ -15,7 +16,7 @@ struct ProjectQDBApp: App {
     init() {
         if !isTesting {
             try! prepareDependencies {
-                $0.defaultDatabase = try Exploration.appDatabase()
+                $0.defaultDatabase = try QDBCore.appDatabase()
             }
         }
     }

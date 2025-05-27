@@ -7,10 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E9FD36532DE56E5D002FF5EA /* SharingGRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E9FD36522DE56E5D002FF5EA /* SharingGRDB */; };
-		E9FD36552DE56E5D002FF5EA /* SharingGRDBCore in Frameworks */ = {isa = PBXBuildFile; productRef = E9FD36542DE56E5D002FF5EA /* SharingGRDBCore */; };
-		E9FD36572DE56E5D002FF5EA /* StructuredQueriesGRDB in Frameworks */ = {isa = PBXBuildFile; productRef = E9FD36562DE56E5D002FF5EA /* StructuredQueriesGRDB */; };
-		E9FD36592DE56E5D002FF5EA /* StructuredQueriesGRDBCore in Frameworks */ = {isa = PBXBuildFile; productRef = E9FD36582DE56E5D002FF5EA /* StructuredQueriesGRDBCore */; };
+		E9FD36712DE579AB002FF5EA /* QDBCore in Frameworks */ = {isa = PBXBuildFile; productRef = E9FD36702DE579AB002FF5EA /* QDBCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -46,10 +43,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E9FD36592DE56E5D002FF5EA /* StructuredQueriesGRDBCore in Frameworks */,
-				E9FD36572DE56E5D002FF5EA /* StructuredQueriesGRDB in Frameworks */,
-				E9FD36532DE56E5D002FF5EA /* SharingGRDB in Frameworks */,
-				E9FD36552DE56E5D002FF5EA /* SharingGRDBCore in Frameworks */,
+				E9FD36712DE579AB002FF5EA /* QDBCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -109,10 +103,7 @@
 			);
 			name = ProjectQDB;
 			packageProductDependencies = (
-				E9FD36522DE56E5D002FF5EA /* SharingGRDB */,
-				E9FD36542DE56E5D002FF5EA /* SharingGRDBCore */,
-				E9FD36562DE56E5D002FF5EA /* StructuredQueriesGRDB */,
-				E9FD36582DE56E5D002FF5EA /* StructuredQueriesGRDBCore */,
+				E9FD36702DE579AB002FF5EA /* QDBCore */,
 			);
 			productName = ProjectQDB;
 			productReference = E9ED4DF62D62699100E38C49 /* ProjectQDB.app */;
@@ -149,7 +140,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1620;
-				LastUpgradeCheck = 1620;
+				LastUpgradeCheck = 1630;
 				TargetAttributes = {
 					E9ED4DF52D62699100E38C49 = {
 						CreatedOnToolsVersion = 16.2;
@@ -170,7 +161,7 @@
 			mainGroup = E9ED4DED2D62699100E38C49;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				E9FD36512DE56E5D002FF5EA /* XCRemoteSwiftPackageReference "sharing-grdb" */,
+				E9FD366F2DE579AB002FF5EA /* XCLocalSwiftPackageReference "ProjectQDB/QDBCore" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E9ED4DF72D62699100E38C49 /* Products */;
@@ -260,7 +251,9 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = AFN2MRW487;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -321,7 +314,9 @@
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
+				DEAD_CODE_STRIPPING = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = AFN2MRW487;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -347,7 +342,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = AFN2MRW487;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -365,7 +360,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 14.7;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.josephgoodrick.ProjectQDB;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -385,7 +380,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = AFN2MRW487;
+				DEAD_CODE_STRIPPING = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -403,7 +398,7 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
 				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
-				MACOSX_DEPLOYMENT_TARGET = 14.7;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.josephgoodrick.ProjectQDB;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -422,7 +417,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = AFN2MRW487;
+				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MACOSX_DEPLOYMENT_TARGET = 14.7;
@@ -445,7 +440,7 @@
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = AFN2MRW487;
+				DEAD_CODE_STRIPPING = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 18.2;
 				MACOSX_DEPLOYMENT_TARGET = 14.7;
@@ -494,37 +489,17 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		E9FD36512DE56E5D002FF5EA /* XCRemoteSwiftPackageReference "sharing-grdb" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/pointfreeco/sharing-grdb";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.4.0;
-			};
+/* Begin XCLocalSwiftPackageReference section */
+		E9FD366F2DE579AB002FF5EA /* XCLocalSwiftPackageReference "ProjectQDB/QDBCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ProjectQDB/QDBCore;
 		};
-/* End XCRemoteSwiftPackageReference section */
+/* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		E9FD36522DE56E5D002FF5EA /* SharingGRDB */ = {
+		E9FD36702DE579AB002FF5EA /* QDBCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = E9FD36512DE56E5D002FF5EA /* XCRemoteSwiftPackageReference "sharing-grdb" */;
-			productName = SharingGRDB;
-		};
-		E9FD36542DE56E5D002FF5EA /* SharingGRDBCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E9FD36512DE56E5D002FF5EA /* XCRemoteSwiftPackageReference "sharing-grdb" */;
-			productName = SharingGRDBCore;
-		};
-		E9FD36562DE56E5D002FF5EA /* StructuredQueriesGRDB */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E9FD36512DE56E5D002FF5EA /* XCRemoteSwiftPackageReference "sharing-grdb" */;
-			productName = StructuredQueriesGRDB;
-		};
-		E9FD36582DE56E5D002FF5EA /* StructuredQueriesGRDBCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = E9FD36512DE56E5D002FF5EA /* XCRemoteSwiftPackageReference "sharing-grdb" */;
-			productName = StructuredQueriesGRDBCore;
+			productName = QDBCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
