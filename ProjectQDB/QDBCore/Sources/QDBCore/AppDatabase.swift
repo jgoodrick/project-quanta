@@ -1,5 +1,5 @@
 //
-//  GRDB.swift
+//  AppDatabase.swift
 //  QDBCore
 //
 //  Created by Goodrick,Joseph on 4/6/25.
