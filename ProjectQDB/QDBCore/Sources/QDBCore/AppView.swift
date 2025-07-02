@@ -17,18 +17,22 @@ public struct AppView: View {
 
     public var body: some View {
         NavigationStack(path: $controller.path) {
-            WordList(controller: controller.words)
-                .navigationDestination(for: AppController.Path.self) { path in
-                    switch path {
-                    case let .detail(controller):
-                        WordDetail(controller: controller)
-                    }
+            WordList {
+                controller.path.append(.detail($0))
+            }
+            .navigationDestination(for: AppController.Path.self) { path in
+                switch path {
+                case .detail(let entryId):
+                    WordDetail(id: entryId)
+                case .newEntryForm:
+                    NewEntryForm()
                 }
+            }
         }
     }
 }
 
-#Preview {
-    let _ = DB.prepare()
+#Preview { let _ = DB.prepare()
     AppView(controller: AppController())
+        .frame(width: 500, height: 500)
 }

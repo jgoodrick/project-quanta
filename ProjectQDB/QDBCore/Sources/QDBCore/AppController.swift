@@ -12,54 +12,13 @@ import SwiftUI
 @MainActor
 @Observable
 public final class AppController {
-    var path: [Path] {
-        didSet { bind() }
-    }
-    var words: WordListController {
-        didSet { bind() }
-    }
+    var path: [Path] = []
 
-    @ObservationIgnored @Dependency(\.continuousClock) var clock
-    @ObservationIgnored @Dependency(\.date.now) var now
-    @ObservationIgnored @Dependency(\.uuid) var uuid
-
-    @CasePathable
-    @dynamicMemberLookup
+    @CasePathable @dynamicMemberLookup
     enum Path: Hashable {
-        case detail(WordDetailController)
+        case detail(DB.Entry.ID)
+        case newEntryForm
     }
 
-    init(
-        path: [Path] = [],
-        words: WordListController = WordListController()
-    ) {
-        self.path = path
-        self.words = words
-        self.bind()
-    }
-
-    public convenience init() {
-        self.init(
-            path: [],
-            words: WordListController()
-        )
-    }
-
-    private func bind() {
-        for destination in path {
-            switch destination {
-            case let .detail(detailModel):
-                bindDetail(model: detailModel)
-            }
-        }
-    }
-
-    private func bindDetail(model: WordDetailController) {
-//        model.onMeetingStarted = { [weak self] syncUp, attendees in
-//            guard let self else { return }
-//            withDependencies(from: self) {
-//                path.append(.record(RecordMeetingModel(syncUp: syncUp, attendees: attendees)))
-//            }
-//        }
-    }
+    public init() {}
 }

@@ -5,11 +5,10 @@
 //  Created by Goodrick,Joseph on 5/26/25.
 //
 
-import Dependencies
-import StructuredQueriesGRDB
+import SharingGRDB
 import Foundation
 
-enum DB {
+public enum DB {
     enum Language {
         @Table("languageKeyboards")
         struct Keyboard: Codable, Hashable, Identifiable {
@@ -26,6 +25,7 @@ enum DB {
         @Table("languageNames")
         struct Name: Codable, Hashable, Identifiable {
             var id: String { code }
+            @Column(primaryKey: true)
             var code: String
             var text: String
             enum BuiltIn: String, CaseIterable, Codable, Hashable, Identifiable {
@@ -91,10 +91,187 @@ enum DB {
     @Table
     struct Entry: Codable, Hashable, Identifiable {
         let id: Int
-        let spelling: Spelling.ID
+        let spelling: DB.Entry.Spelling.ID
         let language: DB.Language.Name.ID
         var recorded: Date
     }
+}
+
+extension DB.Entry {
+    @Selection
+    struct Capsule {
+        var entry: DB.Entry
+        var language: DB.Language.Name
+        var spelling: DB.Entry.Spelling
+
+        static let baseJoins = DB.Entry.spellingAndLanguageJoins
+    }
+}
+
+enum TranslationEntry: AliasName {}
+enum TranslationSpelling: AliasName {}
+enum TranslationLanguage: AliasName {}
+
+extension DB.Entry {
+    static var spellingAndLanguageJoins: Select<Void, DB.Entry, (DB.Entry.Spelling, DB.Language.Name)> {
+        DB.Entry
+            .group(by: \.id)
+            .join(DB.Entry.Spelling.all) { $0.spelling.eq($1.id) }
+            .join(DB.Language.Name.all) { $0.language.eq($2.code) }
+    }
+
+    @Selection
+    struct Row: Hashable, Identifiable {
+        var id: DB.Entry.ID { entryID }
+        var entryID: DB.Entry.ID
+        var languageName: String
+        var spelling: String
+        @Column(as: [DB.Entry.Keyword].JSONRepresentation.self)
+        var keywords: [DB.Entry.Keyword] = []
+//        @Column(as: [DB.Entry].JSONRepresentation.self)
+//        var translations: [DB.Entry] = []
+//        @Column(as: [DB.Entry.Definition].JSONRepresentation.self)
+//        var definitions: [DB.Entry.Definition] = []
+
+        static let withSpellingAndLanguage = DB.Entry
+            .group(by: \.id)
+            .join(DB.Entry.Spelling.all) { $0.spelling.eq($1.id) }
+            .join(DB.Language.Name.all) { $0.language.eq($2.code) }
+
+        static let withKeywordJoins = withSpellingAndLanguage
+            .leftJoin(Joins.EntryKeyword.all) { $0.id.eq($3.entry) }
+            .join(DB.Entry.Keyword.all) { $3.keyword.eq($4.id) }
+
+        static let withTranslationJoins = withKeywordJoins
+            .leftJoin(DB.Semantic.Synonym.all) { $0.id.eq($5.base) }
+            .join(DB.Entry.as(TranslationEntry.self).all) { $5.synonym.eq($6.id) }
+            .join(DB.Entry.Spelling.as(TranslationSpelling.self).all) { $6.spelling.eq($7.id) }
+            .join(DB.Language.Name.as(TranslationLanguage.self).all) { $6.language.eq($8.code) }
+
+        static let withDefinitionsJoins = withTranslationJoins
+            .leftJoin(Joins.EntryDefinition.all) { $0.id.eq($9.entry) }
+            .join(DB.Entry.Definition.all) { $9.definition.eq($10.id) }
+
+        static let all = withKeywordJoins.select { entry, spelling, language, _, keyword in
+//            entry, spelling, language, _, keyword, _, _, _, _, _, _ in
+            DB.Entry.Row.Columns.init(
+                entryID: entry.id,
+                languageName: language.text,
+                spelling: spelling.text,
+                keywords: keyword.jsonGroupArray()
+//                translations: $6.jsonGroupArray(),
+//                definitions: $10.jsonGroupArray()
+            )
+        }
+
+//        static let all: some QueryExpression<Row> = withDefinitionsJoins.select { entry, spelling, languageName, entry_keyword, keywords, synonym, translations, translationSpelling, translationLanguageName, entry_definition, definition in
+//            Row.Columns.init(
+//                entry: entry,
+//                language: languageName,
+//                spelling: spelling,
+//                keywords: keywords.jsonGroupArray(),
+//                translations: translations.jsonGroupArray(),
+//                definitions: definition.jsonGroupArray()
+//            )
+//        }
+    }
+//
+//    @Selection
+//    struct Detail {
+//        var entry: DB.Entry
+//        var language: DB.Language.Name
+//        var spelling: DB.Entry.Spelling
+//        var keywords: [DB.Entry.Keyword] = []
+//        var alternativeSpellings: [DB.Entry.Spelling] = []
+//        var additionalLanguages: [DB.Language.Name] = []
+//        var translations: [DB.Entry] = []
+//        var notes: [DB.Entry.Note] = []
+//        var roots: [DB.Entry] = []
+//    }
+}
+
+extension DB.Entry {
+//    static func searching(_ text: String) -> Where<DB.Entry.Capsule> {
+//        Self
+//            .capsules
+//            .withKeywords
+//            .where {
+//                $0.spelling.collate(.nocase).contains(text)
+//                || $0.notes.collate(.nocase).contains(text)
+//            }
+//    }
+//    static let capsule = group(by: \.id)
+//        .leftJoin(Joins.EntrySpelling.all) { $0.id.eq($1.entry) }
+//        .leftJoin(DB.Entry.Spelling.all) { $1.spelling.eq($2.id) }
+//        .leftJoin(Joins.EntryLanguage.all) { $0.id.eq($1.entry) }
+//        .leftJoin(DB.Language.all) { $2.language.eq($3.id) }
+
+//    struct Slim: FetchKeyRequest {
+//        struct Value: Identifiable {
+//            var id: DB.Entry.ID { entry.id }
+//            var entry: DB.Entry
+//            var language: DB.Language.Name
+//            var spelling: DB.Entry.Spelling
+//        }
+//
+//        let entry: DB.Entry.ID
+//
+//        func fetch(_ db: Database) throws -> Value {
+//            let entry = try db.fetchEntry(for: entry)
+//            let language = try db.fetchLanguage(for: entry.language)
+//            let spelling = try db.fetchSpelling(for: entry.spelling)
+//
+//            return Value(
+//                entry: entry,
+//                language: language,
+//                spelling: spelling
+//            )
+//        }
+//
+//        static let all: All = .init()
+//
+//        struct All: FetchKeyRequest {
+//            func fetch(_ db: Database) throws -> [DB.Entry.Slim.Value] {
+//                try db.fetchAllSlimEntries()
+//            }
+//        }
+//    }
+
+    static func allCapsules() -> some QueryExpression<Capsule> {
+        DB.Entry.Capsule.baseJoins.select { entry, spelling, language in
+            Capsule.Columns.init(
+                entry: entry,
+                language: language,
+                spelling: spelling
+            )
+        }
+    }
+
+//    static func row() -> some QueryExpression<Row> {
+//        DB.Entry.Row.baseJoins.select { entry, spelling, language, _, keyword in
+//            Row.Columns(
+//                entry: entry,
+//                language: language,
+//                spelling: spelling,
+//                keywords: keyword.jsonGroupArray()
+//            )
+//        }
+//    }
+//        .select { capsule, _, spelling, _, language in
+//            Row.Columns.init(
+//                entry: capsule.entry,
+//                language: capsule.language,
+//                spelling: capsule.spelling
+//                keywords: $0,
+//                translations: $1.jsonGroupArray(isDistinct: true),
+//                definitions: $2.jsonGroupArray(isDistinct: true)
+//            )
+//        }
+//        .leftJoin(DB.Entry.Spelling.all) { $1.spelling.eq($2.id) }
+
+//    static let withKeywords = group(by: \.id)
+//        .leftJoin(Joins.EntryKeyword.all) { $0.id.eq($1.entry) }
+//        .leftJoin(DB.Entry.Keyword.all) { $1.keyword.eq($2.id) }
 }
 
 extension DB.Entry {

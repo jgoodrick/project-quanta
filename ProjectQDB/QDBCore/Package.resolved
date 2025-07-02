@@ -1,5 +1,5 @@
 {
-  "originHash" : "ccb4c62cf32193e2e0448bd0c0102a7f577a2e97e1642716599e5b460eb33471",
+  "originHash" : "28d2552400150e446c5d5e2ccc8cd4da8d0702b807aa643506de279bc6e5b596",
   "pins" : [
     {
       "identity" : "combine-schedulers",
@@ -124,7 +124,7 @@
       "location" : "https://github.com/pointfreeco/swift-snapshot-testing",
       "state" : {
         "branch" : "main",
-        "revision" : "37230a37e83f1b7023be08e1b1a2603fcb1567fb"
+        "revision" : "b198a568ad24c5a22995c5ff0ecf9667634e860e"
       }
     },
     {
@@ -133,7 +133,7 @@
       "location" : "https://github.com/pointfreeco/swift-structured-queries",
       "state" : {
         "branch" : "main",
-        "revision" : "efd928f9f1c5bee4356a5d8a9a8e862ce4abb8a3"
+        "revision" : "83e47762c29ea3aa9cef256e506086bca22488c3"
       }
     },
     {

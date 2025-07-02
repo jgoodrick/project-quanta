@@ -5,27 +5,36 @@
 //  Created by Goodrick,Joseph on 4/6/25.
 //
 
-import Dependencies
 import Foundation
-import GRDB
-import StructuredQueriesGRDB
+import IssueReporting
+import OSLog
+import SharingGRDB
+import SwiftUI
+
+private let logger = Logger(subsystem: "MyApp", category: "Database")
 
 public func appDatabase() throws -> any DatabaseWriter {
-    let database: any DatabaseWriter
+    @Dependency(\.context) var context
     var configuration = Configuration()
     configuration.foreignKeysEnabled = true
+    #if DEBUG
     configuration.prepareDatabase { db in
-        #if DEBUG
         db.trace(options: .profile) {
-            print($0.expandedDescription)
+            if context == .preview {
+                print("\($0.expandedDescription)")
+            } else {
+                logger.debug("\($0.expandedDescription)")
+            }
         }
-        #endif
     }
-
-    @Dependency(\.context) var context
+    #endif
+    let database: any DatabaseWriter
     if context == .live {
         let path = URL.documentsDirectory.appending(component: "db.sqlite").path()
-        print("open", path)
+        logger.info("open \(path)")
+        database = try DatabasePool(path: path, configuration: configuration)
+    } else if context == .test {
+        let path = URL.temporaryDirectory.appending(component: "\(UUID().uuidString)-db.sqlite").path()
         database = try DatabasePool(path: path, configuration: configuration)
     } else {
         database = try DatabaseQueue(configuration: configuration)

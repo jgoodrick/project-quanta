@@ -11,21 +11,26 @@ import SwiftUI
 
 @main
 struct ProjectQDBApp: App {
+    @Dependency(\.context) var context
     static let controller = AppController()
 
     init() {
-        if !isTesting {
-            try! prepareDependencies {
-                $0.defaultDatabase = try QDBCore.appDatabase()
+        if context == .live {
+            prepareDependencies {
+                $0.defaultDatabase = try! QDBCore.appDatabase()
             }
         }
     }
 
     var body: some Scene {
         WindowGroup {
-            if !isTesting {
+            if context == .live {
                 AppView(controller: Self.controller)
             }
         }
     }
+}
+
+#Preview { let _ = DB.prepare()
+    AppView(controller: AppController())
 }

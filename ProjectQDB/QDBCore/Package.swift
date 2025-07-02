@@ -21,6 +21,7 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/swift-navigation", branch: "main"),
         .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", branch: "main"),
         .package(url: "https://github.com/pointfreeco/swift-structured-queries", branch: "main"),
+        .package(url: "https://github.com/pointfreeco/swift-dependencies", branch: "main"),
     ],
     targets: [
         .target(
@@ -39,6 +40,7 @@ let package = Package(
                 "QDBCore",
                 .product(name: "InlineSnapshotTesting", package: "swift-snapshot-testing"),
                 .product(name: "StructuredQueriesTestSupport", package: "swift-structured-queries"),
+                .product(name: "DependenciesTestSupport", package: "swift-dependencies"),
             ],
             swiftSettings: [
                 .unsafeFlags([

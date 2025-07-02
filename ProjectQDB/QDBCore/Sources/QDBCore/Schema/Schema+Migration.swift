@@ -11,7 +11,7 @@ import SharingGRDB
 import StructuredQueriesGRDB
 
 extension DB {
-    static func prepare() {
+    public static func prepare() {
         try! prepareDependencies {
             $0.defaultDatabase = try QDBCore.appDatabase()
         }
