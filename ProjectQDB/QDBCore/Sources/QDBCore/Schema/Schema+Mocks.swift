@@ -82,7 +82,6 @@ extension Database {
         }
     }
 }
-#endif
 
 extension DB {
     static func createMockData(in db: Database) throws {
@@ -285,3 +284,5 @@ enum Mock {
         }
     }
 }
+
+#endif

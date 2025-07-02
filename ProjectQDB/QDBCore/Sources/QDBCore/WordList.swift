@@ -17,9 +17,7 @@ struct WordList: View {
 
     @State private var languageId: DB.Language.Name.ID = DB.Language.Name.BuiltIn.en.rawValue
     @State private var searchText: String = ""
-    @State private var order: SortOrder = .reverse
-
-    @Dependency(\.locale) private var locale
+    @State private var order: SortOrder = .forward
 
     var body: some View {
         List {
@@ -29,49 +27,69 @@ struct WordList: View {
                 } label: {
                     Row(id: result.id)
                 }
+                .buttonStyle(.plain)
             }
         }
+        .listStyle(.plain)
         .toolbar {
-            Button {
-                print("tapped add word button")
-            } label: {
-                Image(systemName: "plus")
-            }
-
-            Button {
-                if order == .forward {
-                    order = .reverse
-                } else {
-                    order = .forward
-                }
-            } label: {
-                Image(systemName: "arrow.up.arrow.down")
-            }
-
             Menu {
-                ForEach(availableLanguageNames) { languageName in
-                    Button {
-                        languageId = languageName.id
-                    } label: {
-                        Text(name(of: languageName))
+                Picker(selection: $languageId) {
+                    ForEach(availableLanguageNames) { languageName in
+                        Text(name(of: languageName, capitalized: true))
+                            .tag(languageName.id)
                     }
+                } label: {
+                    Label("Language", systemImage: "flag")
+                    Text("Select the entry language")
+                }
+
+                Picker(selection: $order) {
+                    ForEach([SortOrder.forward, .reverse], id: \.self) { sortOrder in
+                        Text(sortOrder.displayTitle)
+                            .tag(sortOrder)
+                    }
+                } label: {
+                    Label(order.displayTitle, systemImage: "arrow.up.arrow.down")
+                    Text("Toggle the sort order")
                 }
             } label: {
-                Image(systemName: "flag")
+                Image(systemName: "ellipsis.circle")
             }
         }
-        .navigationTitle("Words")
-        .searchable(text: $searchText)
+        .navigationTitle(pageTitle.capitalized)
+        .searchable(text: $searchText, prompt: "Search \(description)")
         .task(id: [languageId, order, searchText] as [AnyHashable]) {
             try? await updateQuery()
         }
     }
 
-    func name(of language: DB.Language.Name) -> String {
+    private static func localizedLanguageName(id: String, capitalized: Bool) -> String? {
+        @Dependency(\.locale) var locale
+        return locale.localizedString(forIdentifier: id)
+    }
+
+    private static func nativeLanguageName(id: String, capitalized: Bool) -> String? {
+        let nativeLocale = Locale(identifier: id)
+        let name = nativeLocale.localizedString(forIdentifier: id)
+        if capitalized {
+            return name?.capitalized(with: nativeLocale)
+        } else {
+            return name
+        }
+    }
+
+    private var pageTitle: String {
+        Self.nativeLanguageName(id: languageId, capitalized: true) ?? "All Words"
+    }
+
+    private var description: String {
+        "all\(Self.localizedLanguageName(id: languageId, capitalized: false).map({ " \($0) " }) ?? " ")words"
+    }
+
+    func name(of language: DB.Language.Name, capitalized: Bool) -> String {
         let fallback = language.text
-        let localized = locale.localizedString(forIdentifier: language.id)?.capitalized(with: locale)
-        let nativeLocale = Locale(identifier: language.id)
-        let native = nativeLocale.localizedString(forIdentifier: language.id)?.capitalized(with: nativeLocale)
+        let localized = Self.localizedLanguageName(id: language.id, capitalized: capitalized)
+        let native = Self.nativeLanguageName(id: language.id, capitalized: capitalized)
         return (native ?? localized ?? fallback)
     }
 
@@ -116,79 +134,21 @@ struct WordList: View {
     }
 }
 
-extension WordList {
-    struct Row: View {
-        let id: DB.Entry.ID
-
-        var body: some View {
-            Load(request) { value in
-                Content(
-                    spelling: value.spelling.text,
-                    translations: value.synonyms.map(\.spelling.text)
-                )
-            }
+extension SortOrder {
+    mutating func toggle() {
+        switch self {
+        case .forward:
+            self = .reverse
+        case .reverse:
+            self = .forward
         }
-
-        struct Content: View {
-            let spelling: String
-            let translations: [String]
-
-            var body: some View {
-                VStack(alignment: .leading) {
-                    Text(spelling)
-                        .font(.headline)
-
-                    Spacer()
-
-                    HStack {
-                        ForEach(translations.enumerated().map(\.self), id: \.0) { (index, translation) in
-                            Text(translation)
-                        }
-                    }
-                    .font(.caption)
-                }
-                .padding()
-            }
-        }
-
-        var request: Request { .init(id: id) }
-
-        struct Request: FetchKeyRequest {
-            let id: DB.Entry.ID
-            struct Value {
-                var entry: DB.Entry
-                var spelling: DB.Entry.Spelling
-                var language: DB.Language.Name
-                var synonyms: [Synonym]
-
-                struct Synonym {
-                    let entry: DB.Entry.ID
-                    let spelling: DB.Entry.Spelling
-                }
-            }
-            enum NoMatchFound: Error {
-                case entry
-                case spelling
-                case language
-            }
-            func fetch(_ db: Database) throws -> Value {
-                guard let entry = try DB.Entry.find(id).fetchOne(db) else { throw NoMatchFound.entry }
-                guard let spelling = try DB.Entry.Spelling.find(entry.spelling).fetchOne(db) else { throw NoMatchFound.spelling }
-                guard let language = try DB.Language.Name.find(entry.language).fetchOne(db) else { throw NoMatchFound.language }
-                let synonyms = try DB.Semantic.Synonym.where({ $0.synonym.eq(id) }).fetchAll(db).compactMap { (syn) -> Value.Synonym? in
-                    guard let spelling = try DB.Entry.Spelling.find(syn.base).fetchOne(db) else { return nil }
-                    return Value.Synonym(
-                        entry: syn.base,
-                        spelling: spelling
-                    )
-                }
-                return Value(
-                    entry: entry,
-                    spelling: spelling,
-                    language: language,
-                    synonyms: synonyms
-                )
-            }
+    }
+    var displayTitle: LocalizedStringKey {
+        switch self {
+        case .forward:
+            return "Ascending"
+        case .reverse:
+            return "Descending"
         }
     }
 }

@@ -17,10 +17,12 @@ public struct AppView: View {
 
     public var body: some View {
         NavigationStack(path: $controller.path) {
-            WordList {
-                controller.path.append(.detail($0))
-            }
-            .navigationDestination(for: AppController.Path.self) { path in
+            WordList(
+                onRowTapped: {
+                    controller.path.append(.detail($0))
+                }
+            )
+            .navigationDestination(path: controller.path) { path in
                 switch path {
                 case .detail(let entryId):
                     WordDetail(id: entryId)
