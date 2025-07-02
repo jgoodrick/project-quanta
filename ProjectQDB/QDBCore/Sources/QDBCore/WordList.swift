@@ -13,11 +13,13 @@ struct WordList: View {
     let onRowTapped: (DB.Entry.ID) -> Void
 
     @FetchAll var searchResults: [Search]
+    @FetchAll var availableLanguageNames: [DB.Language.Name]
 
-    @State private var languageID: DB.Language.Name.ID = DB.Language.Name.BuiltIn.en.rawValue
+    @State private var languageId: DB.Language.Name.ID = DB.Language.Name.BuiltIn.en.rawValue
     @State private var searchText: String = ""
-    @State private var filterDate: Date?
     @State private var order: SortOrder = .reverse
+
+    @Dependency(\.locale) private var locale
 
     var body: some View {
         List {
@@ -45,12 +47,32 @@ struct WordList: View {
             } label: {
                 Image(systemName: "arrow.up.arrow.down")
             }
+
+            Menu {
+                ForEach(availableLanguageNames) { languageName in
+                    Button {
+                        languageId = languageName.id
+                    } label: {
+                        Text(name(of: languageName))
+                    }
+                }
+            } label: {
+                Image(systemName: "flag")
+            }
         }
         .navigationTitle("Words")
         .searchable(text: $searchText)
-        .task(id: [filterDate, order, searchText] as [AnyHashable]) {
+        .task(id: [languageId, order, searchText] as [AnyHashable]) {
             try? await updateQuery()
         }
+    }
+
+    func name(of language: DB.Language.Name) -> String {
+        let fallback = language.text
+        let localized = locale.localizedString(forIdentifier: language.id)?.capitalized(with: locale)
+        let nativeLocale = Locale(identifier: language.id)
+        let native = nativeLocale.localizedString(forIdentifier: language.id)?.capitalized(with: nativeLocale)
+        return (native ?? localized ?? fallback)
     }
 
     @Selection
@@ -65,24 +87,21 @@ struct WordList: View {
         try await $searchResults.load(
             DB.Entry
                 .group(by: \.id)
-                .where {
-                    if let filterDate {
-                        $0.recorded > #bind(filterDate)
-                    } else {
-                        true
-                    }
-                }
                 .join(DB.Language.Name.all) { $0.language.eq($1.code) }
-                .where { $1.primaryKey.eq(languageID) }
+                .where { $1.primaryKey.eq(languageId) }
                 .join(DB.Entry.Spelling.all) { $0.spelling.eq($2.id) }
                 .where { _, _, spelling in
-                    spelling.matching(nonEmpty: searchText)
+                    spelling.text.fuzzy(match: searchText)
                 }
-                .order {
-                    if order == .forward {
-                        $2.text.lower()
+                .order { _, _, spelling in
+                    if !searchText.isEmpty {
+                        (spelling.text.instr(searchText), spelling.text.length())
                     } else {
-                        $2.text.lower().desc()
+                        if order == .forward {
+                            spelling.text.lower()
+                        } else {
+                            spelling.text.lower().desc()
+                        }
                     }
                 }
                 .select { entry, spelling, language in
@@ -94,13 +113,6 @@ struct WordList: View {
                 }
                 .distinct(true)
         )
-    }
-}
-
-extension DB.Entry.Spelling.TableColumns {
-    func matching(nonEmpty searchText: String) -> any QueryExpression<Bool> {
-        guard !searchText.isEmpty else { return #sql("\(true)") }
-        return text.collate(.nocase).contains("%\(searchText.map({ "\($0)" }).joined(separator: "%"))%")
     }
 }
 
@@ -125,7 +137,9 @@ extension WordList {
                 VStack(alignment: .leading) {
                     Text(spelling)
                         .font(.headline)
+
                     Spacer()
+
                     HStack {
                         ForEach(translations.enumerated().map(\.self), id: \.0) { (index, translation) in
                             Text(translation)
