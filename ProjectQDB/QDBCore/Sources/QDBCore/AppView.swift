@@ -36,5 +36,4 @@ public struct AppView: View {
 
 #Preview { let _ = DB.prepare()
     AppView(controller: AppController())
-        .frame(width: 500, height: 500)
 }

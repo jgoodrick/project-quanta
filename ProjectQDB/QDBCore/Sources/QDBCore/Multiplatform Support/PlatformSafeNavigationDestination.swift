@@ -20,7 +20,7 @@ public extension View {
             if path.isEmpty {
                 self
             } else {
-                EmptyView()
+                Color.clear
             }
         }
         .navigationDestination(for: Item.self, destination: destination)

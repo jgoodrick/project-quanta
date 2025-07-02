@@ -13,7 +13,8 @@ struct WordList: View {
     let onRowTapped: (DB.Entry.ID) -> Void
 
     @FetchAll var searchResults: [Search]
-    @FetchAll var availableLanguageNames: [DB.Language.Name]
+
+    @Dependency(\.locale) private var locale
 
     @State private var languageId: DB.Language.Name.ID = DB.Language.Name.BuiltIn.en.rawValue
     @State private var searchText: String = ""
@@ -32,29 +33,10 @@ struct WordList: View {
         }
         .listStyle(.plain)
         .toolbar {
-            Menu {
-                Picker(selection: $languageId) {
-                    ForEach(availableLanguageNames) { languageName in
-                        Text(name(of: languageName, capitalized: true))
-                            .tag(languageName.id)
-                    }
-                } label: {
-                    Label("Language", systemImage: "flag")
-                    Text("Select the entry language")
-                }
-
-                Picker(selection: $order) {
-                    ForEach([SortOrder.forward, .reverse], id: \.self) { sortOrder in
-                        Text(sortOrder.displayTitle)
-                            .tag(sortOrder)
-                    }
-                } label: {
-                    Label(order.displayTitle, systemImage: "arrow.up.arrow.down")
-                    Text("Toggle the sort order")
-                }
-            } label: {
-                Image(systemName: "ellipsis.circle")
-            }
+            OptionsToolbarPicker(
+                languageId: $languageId,
+                order: $order
+            )
         }
         .navigationTitle(pageTitle.capitalized)
         .searchable(text: $searchText, prompt: "Search \(description)")
@@ -63,34 +45,12 @@ struct WordList: View {
         }
     }
 
-    private static func localizedLanguageName(id: String, capitalized: Bool) -> String? {
-        @Dependency(\.locale) var locale
-        return locale.localizedString(forIdentifier: id)
-    }
-
-    private static func nativeLanguageName(id: String, capitalized: Bool) -> String? {
-        let nativeLocale = Locale(identifier: id)
-        let name = nativeLocale.localizedString(forIdentifier: id)
-        if capitalized {
-            return name?.capitalized(with: nativeLocale)
-        } else {
-            return name
-        }
-    }
-
     private var pageTitle: String {
-        Self.nativeLanguageName(id: languageId, capitalized: true) ?? "All Words"
+        locale.languageName(of: languageId, native: true, capitalized: true) ?? "All Words"
     }
 
     private var description: String {
-        "all\(Self.localizedLanguageName(id: languageId, capitalized: false).map({ " \($0) " }) ?? " ")words"
-    }
-
-    func name(of language: DB.Language.Name, capitalized: Bool) -> String {
-        let fallback = language.text
-        let localized = Self.localizedLanguageName(id: language.id, capitalized: capitalized)
-        let native = Self.nativeLanguageName(id: language.id, capitalized: capitalized)
-        return (native ?? localized ?? fallback)
+        "all\(locale.languageName(of: languageId, native: false, capitalized: false).map({ " \($0) " }) ?? " ")words"
     }
 
     @Selection
@@ -132,17 +92,51 @@ struct WordList: View {
                 .distinct(true)
         )
     }
+
+    struct OptionsToolbarPicker: View {
+        @Binding var languageId: DB.Language.Name.ID
+        @Binding var order: SortOrder
+
+        @FetchAll var availableLanguageNames: [DB.Language.Name]
+
+        @Dependency(\.locale) private var locale
+
+        var body: some View {
+            Menu {
+                Picker(selection: $languageId) {
+                    ForEach(availableLanguageNames) { languageName in
+                        Text(name(of: languageName, capitalized: true))
+                            .tag(languageName.id)
+                    }
+                } label: {
+                    Label("Language", systemImage: "flag")
+                    Text("Select the entry language")
+                }
+
+                Picker(selection: $order) {
+                    ForEach([SortOrder.forward, .reverse], id: \.self) { sortOrder in
+                        Text(sortOrder.displayTitle)
+                            .tag(sortOrder)
+                    }
+                } label: {
+                    Label(order.displayTitle, systemImage: "arrow.up.arrow.down")
+                    Text("Select the sort order")
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+            }
+        }
+
+        func name(of language: DB.Language.Name, capitalized: Bool) -> String {
+            let fallback = language.text
+            let localized = locale.languageName(of: language.id, native: false, capitalized: capitalized)
+            let native = locale.languageName(of: language.id, native: true, capitalized: capitalized)
+            return (native ?? localized ?? fallback)
+        }
+    }
 }
 
 extension SortOrder {
-    mutating func toggle() {
-        switch self {
-        case .forward:
-            self = .reverse
-        case .reverse:
-            self = .forward
-        }
-    }
     var displayTitle: LocalizedStringKey {
         switch self {
         case .forward:
