@@ -9,20 +9,22 @@ import SharingGRDB
 import SwiftUI
 
 public struct AppView: View {
-    @Bindable var controller: AppController
+    @Bindable var nav: Nav
 
-    public init(controller: AppController) {
-        self.controller = controller
+    public init(nav: Nav) {
+        self.nav = nav
     }
 
+    @State private var path: NavigationPath = .init()
+
     public var body: some View {
-        NavigationStack(path: $controller.path) {
+        NavigationStack(path: $path) {
             WordList(
                 onRowTapped: {
-                    controller.path.append(.detail($0))
+                    nav.path.append(.detail($0))
                 }
             )
-            .navigationDestination(path: controller.path) { path in
+            .navigationDestination(path: nav.path) { path in
                 switch path {
                 case .detail(let entryId):
                     WordDetail(id: entryId)
@@ -35,5 +37,5 @@ public struct AppView: View {
 }
 
 #Preview { let _ = DB.prepare()
-    AppView(controller: AppController())
+    AppView(nav: Nav())
 }

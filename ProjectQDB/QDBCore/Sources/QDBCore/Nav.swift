@@ -1,5 +1,5 @@
 //
-//  AppController.swift
+//  Nav.swift
 //  QDBCore
 //
 //  Created by Goodrick,Joseph on 5/26/25.
@@ -11,7 +11,7 @@ import SwiftUI
 
 @MainActor
 @Observable
-public final class AppController {
+public final class Nav {
     var path: [Path] = []
 
     @CasePathable @dynamicMemberLookup

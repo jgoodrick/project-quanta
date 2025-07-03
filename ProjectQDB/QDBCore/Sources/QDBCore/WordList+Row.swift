@@ -42,6 +42,7 @@ extension WordList {
                 }
                 .padding()
                 .frame(maxWidth: .infinity, alignment: .topLeading)
+                .contentShape(Rectangle())
             }
         }
 

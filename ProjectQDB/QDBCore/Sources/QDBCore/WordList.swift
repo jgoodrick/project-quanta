@@ -19,6 +19,8 @@ struct WordList: View {
     @State private var languageId: DB.Language.Name.ID = DB.Language.Name.BuiltIn.en.rawValue
     @State private var searchText: String = ""
     @State private var order: SortOrder = .forward
+    @State private var newWordText: String = ""
+    @State private var newWordFieldFocused = false
 
     var body: some View {
         List {
@@ -32,6 +34,17 @@ struct WordList: View {
             }
         }
         .listStyle(.plain)
+        .modifier(
+            ToolbarTextFieldInstaller(
+                placeholder: "Add a new word",
+                languageIdentifier: "uk_UA",
+                fieldStyle: .defaultValue,
+                text: $newWordText,
+                focused: $newWordFieldFocused,
+                installed: true,
+                actions: .noop
+            )
+        )
         .toolbar {
             OptionsToolbarPicker(
                 languageId: $languageId,

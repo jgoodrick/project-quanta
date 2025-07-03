@@ -12,7 +12,7 @@ import SwiftUI
 @main
 struct ProjectQDBApp: App {
     @Dependency(\.context) var context
-    static let controller = AppController()
+    static let nav = Nav()
 
     init() {
         if context == .live {
@@ -25,12 +25,12 @@ struct ProjectQDBApp: App {
     var body: some Scene {
         WindowGroup {
             if context == .live {
-                AppView(controller: Self.controller)
+                AppView(nav: Self.nav)
             }
         }
     }
 }
 
 #Preview { let _ = DB.prepare()
-    AppView(controller: AppController())
+    AppView(nav: Nav())
 }
