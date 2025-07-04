@@ -30,7 +30,7 @@ public struct AppView: View {
                     NewEntryForm(word: initialValue)
                 }
             }
-            .installSharedEntryField(
+            .installQuickEntry(
                 actions: .init(
                     onSubmit: { submitted in
                         nav.path.append(.newEntryForm(initialValue: submitted))

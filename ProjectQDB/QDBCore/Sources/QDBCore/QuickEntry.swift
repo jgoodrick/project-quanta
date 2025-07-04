@@ -1,5 +1,5 @@
 //
-//  SharedEntryField.swift
+//  QuickEntry.swift
 //  QDBCore
 //
 //  Created by Goodrick,Joseph on 7/3/25.
@@ -16,12 +16,12 @@ import SwiftUI
 /// will be available at any point in the app
 
 extension View {
-    func installSharedEntryField(actions: ToolbarTextFieldInstaller.Actions) -> some View {
-        self.modifier(SharedEntryField(actions: actions))
+    func installQuickEntry(actions: ToolbarTextFieldInstaller.Actions) -> some View {
+        self.modifier(QuickEntry(actions: actions))
     }
 }
 
-struct SharedEntryField: ViewModifier {
+struct QuickEntry: ViewModifier {
     let actions: ToolbarTextFieldInstaller.Actions
     @Shared(.languageId) var languageId
     @Shared(.sharedEntryText) var text
@@ -47,7 +47,7 @@ struct SharedEntryField: ViewModifier {
 }
 
 #Preview {
-    Color.green.installSharedEntryField(
+    Color.green.installQuickEntry(
         actions: .init(
             onSubmit: { _ in }
         )

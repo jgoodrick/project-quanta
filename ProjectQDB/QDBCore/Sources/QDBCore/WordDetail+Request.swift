@@ -23,18 +23,6 @@ extension WordDetail {
             var roots: [DB.Entry] = []
         }
 
-        struct Draft {
-            let entry: DB.Entry.Draft
-            var spelling: DB.Entry.Spelling.Draft
-            var language: DB.Language.Name
-        }
-
-        enum NoMatchFound: Error {
-            case entry
-            case spelling
-            case language
-        }
-
         func fetch(_ db: Database) throws -> Value {
             guard let entry = try DB.Entry.find(id).fetchOne(db) else { throw NoMatchFound.entry }
             guard let language = try DB.Language.Name.find(entry.language).fetchOne(db) else { throw NoMatchFound.language }
