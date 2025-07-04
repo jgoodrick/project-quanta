@@ -15,10 +15,8 @@ public struct AppView: View {
         self.nav = nav
     }
 
-    @State private var path: NavigationPath = .init()
-
     public var body: some View {
-        NavigationStack(path: $path) {
+        NavigationStack(path: $nav.path) {
             WordList(
                 onRowTapped: {
                     nav.path.append(.detail($0))
@@ -28,10 +26,17 @@ public struct AppView: View {
                 switch path {
                 case .detail(let entryId):
                     WordDetail(id: entryId)
-                case .newEntryForm:
-                    NewEntryForm()
+                case .newEntryForm(let initialValue):
+                    NewEntryForm(word: initialValue)
                 }
             }
+            .installSharedEntryField(
+                actions: .init(
+                    onSubmit: { submitted in
+                        nav.path.append(.newEntryForm(initialValue: submitted))
+                    }
+                )
+            )
         }
     }
 }

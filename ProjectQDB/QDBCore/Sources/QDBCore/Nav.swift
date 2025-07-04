@@ -17,7 +17,7 @@ public final class Nav {
     @CasePathable @dynamicMemberLookup
     enum Path: Hashable {
         case detail(DB.Entry.ID)
-        case newEntryForm
+        case newEntryForm(initialValue: String = "")
     }
 
     public init() {}

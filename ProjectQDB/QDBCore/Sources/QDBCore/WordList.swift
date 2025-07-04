@@ -16,11 +16,9 @@ struct WordList: View {
 
     @Dependency(\.locale) private var locale
 
-    @State private var languageId: DB.Language.Name.ID = DB.Language.Name.BuiltIn.en.rawValue
+    @Shared(.languageId) private var languageId
     @State private var searchText: String = ""
     @State private var order: SortOrder = .forward
-    @State private var newWordText: String = ""
-    @State private var newWordFieldFocused = false
 
     var body: some View {
         List {
@@ -34,22 +32,8 @@ struct WordList: View {
             }
         }
         .listStyle(.plain)
-        .modifier(
-            ToolbarTextFieldInstaller(
-                placeholder: "Add a new word",
-                languageIdentifier: "uk_UA",
-                fieldStyle: .defaultValue,
-                text: $newWordText,
-                focused: $newWordFieldFocused,
-                installed: true,
-                actions: .noop
-            )
-        )
         .toolbar {
-            OptionsToolbarPicker(
-                languageId: $languageId,
-                order: $order
-            )
+            Toolbar(languageId: Binding($languageId), order: $order)
         }
         .navigationTitle(pageTitle.capitalized)
         .searchable(text: $searchText, prompt: "Search \(description)")
@@ -63,7 +47,7 @@ struct WordList: View {
     }
 
     private var description: String {
-        "all\(locale.languageName(of: languageId, native: false, capitalized: false).map({ " \($0) " }) ?? " ")words"
+        "all\(locale.interpolatableLanguageName(of: languageId))words"
     }
 
     @Selection
@@ -104,59 +88,6 @@ struct WordList: View {
                 }
                 .distinct(true)
         )
-    }
-
-    struct OptionsToolbarPicker: View {
-        @Binding var languageId: DB.Language.Name.ID
-        @Binding var order: SortOrder
-
-        @FetchAll var availableLanguageNames: [DB.Language.Name]
-
-        @Dependency(\.locale) private var locale
-
-        var body: some View {
-            Menu {
-                Picker(selection: $languageId) {
-                    ForEach(availableLanguageNames) { languageName in
-                        Text(name(of: languageName, capitalized: true))
-                            .tag(languageName.id)
-                    }
-                } label: {
-                    Label("Language", systemImage: "flag")
-                    Text("Select the entry language")
-                }
-
-                Picker(selection: $order) {
-                    ForEach([SortOrder.forward, .reverse], id: \.self) { sortOrder in
-                        Text(sortOrder.displayTitle)
-                            .tag(sortOrder)
-                    }
-                } label: {
-                    Label(order.displayTitle, systemImage: "arrow.up.arrow.down")
-                    Text("Select the sort order")
-                }
-            } label: {
-                Image(systemName: "ellipsis.circle")
-            }
-        }
-
-        func name(of language: DB.Language.Name, capitalized: Bool) -> String {
-            let fallback = language.text
-            let localized = locale.languageName(of: language.id, native: false, capitalized: capitalized)
-            let native = locale.languageName(of: language.id, native: true, capitalized: capitalized)
-            return (native ?? localized ?? fallback)
-        }
-    }
-}
-
-extension SortOrder {
-    var displayTitle: LocalizedStringKey {
-        switch self {
-        case .forward:
-            return "Ascending"
-        case .reverse:
-            return "Descending"
-        }
     }
 }
 

@@ -18,9 +18,8 @@ struct ToolbarTextFieldInstaller: ViewModifier {
     let actions: Actions
 
     struct Actions {
-        let onLanguageUnavailable: (String) -> Void
+        var onLanguageAvailability: (String, Bool) -> Void = { _, _ in }
         let onSubmit: (String) async -> Void
-        let tappedViewBehindActiveToolbarTextField: () async -> Void
     }
 
     struct Effects {
@@ -61,7 +60,6 @@ struct ToolbarTextFieldInstaller: ViewModifier {
 
                 if focused {
                     Button {
-                        Task { await actions.tappedViewBehindActiveToolbarTextField() }
                         effects.tappedViewBehindActiveToolbarTextField()
                     } label: {
                         Rectangle()
@@ -95,7 +93,7 @@ struct ToolbarTextFieldInstaller: ViewModifier {
             style: fieldStyle,
             text: $text,
             focused: $focused,
-            onLanguageUnavailable: actions.onLanguageUnavailable,
+            onLanguageAvailability: actions.onLanguageAvailability,
             onSubmit: { [submitted = text] in
                 Task { @MainActor in
                     await actions.onSubmit(submitted)
@@ -111,7 +109,7 @@ struct ToolbarTextFieldInstaller: ViewModifier {
         var style: Style = .defaultValue
         @Binding var text: String
         @Binding var focused: Bool
-        let onLanguageUnavailable: (String) -> Void
+        let onLanguageAvailability: (String, Bool) -> Void
         let onSubmit: () -> Void
 
         struct Style: Sendable {
@@ -147,7 +145,7 @@ struct ToolbarTextFieldInstaller: ViewModifier {
                 text: $text,
                 isFocused: $focused,
                 preferredLanguage: languageIdentifier,
-                onLanguageUnavailable: onLanguageUnavailable,
+                onLanguageAvailability: onLanguageAvailability,
                 onSubmit: onSubmit
             )
             #else
@@ -191,9 +189,8 @@ extension View {
 extension ToolbarTextFieldInstaller.Actions {
     static var noop: Self {
         .init(
-            onLanguageUnavailable: { print("\($0) is unavailable")},
-            onSubmit: { submitted in print("submitted the text field: \(submitted)") },
-            tappedViewBehindActiveToolbarTextField: { print("tapped background") }
+            onLanguageAvailability: { print("\($0) is \($1 ? "" : "un")available") },
+            onSubmit: { submitted in print("submitted the text field: \(submitted)") }
         )
     }
 }

@@ -26,4 +26,8 @@ extension Locale {
             }
         }
     }
+
+    func interpolatableLanguageName(of identifier: String, native: Bool = false, capitalized: Bool = false) -> String {
+        languageName(of: identifier, native: native, capitalized: capitalized).map({ " \($0) " }) ?? " "
+    }
 }
