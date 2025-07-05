@@ -14,29 +14,16 @@ import StructuredQueriesGRDB
 extension Database {
     fileprivate func seedSampleData() throws {
         try seed {
-            DB.Language.Name(code: "en", text: "English")
-            DB.Language.Name(code: "es", text: "Spanish")
-            DB.Language.Name(code: "uk", text: "Ukrainian")
-            DB.Entry(id: 1, spelling: 1, language: "en", recorded: Mock.now())
-            DB.Entry(id: 2, spelling: 2, language: "en", recorded: Mock.now())
-            DB.Entry(id: 3, spelling: 3, language: "en", recorded: Mock.now())
-            DB.Entry(id: 4, spelling: 4, language: "en", recorded: Mock.now())
-            DB.Entry.Spelling(id: 1, text: "hello")
-            DB.Entry.Spelling(id: 2, text: "world")
-            DB.Entry.Spelling(id: 3, text: "goodbye")
-            DB.Entry.Spelling(id: 4, text: "see you later")
-            DB.Entry(id: 100, spelling: 100, language: "es", recorded: Mock.now())
-            DB.Entry(id: 200, spelling: 200, language: "es", recorded: Mock.now())
-            DB.Entry(id: 300, spelling: 300, language: "es", recorded: Mock.now())
-            DB.Entry.Spelling(id: 100, text: "hola")
-            DB.Entry.Spelling(id: 200, text: "mundo")
-            DB.Entry.Spelling(id: 300, text: "adiós")
-            DB.Entry(id: 1000, spelling: 1000, language: "uk", recorded: Mock.now())
-            DB.Entry(id: 2000, spelling: 2000, language: "uk", recorded: Mock.now())
-            DB.Entry(id: 3000, spelling: 3000, language: "uk", recorded: Mock.now())
-            DB.Entry.Spelling(id: 1000, text: "привіт")
-            DB.Entry.Spelling(id: 2000, text: "світ")
-            DB.Entry.Spelling(id: 3000, text: "пока")
+            DB.Entry(id: 1, spelling: "hello", language: "en", recorded: Mock.now())
+            DB.Entry(id: 2, spelling: "world", language: "en", recorded: Mock.now())
+            DB.Entry(id: 3, spelling: "goodbye", language: "en", recorded: Mock.now())
+            DB.Entry(id: 4, spelling: "see you later", language: "en", recorded: Mock.now())
+            DB.Entry(id: 100, spelling: "hola", language: "es", recorded: Mock.now())
+            DB.Entry(id: 200, spelling: "mundo", language: "es", recorded: Mock.now())
+            DB.Entry(id: 300, spelling: "adiós", language: "es", recorded: Mock.now())
+            DB.Entry(id: 1000, spelling: "привіт", language: "uk", recorded: Mock.now())
+            DB.Entry(id: 2000, spelling: "світ", language: "uk", recorded: Mock.now())
+            DB.Entry(id: 3000, spelling: "пока", language: "uk", recorded: Mock.now())
             DB.Semantic.Synonym(base: 1, synonym: 4)
             DB.Semantic.Synonym(base: 1, synonym: 100)
             DB.Semantic.Synonym(base: 1, synonym: 1000)
@@ -86,31 +73,17 @@ extension Database {
 extension DB {
     static func createMockData(in db: Database) throws {
         try db.seedSampleData()
-//        try Mock.allLanguages.forEach {
-//            try Language.Name.insert($0).execute(db)
-//        }
-//        try Mock.allEntries.forEach {
-//            try Entry.insert($0).execute(db)
-//        }
-//        try Mock.allSpellings.forEach {
-//            try Entry.Spelling.insert($0).execute(db)
-//        }
-//        try Mock.allTranslations.forEach {
-//            try DB.Semantic.Synonym.insert($0).execute(db)
-//        }
     }
 }
 
 enum Mock {
-    static let allLanguages: [DB.Language.Name] = [
+    static let allLanguages: [String] = [
         English.language,
         Spanish.language,
         Ukrainian.language
     ]
 
     static let allEntries: [DB.Entry] = English.Entry.all + Spanish.Entry.all + Ukrainian.Entry.all
-
-    static let allSpellings: [DB.Entry.Spelling] = English.Spelling.all + Spanish.Spelling.all + Ukrainian.Spelling.all
 
     static let allTranslations: [DB.Semantic.Synonym] = English.Synonym.all + Spanish.Synonym.all + Ukrainian.Synonym.all
 
@@ -120,20 +93,14 @@ enum Mock {
     }
 
     enum English {
-        static let language = DB.Language.Name(code: "en", text: "English")
+        static let language = "en"
+        static let name = "English"
         enum Entry {
             static let all: [DB.Entry] = [hello, world, goodbye]
-            static let hello = DB.Entry(id: 1, spelling: 1, language: language.code, recorded: Mock.now())
-            static let world = DB.Entry(id: 2, spelling: 2, language: language.code, recorded: Mock.now())
-            static let goodbye = DB.Entry(id: 3, spelling: 3, language: language.code, recorded: Mock.now())
-            static let seeYouLater = DB.Entry(id: 4, spelling: 4, language: language.code, recorded: Mock.now())
-        }
-        enum Spelling {
-            static let all: [DB.Entry.Spelling] = [hello, world, goodbye]
-            static let hello = DB.Entry.Spelling(id: 1, text: "hello")
-            static let world = DB.Entry.Spelling(id: 2, text: "world")
-            static let goodbye = DB.Entry.Spelling(id: 3, text: "goodbye")
-            static let seeYouLater = DB.Entry.Spelling(id: 4, text: "see you later")
+            static let hello = DB.Entry(id: 1, spelling: "hello", language: language, recorded: Mock.now())
+            static let world = DB.Entry(id: 2, spelling: "world", language: language, recorded: Mock.now())
+            static let goodbye = DB.Entry(id: 3, spelling: "goodbye", language: language, recorded: Mock.now())
+            static let seeYouLater = DB.Entry(id: 4, spelling: "see you later", language: language, recorded: Mock.now())
         }
         enum Synonym {
             static let all: [DB.Semantic.Synonym] = [
@@ -176,18 +143,13 @@ enum Mock {
         }
     }
     enum Spanish {
-        static let language = DB.Language.Name(code: "es", text: "Spanish")
+        static let language = "es"
+        static let name = "Spanish"
         enum Entry {
             static let all: [DB.Entry] = [hello, world, goodbye]
-            static let hello = DB.Entry(id: 100, spelling: 100, language: language.code, recorded: Mock.now())
-            static let world = DB.Entry(id: 200, spelling: 200, language: language.code, recorded: Mock.now())
-            static let goodbye = DB.Entry(id: 300, spelling: 300, language: language.code, recorded: Mock.now())
-        }
-        enum Spelling {
-            static let all: [DB.Entry.Spelling] = [hello, world, goodbye]
-            static let hello = DB.Entry.Spelling(id: 100, text: "hola")
-            static let world = DB.Entry.Spelling(id: 200, text: "mundo")
-            static let goodbye = DB.Entry.Spelling(id: 300, text: "adiós")
+            static let hello = DB.Entry(id: 100, spelling: "hola", language: language, recorded: Mock.now())
+            static let world = DB.Entry(id: 200, spelling: "mundo", language: language, recorded: Mock.now())
+            static let goodbye = DB.Entry(id: 300, spelling: "adiós", language: language, recorded: Mock.now())
         }
         enum Synonym {
             static let all: [DB.Semantic.Synonym] = [
@@ -230,18 +192,13 @@ enum Mock {
         }
     }
     enum Ukrainian {
-        static let language = DB.Language.Name(code: "uk", text: "Ukrainian")
+        static let language = "uk"
+        static let name = "Ukrainian"
         enum Entry {
             static let all: [DB.Entry] = [hello, world, goodbye]
-            static let hello = DB.Entry(id: 1000, spelling: 1000, language: language.code, recorded: Mock.now())
-            static let world = DB.Entry(id: 2000, spelling: 2000, language: language.code, recorded: Mock.now())
-            static let goodbye = DB.Entry(id: 3000, spelling: 3000, language: language.code, recorded: Mock.now())
-        }
-        enum Spelling {
-            static let all: [DB.Entry.Spelling] = [hello, world, goodbye]
-            static let hello = DB.Entry.Spelling(id: 1000, text: "привіт")
-            static let world = DB.Entry.Spelling(id: 2000, text: "світ")
-            static let goodbye = DB.Entry.Spelling(id: 3000, text: "пока")
+            static let hello = DB.Entry(id: 1000, spelling: "привіт", language: language, recorded: Mock.now())
+            static let world = DB.Entry(id: 2000, spelling: "світ", language: language, recorded: Mock.now())
+            static let goodbye = DB.Entry(id: 3000, spelling: "пока", language: language, recorded: Mock.now())
         }
         enum Synonym {
             static let all: [DB.Semantic.Synonym] = [

@@ -12,7 +12,7 @@ import SwiftUINavigation
 struct WordList: View {
     let onRowTapped: (DB.Entry.ID) -> Void
 
-    @FetchAll var searchResults: [Search]
+    @FetchAll var searchResults: [DB.Entry]
 
     @Dependency(\.locale) private var locale
 
@@ -50,42 +50,27 @@ struct WordList: View {
         "all\(locale.interpolatableLanguageName(of: languageId))words"
     }
 
-    @Selection
-    struct Search: Hashable, Identifiable {
-        var id: DB.Entry.ID { entryID }
-        var entryID: DB.Entry.ID
-        var languageName: String
-        var spelling: String
-    }
-
     private func updateQuery() async throws {
         try await $searchResults.load(
-            DB.Entry
-                .group(by: \.id)
-                .join(DB.Language.Name.all) { $0.language.eq($1.code) }
-                .where { $1.primaryKey.eq(languageId) }
-                .join(DB.Entry.Spelling.all) { $0.spelling.eq($2.id) }
-                .where { _, _, spelling in
-                    spelling.text.fuzzy(match: searchText)
+            DB.Entry.all
+                .where {
+                    $0.language.eq(languageId)
                 }
-                .order { _, _, spelling in
+                .where {
+                    $0.spelling.fuzzy(match: searchText)
+                }
+                .order { entry in
                     if !searchText.isEmpty {
-                        (spelling.text.instr(searchText), spelling.text.length())
+                        (entry.spelling.instr(searchText), entry.spelling.length())
                     } else {
                         if order == .forward {
-                            spelling.text.lower()
+                            entry.spelling.lower()
                         } else {
-                            spelling.text.lower().desc()
+                            entry.spelling.lower().desc()
                         }
                     }
                 }
-                .select { entry, spelling, language in
-                    Search.Columns.init(
-                        entryID: entry.id,
-                        languageName: language.text,
-                        spelling: spelling.text
-                    )
-                }
+                .select { $0 }
                 .distinct(true)
         )
     }

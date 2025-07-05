@@ -18,11 +18,11 @@ struct WordDetail: View {
         Load(request) { value in
             List {
                 Section("Language") {
-                    Text(locale.interpolatableLanguageName(of: value.language.code, capitalized: true))
+                    Text(locale.interpolatableLanguageName(of: value.entry.language, capitalized: true))
                     if !value.additionalLanguages.isEmpty {
                         Text("Also used in:")
-                        ForEach(value.additionalLanguages) { languageName in
-                            Text(locale.interpolatableLanguageName(of: languageName.code, capitalized: true))
+                        ForEach(value.additionalLanguages, id: \.self) { language in
+                            Text(locale.interpolatableLanguageName(of: language, capitalized: true))
                                 .foregroundStyle(.secondary)
                         }
                     }
@@ -30,8 +30,8 @@ struct WordDetail: View {
 
                 if !value.alternativeSpellings.isEmpty {
                     Section("Alternative Spellings:") {
-                        ForEach(value.alternativeSpellings) { altSpelling in
-                            Text(altSpelling.text)
+                        ForEach(value.alternativeSpellings, id: \.self) { altSpelling in
+                            Text(altSpelling)
                         }
                     }
                 }
@@ -60,7 +60,7 @@ struct WordDetail: View {
                     }
                 }
             }
-            .navigationTitle("\(value.spelling.text)")
+            .navigationTitle("\(value.entry.spelling)")
         }
     }
 
@@ -75,9 +75,9 @@ struct WordDetail: View {
 
         var body: some View {
             Load(request) { loaded in
-                TextField("\(locale.interpolatableLanguageName(of: loaded.language.code, capitalized: true))Translation", text: $text)
+                TextField("\(locale.interpolatableLanguageName(of: loaded.language, capitalized: true))Translation", text: $text)
                     .task {
-                        text = loaded.spelling.text
+                        text = loaded.spelling
                     }
             }
         }
@@ -87,23 +87,11 @@ struct WordDetail: View {
         struct Request: FetchKeyRequest {
             let id: DB.Entry.ID
 
-            struct Value {
-                var id: DB.Entry.ID { entry.id }
-                var entry: DB.Entry
-                var language: DB.Language.Name
-                var spelling: DB.Entry.Spelling
-            }
+            typealias Value = DB.Entry
 
             func fetch(_ db: Database) throws -> Value {
                 guard let entry = try DB.Entry.find(id).fetchOne(db) else { throw NoMatchFound.entry }
-                guard let language = try DB.Language.Name.find(entry.language).fetchOne(db) else { throw NoMatchFound.language }
-                guard let spelling = try DB.Entry.Spelling.find(entry.spelling).fetchOne(db) else { throw NoMatchFound.spelling }
-
-                return Value(
-                    entry: entry,
-                    language: language,
-                    spelling: spelling
-                )
+                return entry
             }
         }
     }
@@ -149,7 +137,7 @@ struct WordDetail: View {
             Load(request) { loaded in
                 TextField("Root", text: $text)
                     .task {
-                        text = loaded.spelling.text
+                        text = loaded.spelling
                     }
             }
         }
@@ -159,23 +147,11 @@ struct WordDetail: View {
         struct Request: FetchKeyRequest {
             let id: DB.Entry.ID
 
-            struct Value {
-                var id: DB.Entry.ID { entry.id }
-                var entry: DB.Entry
-                var language: DB.Language.Name
-                var spelling: DB.Entry.Spelling
-            }
+            typealias Value = DB.Entry
 
             func fetch(_ db: Database) throws -> Value {
                 guard let entry = try DB.Entry.find(id).fetchOne(db) else { throw NoMatchFound.entry }
-                guard let language = try DB.Language.Name.find(entry.language).fetchOne(db) else { throw NoMatchFound.language }
-                guard let spelling = try DB.Entry.Spelling.find(entry.spelling).fetchOne(db) else { throw NoMatchFound.spelling }
-
-                return Value(
-                    entry: entry,
-                    language: language,
-                    spelling: spelling
-                )
+                return entry
             }
         }
     }

@@ -14,10 +14,8 @@ extension WordDetail {
         struct Value {
             var id: DB.Entry.ID { entry.id }
             var entry: DB.Entry
-            var language: DB.Language.Name
-            var spelling: DB.Entry.Spelling
-            var alternativeSpellings: [DB.Entry.Spelling] = []
-            var additionalLanguages: [DB.Language.Name] = []
+            var alternativeSpellings: [String] = []
+            var additionalLanguages: [String] = []
             var translations: [DB.Entry] = []
             var notes: [DB.Entry.Note] = []
             var roots: [DB.Entry] = []
@@ -25,22 +23,19 @@ extension WordDetail {
 
         func fetch(_ db: Database) throws -> Value {
             guard let entry = try DB.Entry.find(id).fetchOne(db) else { throw NoMatchFound.entry }
-            guard let language = try DB.Language.Name.find(entry.language).fetchOne(db) else { throw NoMatchFound.language }
-            guard let spelling = try DB.Entry.Spelling.find(entry.spelling).fetchOne(db) else { throw NoMatchFound.spelling }
 
             return Value(
                 entry: entry,
-                language: language,
-                spelling: spelling,
-                alternativeSpellings: try DB.Entry.Joins.EntrySpelling
+                alternativeSpellings: try DB.Entry.Joins.EntryAdditionalSpelling
                     .where { entry.id.eq($0.entry) }
-                    .join(DB.Entry.Spelling.all) { $0.spelling.eq($1.id) }
-                    .select { $1 }
+                    .join(DB.Entry.all) { $0.additionalSpelling.eq($1.id) }
+                    .select { $1.spelling }
+                    .distinct()
                     .fetchAll(db),
-                additionalLanguages: try DB.Entry.Joins.EntryLanguage
-                    .where { $0.entry.eq(entry.id) }
-                    .join(DB.Language.Name.all) { $0.language.eq($1.code) }
-                    .select { _, name in name }
+                additionalLanguages: try DB.Entry
+                    .where { $0.spelling.eq(entry.spelling) && $0.language.neq(entry.language) }
+                    .select { $0.language }
+                    .distinct()
                     .fetchAll(db),
                 translations: try DB.Semantic.Synonym
                     .where { $0.base.eq(entry.id) }

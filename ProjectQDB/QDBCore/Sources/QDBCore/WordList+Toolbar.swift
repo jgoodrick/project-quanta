@@ -10,7 +10,7 @@ import SwiftUI
 
 extension WordList {
     struct Toolbar: View {
-        @Binding var languageId: DB.Language.Name.ID
+        @Binding var languageId: String
         @Binding var order: SortOrder
 
         var body: some View {
@@ -26,7 +26,7 @@ extension WordList {
 }
 
 #Preview {
-    @Previewable @State var languageId: DB.Language.Name.ID = "en_US"
+    @Previewable @State var languageId: String = "en_US"
     @Previewable @State var order: SortOrder = .forward
     Color.red.toolbar {
         WordList.Toolbar(

@@ -18,8 +18,8 @@ extension SharedKey where Self == AppStorageKey<String>.Default {
     static var lastSelectedTranslationLanguageId: Self {
         @Dependency(\.defaultDatabase) var db
         @Shared(.languageId) var current
-        let available = try? db.read { db in try DB.Language.Name.all.order(by: \.code).fetchAll(db) }
-        return Self[.appStorage("lastSelectedTranslationLanguageId_from_\(current)"), default: available?.first?.code ?? "en"]
+        let available = try? db.read { db in try DB.Entry.all.select(\.language).distinct().fetchAll(db) }
+        return Self[.appStorage("lastSelectedTranslationLanguageId_from_\(current)"), default: available?.first ?? "en"]
     }
 }
 

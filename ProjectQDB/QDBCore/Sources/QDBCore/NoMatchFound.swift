@@ -7,7 +7,5 @@
 
 enum NoMatchFound: Error {
     case entry
-    case spelling
-    case language
 }
 

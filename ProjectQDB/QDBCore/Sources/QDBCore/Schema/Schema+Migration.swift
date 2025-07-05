@@ -18,7 +18,6 @@ extension DB {
     }
 
     static func migrate(db: Database) throws {
-        try Language.migrate(db: db)
         try Entry.migrate(db: db)
         try Noun.migrate(db: db)
         try Etymology.migrate(db: db)
@@ -26,42 +25,6 @@ extension DB {
         try Semantic.migrate(db: db)
         try Phonetic.migrate(db: db)
         try Orthographic.migrate(db: db)
-    }
-}
-
-extension DB.Language {
-    static func migrate(db: Database) throws {
-        try db.execute(sql:
-          """
-          CREATE TABLE \(Keyboard.tableName) (
-            "\(Keyboard.columns.id.name)" TEXT NOT NULL PRIMARY KEY
-          )
-          """
-        )
-        try db.execute(sql:
-          """
-          CREATE TABLE \(Name.tableName) (
-            "\(Name.columns.code.name)" TEXT NOT NULL PRIMARY KEY,
-            "\(Name.columns.text.name)" TEXT NOT NULL
-          )
-          """
-        )
-        try db.execute(sql:
-          """
-          CREATE TABLE \(Region.tableName) (
-            "\(Region.columns.code.name)" TEXT NOT NULL PRIMARY KEY,
-            "\(Region.columns.text.name)" TEXT NOT NULL
-          )
-          """
-        )
-        try db.execute(sql:
-          """
-          CREATE TABLE \(Script.tableName) (
-            "\(Script.columns.code.name)" TEXT NOT NULL PRIMARY KEY,
-            "\(Script.columns.text.name)" TEXT NOT NULL
-          )
-          """
-        )
     }
 }
 
@@ -78,14 +41,6 @@ extension DB.Entry {
     }
 
     static func createTablesWithoutForeignKeys(db: Database) throws {
-        try db.execute(sql:
-          """
-          CREATE TABLE \(Spelling.tableName) (
-            "\(Spelling.columns.id.name)" INTEGER PRIMARY KEY AUTOINCREMENT,
-            "\(Spelling.columns.text.name)" TEXT NOT NULL UNIQUE COLLATE NOCASE
-          )
-          """
-        )
         try db.execute(sql:
           """
           CREATE TABLE \(Definition.tableName) (
@@ -142,7 +97,6 @@ extension DB.Entry {
     }
 
     static func createIndicesWithoutForeignKeys(db: Database) throws {
-        try db.createIndex(Spelling.self, on: \.text)
         try db.createIndex(Keyword.self, on: \.text)
         try db.createIndex(Impression.self, on: \.mode)
     }
@@ -154,8 +108,7 @@ extension DB.Entry {
             "\(DB.Entry.columns.id.name)" INTEGER PRIMARY KEY AUTOINCREMENT,
             "\(DB.Entry.columns.spelling.name)" INTEGER NOT NULL,
             "\(DB.Entry.columns.language.name)" TEXT NOT NULL,
-            "\(DB.Entry.columns.recorded.name)" TEXT NOT NULL,
-            FOREIGN KEY("\(DB.Entry.columns.spelling.name)") REFERENCES \(DB.Entry.Spelling.tableName)("id")
+            "\(DB.Entry.columns.recorded.name)" TEXT NOT NULL
           )
           """
         )
@@ -178,31 +131,10 @@ extension DB.Entry {
 extension DB.Entry.Joins {
     static func migrate(db: Database) throws {
         try db.createEntryJoinTable(
-            EntryLanguage.self,
-            DB.Language.Name.self,
+            EntryAdditionalSpelling.self,
+            DB.Entry.self,
             of: \.entry,
-            to: \.language,
-            id: \.code
-        )
-        try db.createEntryJoinTable(
-            EntryRegion.self,
-            DB.Language.Region.self,
-            of: \.entry,
-            to: \.region,
-            id: \.code
-        )
-        try db.createEntryJoinTable(
-            EntryScript.self,
-            DB.Language.Script.self,
-            of: \.entry,
-            to: \.script,
-            id: \.code
-        )
-        try db.createEntryJoinTable(
-            EntrySpelling.self,
-            DB.Entry.Spelling.self,
-            of: \.entry,
-            to: \.spelling,
+            to: \.additionalSpelling,
             id: \.id
         )
         try db.createEntryJoinTable(
@@ -336,13 +268,6 @@ extension DB.Etymology {
             Derivation.self,
             of: \.base,
             to: \.derived
-        )
-        try db.createEntryJoinTable(
-            Loan.self,
-            DB.Language.Name.self,
-            of: \.entry,
-            to: \.origin,
-            id: \.code
         )
         try db.createEntryEntryJoinTable(
             Cognate.self,

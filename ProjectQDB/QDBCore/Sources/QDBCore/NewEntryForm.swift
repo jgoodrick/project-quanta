@@ -16,9 +16,9 @@ struct NewEntryForm: View {
 
     @State private var languageId: String = .currentLanguageId()
 
-    @FetchAll var availableLanguageNames: [DB.Language.Name]
+    @FetchAll var availableLanguageNames: [String]
 
-    @State private var selectedTranslationLanguageIds: [DB.Language.Name.ID] = {
+    @State private var selectedTranslationLanguageIds: [String] = {
         @Shared(.lastSelectedTranslationLanguageId) var lastSelected
         return [lastSelected]
     }()
@@ -29,8 +29,8 @@ struct NewEntryForm: View {
         self._word = .init(initialValue: word)
     }
 
-    var selectedTranslations: [DB.Language.Name] {
-        availableLanguageNames.filter { selectedTranslationLanguageIds.contains($0.code) }
+    var selectedTranslations: [String] {
+        availableLanguageNames.filter { selectedTranslationLanguageIds.contains($0) }
     }
 
     var body: some View {
@@ -84,16 +84,13 @@ struct NewEntryForm: View {
         try await $spellingMatches.load(
             DB.Entry
                 .group(by: \.id)
-                .join(DB.Language.Name.all) { $0.language.eq($1.code) }
-                .where { $1.primaryKey.eq(languageId) }
-                .join(DB.Entry.Spelling.all) { $0.spelling.eq($2.id) }
-                .where { _, _, spelling in
-                    spelling.text.collate(.nocase).like(word)
+                .where { entry in
+                    entry.spelling.collate(.nocase).like(word)
                 }
-                .order { entry, languageName, spelling in
-                    (languageName.code.eq(languageId), entry.recorded)
+                .order { entry in
+                    (entry.language.eq(languageId), entry.recorded)
                 }
-                .select { entry, _, _ in
+                .select { entry in
                     SpellingMatch.Columns.init(
                         entry: entry,
                         exact: false
@@ -113,12 +110,12 @@ extension String {
 }
 
 struct ProposedTranslation: View {
-    let language: DB.Language.Name
+    let language: String
     @Binding var text: String
 
     var body: some View {
-        Section(language.text) {
-            TextField(language.text, text: $text)
+        Section(language) {
+            TextField(language, text: $text)
                 .font(.largeTitle)
                 .textFieldStyle(.roundedBorder)
         }

@@ -15,8 +15,8 @@ extension WordList {
         var body: some View {
             Load(request) { value in
                 Content(
-                    spelling: value.spelling.text,
-                    translations: value.synonyms.map(\.spelling.text)
+                    spelling: value.entry.spelling,
+                    translations: value.synonyms.map(\.spelling)
                 )
             }
         }
@@ -52,36 +52,20 @@ extension WordList {
             let id: DB.Entry.ID
             struct Value {
                 var entry: DB.Entry
-                var spelling: DB.Entry.Spelling
-                var language: DB.Language.Name
-                var synonyms: [Synonym]
-
-                struct Synonym {
-                    let entry: DB.Entry.ID
-                    let spelling: DB.Entry.Spelling
-                }
+                var synonyms: [DB.Entry]
             }
             enum NoMatchFound: Error {
                 case entry
-                case spelling
-                case language
             }
             func fetch(_ db: Database) throws -> Value {
                 guard let entry = try DB.Entry.find(id).fetchOne(db) else { throw NoMatchFound.entry }
-                guard let spelling = try DB.Entry.Spelling.find(entry.spelling).fetchOne(db) else { throw NoMatchFound.spelling }
-                guard let language = try DB.Language.Name.find(entry.language).fetchOne(db) else { throw NoMatchFound.language }
-                let synonyms = try DB.Semantic.Synonym.where({ $0.synonym.eq(id) }).fetchAll(db).compactMap { (syn) -> Value.Synonym? in
-                    guard let spelling = try DB.Entry.Spelling.find(syn.base).fetchOne(db) else { return nil }
-                    return Value.Synonym(
-                        entry: syn.base,
-                        spelling: spelling
-                    )
-                }
                 return Value(
                     entry: entry,
-                    spelling: spelling,
-                    language: language,
-                    synonyms: synonyms
+                    synonyms: try DB.Semantic.Synonym
+                        .where { $0.base.eq(id) }
+                        .join(DB.Entry.all) { $0.synonym.eq($1.id) }
+                        .select { _, entry in entry }
+                        .fetchAll(db)
                 )
             }
         }
