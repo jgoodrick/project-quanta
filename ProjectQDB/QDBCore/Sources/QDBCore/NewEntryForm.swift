@@ -12,25 +12,17 @@ import SwiftUI
 struct NewEntryForm: View {
     @State private var word = ""
 
-    @FetchAll var spellingMatches: [SpellingMatch]
+    @FetchAll var matches: [Match]
 
-    @State private var languageId: String = .currentLanguageId()
-
-    @FetchAll var availableLanguageNames: [String]
-
-    @State private var selectedTranslationLanguageIds: [String] = {
-        @Shared(.lastSelectedTranslationLanguageId) var lastSelected
-        return [lastSelected]
+    @State private var languageId: String = {
+        @Shared(.languageId) var current
+        return current
     }()
 
     @Dependency(\.defaultDatabase) private var db
 
     init(word: String = "") {
         self._word = .init(initialValue: word)
-    }
-
-    var selectedTranslations: [String] {
-        availableLanguageNames.filter { selectedTranslationLanguageIds.contains($0) }
     }
 
     var body: some View {
@@ -44,80 +36,81 @@ struct NewEntryForm: View {
                     .pickerStyle(.navigationLink)
             }
 
-            if !spellingMatches.isEmpty {
-//                ForEach(selectedTranslations.indices, id: \.self) { index in
-//                    let language = selectedTranslations[index]
-//                    if language.id != languageId {
-//                        ProposedTranslation(
-//                            language: language,
-//                            text: 
-//                        )
-//                    }
-//                }
+            if let existingTranslations = matches.first?.translations, !existingTranslations.isEmpty {
+                ForEach(existingTranslations, id: \.self) { translationEntryId in
+                    try? ExistingTranslation(id: translationEntryId)
+                }
             }
         }
         .toolbar {
-            if spellingMatches.isEmpty {
+            if matches.isEmpty {
                 Button("Save") {
                     withErrorReporting {
                         try db.write { db in
+                            try DB.Entry.upsert {
+                                DB.Entry.Draft(
+                                    spelling: word,
+                                    language: languageId,
+                                    recorded: .now
+                                )
+                            }.execute(db)
                         }
                     }
                 }
             }
         }
         .task(id: word) {
-            try? await updateQuery()
+            try? await updateMatchesQuery()
         }
-        .navigationTitle(spellingMatches.isEmpty ? "Add" : "Update")
+        .navigationTitle(matches.isEmpty ? "Add" : "Duplicate")
     }
 
 
     @Selection
-    struct SpellingMatch: Hashable, Identifiable {
-        var id: DB.Entry.ID { entry.id }
-        var entry: DB.Entry
-        var exact: Bool
+    struct Match: Hashable, Identifiable {
+        var id: DB.Entry.ID { match.id }
+        var match: DB.Entry
+        @Column(as: [DB.Entry.ID].JSONRepresentation.self)
+        var translations: [DB.Entry.ID]
     }
 
-    private func updateQuery() async throws {
-        try await $spellingMatches.load(
-            DB.Entry
-                .group(by: \.id)
+    private func updateMatchesQuery() async throws {
+        try await $matches.load(
+            DB.Entry.all
                 .where { entry in
-                    entry.spelling.collate(.nocase).like(word)
+                    entry.spelling.collate(.nocase).like(word).and(entry.language.eq(languageId))
                 }
-                .order { entry in
-                    (entry.language.eq(languageId), entry.recorded)
-                }
-                .select { entry in
-                    SpellingMatch.Columns.init(
-                        entry: entry,
-                        exact: false
+                .join(DB.Semantic.Synonym.all) { entry, x in x.base.eq(entry.id) }
+                .join(DB.Entry.as(TranslationEntry.self).all) { entry, join, joined in join.synonym.eq(joined.id) }
+                .order(by: \.recorded)
+                .select { entry, _, translation in
+                    Match.Columns(
+                        match: entry,
+                        translations: translation.id.jsonGroupArray(isDistinct: true)
                     )
                 }
-                .distinct(true)
         )
     }
 
-}
+    struct ExistingTranslation: View {
+        let entry: DB.Entry
+        @State var text: String
 
-extension String {
-    static func currentLanguageId() -> Self {
-        @Dependency(\.locale) var locale
-        return locale.language.minimalIdentifier
-    }
-}
+        @Dependency(\.locale) private var locale
 
-struct ProposedTranslation: View {
-    let language: String
-    @Binding var text: String
+        init(id: DB.Entry.ID) throws {
+            @Dependency(\.defaultDatabase) var db
+            guard let entry = try db.read({ db in try DB.Entry.find(id).fetchOne(db) }) else { throw NoMatchFound.entry }
+            self.entry = entry
+            self._text = .init(initialValue: entry.spelling)
+        }
 
-    var body: some View {
-        Section(language) {
-            TextField(language, text: $text)
-                .font(.largeTitle)
-                .textFieldStyle(.roundedBorder)
+        var body: some View {
+            Section(locale.interpolatableLanguageName(of: entry.language, native: true, capitalized: true)) {
+                TextField("Add a\(locale.interpolatableLanguageName(of: entry.language))translation", text: $text)
+                    .font(.title)
+                    .textFieldStyle(.roundedBorder)
+            }
         }
     }
 }
