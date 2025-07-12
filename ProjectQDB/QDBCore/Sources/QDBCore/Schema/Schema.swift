@@ -91,8 +91,8 @@ public enum DB {
     @Table
     struct Entry: Codable, Hashable, Identifiable {
         let id: Int
-        let spelling: String
-        let language: String
+        var spelling: String
+        var language: String
         var recorded: Date
     }
 }
