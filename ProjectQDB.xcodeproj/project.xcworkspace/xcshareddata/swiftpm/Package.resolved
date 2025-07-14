@@ -25,7 +25,7 @@
       "location" : "https://github.com/pointfreeco/sharing-grdb",
       "state" : {
         "branch" : "main",
-        "revision" : "541605e8d13273f6479361a57f7e4adb07c88c9e"
+        "revision" : "86165c79ffcfc2472779060d718887067a5252f6"
       }
     },
     {
@@ -124,7 +124,7 @@
       "location" : "https://github.com/pointfreeco/swift-snapshot-testing",
       "state" : {
         "branch" : "main",
-        "revision" : "37230a37e83f1b7023be08e1b1a2603fcb1567fb"
+        "revision" : "b198a568ad24c5a22995c5ff0ecf9667634e860e"
       }
     },
     {
@@ -133,7 +133,7 @@
       "location" : "https://github.com/pointfreeco/swift-structured-queries",
       "state" : {
         "branch" : "main",
-        "revision" : "efd928f9f1c5bee4356a5d8a9a8e862ce4abb8a3"
+        "revision" : "2d9f1d94f5cbfbd37c5ab0b2500b385db95516a3"
       }
     },
     {
