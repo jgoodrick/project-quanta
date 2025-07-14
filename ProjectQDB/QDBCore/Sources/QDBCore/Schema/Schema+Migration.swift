@@ -44,7 +44,7 @@ extension DB.Entry {
         try db.execute(sql:
           """
           CREATE TABLE \(Definition.tableName) (
-            "\(Definition.columns.id.name)" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "\(Definition.columns.id.name)" TEXT PRIMARY KEY NOT NULL ON CONFLICT REPLACE DEFAULT (uuid()),
             "\(Definition.columns.text.name)" TEXT NOT NULL
           )
           """
@@ -52,7 +52,7 @@ extension DB.Entry {
         try db.execute(sql:
           """
           CREATE TABLE \(Usage.tableName) (
-            "\(Usage.columns.id.name)" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "\(Usage.columns.id.name)" TEXT PRIMARY KEY NOT NULL ON CONFLICT REPLACE DEFAULT (uuid()),
             "\(Usage.columns.text.name)" TEXT NOT NULL
           )
           """
@@ -60,7 +60,7 @@ extension DB.Entry {
         try db.execute(sql:
           """
           CREATE TABLE \(Keyword.tableName) (
-            "\(Keyword.columns.id.name)" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "\(Keyword.columns.id.name)" TEXT PRIMARY KEY NOT NULL ON CONFLICT REPLACE DEFAULT (uuid()),
             "\(Keyword.columns.text.name)" TEXT NOT NULL UNIQUE COLLATE NOCASE,
             "\(Keyword.columns.description.name)" TEXT NOT NULL
           )
@@ -69,7 +69,7 @@ extension DB.Entry {
         try db.execute(sql:
           """
           CREATE TABLE \(Pronunciation.tableName) (
-            "\(Pronunciation.columns.id.name)" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "\(Pronunciation.columns.id.name)" TEXT PRIMARY KEY NOT NULL ON CONFLICT REPLACE DEFAULT (uuid()),
             "\(Pronunciation.columns.text.name)" TEXT NOT NULL,
             "\(Pronunciation.columns.audioURL.name)" TEXT
           )
@@ -78,7 +78,7 @@ extension DB.Entry {
         try db.execute(sql:
           """
           CREATE TABLE \(Image.tableName) (
-            "\(Image.columns.id.name)" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "\(Image.columns.id.name)" TEXT PRIMARY KEY NOT NULL ON CONFLICT REPLACE DEFAULT (uuid()),
             "\(Image.columns.imageURL.name)" TEXT NOT NULL,
             "\(Image.columns.remote.name)" BOOLEAN
           )
@@ -87,7 +87,7 @@ extension DB.Entry {
         try db.execute(sql:
           """
           CREATE TABLE \(Impression.tableName) (
-            "\(Impression.columns.id.name)" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "\(Impression.columns.id.name)" TEXT PRIMARY KEY NOT NULL ON CONFLICT REPLACE DEFAULT (uuid()),
             "\(Impression.columns.mastery.name)" FLOAT NOT NULL,
             "\(Impression.columns.mode.name)" TEXT NOT NULL,
             "\(Impression.columns.recorded.name)" TEXT NOT NULL
@@ -105,7 +105,7 @@ extension DB.Entry {
         try db.execute(sql:
           """
           CREATE TABLE \(DB.Entry.tableName) (
-            "\(DB.Entry.columns.id.name)" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "\(DB.Entry.columns.id.name)" TEXT PRIMARY KEY NOT NULL ON CONFLICT REPLACE DEFAULT (uuid()),
             "\(DB.Entry.columns.spelling.name)" INTEGER NOT NULL,
             "\(DB.Entry.columns.language.name)" TEXT NOT NULL,
             "\(DB.Entry.columns.recorded.name)" TEXT NOT NULL
@@ -115,7 +115,7 @@ extension DB.Entry {
         try db.execute(sql:
           """
           CREATE TABLE \(Note.tableName) (
-            "\(Note.columns.id.name)" INTEGER PRIMARY KEY AUTOINCREMENT,
+            "\(Note.columns.id.name)" TEXT PRIMARY KEY NOT NULL ON CONFLICT REPLACE DEFAULT (uuid()),
             "\(Note.columns.entry.name)" INTEGER,
             "\(Note.columns.text.name)" TEXT NOT NULL,
             "\(Note.columns.recorded.name)" TEXT NOT NULL,
@@ -522,8 +522,8 @@ extension DB.Orthographic {
 extension Database {
     func createEntryEntryJoinTable<T: StructuredQueries.Table>(
         _ table: T.Type,
-        of tableBaseKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, Int>>,
-        to tableTargetKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, Int>>
+        of tableBaseKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, DB.Entry.ID>>,
+        to tableTargetKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, DB.Entry.ID>>
     ) throws {
         try execute(sql:
             CreateJoinTable(
@@ -544,7 +544,7 @@ extension Database {
     func createEntryJoinTable<T: StructuredQueries.Table, V: StructuredQueries.Table & Identifiable>(
         _ table: T.Type,
         _ target: V.Type,
-        of tableBaseKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, Int>>,
+        of tableBaseKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, DB.Entry.ID>>,
         to tableTargetKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, V.ID>>,
         id targetIDKeyPath: KeyPath<V.TableColumns, TableColumn<V.TableColumns.QueryValue, V.ID>>
     ) throws where V.ID: QueryBindable {

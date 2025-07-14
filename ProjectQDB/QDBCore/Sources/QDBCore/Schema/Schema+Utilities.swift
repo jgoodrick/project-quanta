@@ -57,10 +57,10 @@ struct CreateJoinTable<T: Table, U: Table & Identifiable, V: Table & Identifiabl
     var statement: String {
         """
         CREATE TABLE "\(table.tableName)" (
-          "\(baseRefField)" INTEGER NOT NULL
+          "\(baseRefField)" TEXT NOT NULL
             REFERENCES "\(baseTableName)"("\(baseField)")
             ON DELETE CASCADE,
-          "\(targetRefField)" INTEGER NOT NULL
+          "\(targetRefField)" TEXT NOT NULL
             REFERENCES "\(targetTableName)"("\(targetField)")
             ON DELETE CASCADE
         )

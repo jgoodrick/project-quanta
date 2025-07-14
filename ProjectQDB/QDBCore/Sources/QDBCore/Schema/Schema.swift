@@ -9,88 +9,9 @@ import SharingGRDB
 import Foundation
 
 public enum DB {
-//    enum Language {
-//        @Table("languageKeyboards")
-//        struct Keyboard: Codable, Hashable, Identifiable {
-//            var id: String
-//            enum BuiltIn: String, CaseIterable, Codable, Hashable, Identifiable {
-//                case en_US
-//                case es_US
-//                case uk_UA
-//
-//                var id: String { rawValue }
-//            }
-//        }
-//
-//        @Table("languageNames")
-//        struct Name: Codable, Hashable, Identifiable {
-//            var id: String { code }
-//            @Column(primaryKey: true)
-//            var code: String
-//            var text: String
-//            enum BuiltIn: String, CaseIterable, Codable, Hashable, Identifiable {
-//                case en
-//                case es
-//                case uk
-//
-//                var id: String { code }
-//                var code: String { rawValue }
-//                var text: String {
-//                    switch self {
-//                    case .en: "English"
-//                    case .es: "Spanish"
-//                    case .uk: "Ukrainian"
-//                    }
-//                }
-//            }
-//        }
-//
-//        @Table("languageRegions")
-//        struct Region: Codable, Hashable, Identifiable {
-//            var id: String { code }
-//            var code: String
-//            var text: String
-//            enum BuiltIn: String, CaseIterable, Codable, Hashable, Identifiable {
-//                case US
-//                case UK
-//                case UA
-//
-//                var id: String { code }
-//                var code: String { rawValue }
-//                var text: String {
-//                    switch self {
-//                    case .US: "United States"
-//                    case .UK: "United Kingdom"
-//                    case .UA: "Ukraine"
-//                    }
-//                }
-//            }
-//        }
-//
-//        @Table("languageScripts")
-//        struct Script: Codable, Hashable, Identifiable {
-//            var id: String { code }
-//            var code: String
-//            var text: String
-//            enum BuiltIn: String, CaseIterable, Codable, Hashable, Identifiable {
-//                case Cyrl
-//                case Latn
-//
-//                var id: String { code }
-//                var code: String { rawValue }
-//                var text: String {
-//                    switch self {
-//                    case .Cyrl: "Cyrillic"
-//                    case .Latn: "Latin"
-//                    }
-//                }
-//            }
-//        }
-//    }
-
     @Table
     struct Entry: Codable, Hashable, Identifiable {
-        let id: Int
+        let id: UUID
         var spelling: String
         var language: String
         var recorded: Date
@@ -103,8 +24,6 @@ extension DB.Entry {
         var entry: DB.Entry
         var language: String
         var spelling: String
-
-//        static let baseJoins = DB.Entry.spellingAndLanguageJoins
     }
 }
 
@@ -113,13 +32,6 @@ enum TranslationSpelling: AliasName {}
 enum TranslationLanguage: AliasName {}
 
 extension DB.Entry {
-//    static var spellingAndLanguageJoins: Select<Void, DB.Entry, (String, String)> {
-//        DB.Entry
-//            .group(by: \.id)
-//            .join(String.all) { $0.spelling.eq($1.id) }
-//            .join(String.all) { $0.language.eq($2.code) }
-//    }
-
     @Selection
     struct Row: Hashable, Identifiable {
         var id: DB.Entry.ID { entryID }
@@ -128,10 +40,6 @@ extension DB.Entry {
         var spelling: String
         @Column(as: [DB.Entry.Keyword].JSONRepresentation.self)
         var keywords: [DB.Entry.Keyword] = []
-//        @Column(as: [DB.Entry].JSONRepresentation.self)
-//        var translations: [DB.Entry] = []
-//        @Column(as: [DB.Entry.Definition].JSONRepresentation.self)
-//        var definitions: [DB.Entry.Definition] = []
 
         static let withKeywordJoins = DB.Entry
             .group(by: \.id)
@@ -152,158 +60,48 @@ extension DB.Entry {
                 languageName: entry.language,
                 spelling: entry.spelling,
                 keywords: keyword.jsonGroupArray()
-//                translations: $6.jsonGroupArray(),
-//                definitions: $10.jsonGroupArray()
             )
         }
-
-//        static let all: some QueryExpression<Row> = withDefinitionsJoins.select { entry, spelling, languageName, entry_keyword, keywords, synonym, translations, translationSpelling, translationLanguageName, entry_definition, definition in
-//            Row.Columns.init(
-//                entry: entry,
-//                language: languageName,
-//                spelling: spelling,
-//                keywords: keywords.jsonGroupArray(),
-//                translations: translations.jsonGroupArray(),
-//                definitions: definition.jsonGroupArray()
-//            )
-//        }
     }
-//
-//    @Selection
-//    struct Detail {
-//        var entry: DB.Entry
-//        var language: String
-//        var spelling: String
-//        var keywords: [DB.Entry.Keyword] = []
-//        var alternativeSpellings: [String] = []
-//        var additionalLanguages: [String] = []
-//        var translations: [DB.Entry] = []
-//        var notes: [DB.Entry.Note] = []
-//        var roots: [DB.Entry] = []
-//    }
-}
-
-extension DB.Entry {
-//    static func searching(_ text: String) -> Where<DB.Entry.Capsule> {
-//        Self
-//            .capsules
-//            .withKeywords
-//            .where {
-//                $0.spelling.collate(.nocase).contains(text)
-//                || $0.notes.collate(.nocase).contains(text)
-//            }
-//    }
-//    static let capsule = group(by: \.id)
-//        .leftJoin(Joins.EntrySpelling.all) { $0.id.eq($1.entry) }
-//        .leftJoin(String.all) { $1.spelling.eq($2.id) }
-//        .leftJoin(Joins.EntryLanguage.all) { $0.id.eq($1.entry) }
-//        .leftJoin(String.all) { $2.language.eq($3.id) }
-
-//    struct Slim: FetchKeyRequest {
-//        struct Value: Identifiable {
-//            var id: DB.Entry.ID { entry.id }
-//            var entry: DB.Entry
-//            var language: String
-//            var spelling: String
-//        }
-//
-//        let entry: DB.Entry.ID
-//
-//        func fetch(_ db: Database) throws -> Value {
-//            let entry = try db.fetchEntry(for: entry)
-//            let language = try db.fetchLanguage(for: entry.language)
-//            let spelling = try db.fetchSpelling(for: entry.spelling)
-//
-//            return Value(
-//                entry: entry,
-//                language: language,
-//                spelling: spelling
-//            )
-//        }
-//
-//        static let all: All = .init()
-//
-//        struct All: FetchKeyRequest {
-//            func fetch(_ db: Database) throws -> [DB.Entry.Slim.Value] {
-//                try db.fetchAllSlimEntries()
-//            }
-//        }
-//    }
-
-//    static func allCapsules() -> some QueryExpression<Capsule> {
-//        DB.Entry.Capsule.baseJoins.select { entry, spelling, language in
-//            Capsule.Columns.init(
-//                entry: entry,
-//                language: language,
-//                spelling: spelling
-//            )
-//        }
-//    }
-
-//    static func row() -> some QueryExpression<Row> {
-//        DB.Entry.Row.baseJoins.select { entry, spelling, language, _, keyword in
-//            Row.Columns(
-//                entry: entry,
-//                language: language,
-//                spelling: spelling,
-//                keywords: keyword.jsonGroupArray()
-//            )
-//        }
-//    }
-//        .select { capsule, _, spelling, _, language in
-//            Row.Columns.init(
-//                entry: capsule.entry,
-//                language: capsule.language,
-//                spelling: capsule.spelling
-//                keywords: $0,
-//                translations: $1.jsonGroupArray(isDistinct: true),
-//                definitions: $2.jsonGroupArray(isDistinct: true)
-//            )
-//        }
-//        .leftJoin(String.all) { $1.spelling.eq($2.id) }
-
-//    static let withKeywords = group(by: \.id)
-//        .leftJoin(Joins.EntryKeyword.all) { $0.id.eq($1.entry) }
-//        .leftJoin(DB.Entry.Keyword.all) { $1.keyword.eq($2.id) }
 }
 
 extension DB.Entry {
     @Table
     struct Definition: Codable, Hashable, Identifiable {
-        let id: Int
+        let id: UUID
         var text: String
     }
 
     @Table
     struct Usage: Codable, Hashable, Identifiable {
-        let id: Int
+        let id: UUID
         var text: String
     }
 
     @Table
     struct Keyword: Codable, Hashable, Identifiable {
-        let id: Int
+        let id: UUID
         var text: String
         var description: String
     }
 
     @Table
     struct Pronunciation: Codable, Hashable, Identifiable {
-        let id: Int
+        let id: UUID
         var text: String
         var audioURL: URL?
     }
 
     @Table
     struct Image: Codable, Hashable, Identifiable {
-        let id: Int
+        let id: UUID
         var imageURL: URL
         var remote: Bool
     }
 
     @Table
     struct Impression: Codable, Hashable, Identifiable {
-        let id: Int
+        let id: UUID
         var mastery: Double
         var mode: String
         var recorded: Date
@@ -313,7 +111,7 @@ extension DB.Entry {
 
     @Table
     struct Note: Codable, Hashable, Identifiable {
-        let id: Int
+        let id: UUID
         var entry: DB.Entry.ID
         var text: String
         var recorded: Date
