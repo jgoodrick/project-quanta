@@ -12,7 +12,7 @@ import SwiftUI
 struct NewEntryForm: View {
     @State private var word = ""
 
-    @FetchAll var matches: [Match]
+    @FetchAll var matches: [DB.Entry.Match]
 
     @State private var languageId: String = {
         @Shared(.languageId) var current
@@ -21,12 +21,15 @@ struct NewEntryForm: View {
 
     @State private var newTranslations: [TranslationDraft.Model]
 
-    @Dependency(\.defaultDatabase) private var db
+    @Dependency(\.defaultDatabase) private var database
     @Dependency(\.locale) private var locale
     @Environment(\.dismiss) private var dismiss
 
     init(
-        word: String = "",
+        word: String = {
+            @Shared(.sharedEntryText) var sharedEntryText
+            return sharedEntryText
+        }(),
         languageId: String = {
             @Shared(.languageId) var languageId
             return languageId
@@ -39,19 +42,25 @@ struct NewEntryForm: View {
         }()
     ) {
         self._word = .init(initialValue: word)
-        self._matches = FetchAll(Match.all(against: word, languageId: languageId))
+        self._matches = FetchAll(DB.Entry.Match.all(against: word, languageId: languageId))
         self._newTranslations = .init(initialValue: [.init(languageId: firstNewTranslationLangaugeId)])
     }
 
     var body: some View {
         Form {
             Section {
-                TextField("Word", text: $word)
-                    .font(.largeTitle)
-                    .textFieldStyle(.roundedBorder)
+                HStack {
+                    TextField("Spelling", text: $word)
+                        .font(.largeTitle)
+                        .textFieldStyle(.roundedBorder)
+                        .layoutPriority(1)
 
-                LanguagePicker(languageId: $languageId)
-                    .pickerStyle(.navigationLink)
+                    LanguagePicker(languageId: $languageId)
+                        .frame(minWidth: 100)
+                }
+                .labelsHidden()
+            } header: {
+                Text("New word")
             }
 
             // existing translations
@@ -81,14 +90,14 @@ struct NewEntryForm: View {
 
     func save() {
         withErrorReporting {
-            let matches: Int = try db.read { db in
+            let matches: Int = try database.read { db in
                 try DB.Entry
                     .where { $0.spelling.eq(word) }
                     .select { $0.count() }
                     .fetchOne(db) ?? 0
             }
             guard matches == 0 else { return }
-            try db.write { db in
+            try database.write { db in
                 try DB.Entry.upsert {
                     DB.Entry.Draft(
                         spelling: word,
@@ -101,32 +110,8 @@ struct NewEntryForm: View {
         }
     }
 
-    @Selection
-    struct Match: Hashable, Identifiable {
-        var id: DB.Entry.ID { match.id }
-        var match: DB.Entry
-        @Column(as: [DB.Entry.ID].JSONRepresentation.self)
-        var translations: [DB.Entry.ID]
-
-        static func all(against word: String, languageId: String) -> some StructuredQueriesCore.Statement<NewEntryForm.Match> {
-            DB.Entry.all
-                .where { entry in
-                    entry.spelling.collate(.nocase).like(word).and(entry.language.eq(languageId))
-                }
-                .join(DB.Semantic.Synonym.all) { entry, x in x.base.eq(entry.id) }
-                .join(DB.Entry.as(TranslationEntry.self).all) { entry, join, joined in join.synonym.eq(joined.id) }
-                .order(by: \.recorded)
-                .select { entry, _, translation in
-                    NewEntryForm.Match.Columns(
-                        match: entry,
-                        translations: translation.id.jsonGroupArray(isDistinct: true)
-                    )
-                }
-        }
-    }
-
     private func updateMatchesQuery() async throws {
-        try await $matches.load(Match.all(against: word, languageId: languageId))
+        try await $matches.load(DB.Entry.Match.all(against: word, languageId: languageId))
     }
 
     struct ExistingTranslation: View {
@@ -183,15 +168,22 @@ struct TranslationDraft: View {
     }
 
     var body: some View {
-        TextField(
-            "\(model.languageName) translation",
-            text: $model.draft.spelling
-        )
+        HStack {
+            TextField("\(model.languageName) translation", text: $model.draft.spelling)
+                .font(.subheadline)
+                .textFieldStyle(.roundedBorder)
+                .layoutPriority(1)
+
+            LanguagePicker(languageId: $model.draft.language)
+                .frame(minWidth: 100)
+        }
+        .labelsHidden()
     }
 }
 
 #Preview { let _ = DB.prepare()
     NavigationStack {
         NewEntryForm(word: "quite")
+            .navigationTitle("New Word")
     }
 }

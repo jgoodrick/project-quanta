@@ -26,14 +26,18 @@ public struct AppView: View {
                 switch path {
                 case .detail(let entryId):
                     WordDetail(id: entryId)
-                case .newEntryForm(let initialValue):
-                    NewEntryForm(word: initialValue)
+                case .newEntryForm:
+                    NewEntryForm()
                 }
             }
             .installQuickEntry(
                 actions: .init(
                     onSubmit: { submitted in
-                        nav.path.append(.newEntryForm(initialValue: submitted))
+                        if let match = DB.Entry.Match.firstMatch(for: submitted) {
+                            nav.path.append(.detail(match))
+                        } else {
+                            nav.path.append(.newEntryForm)
+                        }
                     }
                 )
             )
