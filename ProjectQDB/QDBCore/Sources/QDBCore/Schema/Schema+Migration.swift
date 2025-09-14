@@ -17,7 +17,7 @@ extension DB {
         }
     }
 
-    static func migrate(db: Database) throws {
+    static func createInitialTables(db: Database) throws {
         try Entry.migrate(db: db)
         try Noun.migrate(db: db)
         try Etymology.migrate(db: db)

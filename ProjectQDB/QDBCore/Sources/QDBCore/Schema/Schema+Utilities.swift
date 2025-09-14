@@ -7,7 +7,7 @@
 
 import StructuredQueries
 
-struct CreateJoinTable<T: Table, U: Table & Identifiable, V: Table & Identifiable> where U.ID: QueryBindable, U.ID.QueryOutput: Sendable, V.ID: QueryBindable & Sendable, V.ID.QueryOutput: Sendable {
+struct CreateJoinTable<T: Table, U: Table & Identifiable, V: Table & Identifiable> where U.ID: QueryBindable, V.ID: QueryBindable {
     let table: T.Type
     let tableBaseKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, U.ID>>
     let baseIDKeyPath: KeyPath<U.TableColumns, TableColumn<U.TableColumns.QueryValue, U.ID>>
@@ -68,7 +68,7 @@ struct CreateJoinTable<T: Table, U: Table & Identifiable, V: Table & Identifiabl
     }
 }
 
-struct CreateIndex<T: Table, IndexID: Hashable & QueryBindable> where IndexID.QueryOutput: Sendable {
+struct CreateIndex<T: Table, IndexID: Hashable & QueryBindable> {
     let table: T.Type
     let tableBaseKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, IndexID>>
 

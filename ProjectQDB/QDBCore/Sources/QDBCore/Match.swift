@@ -27,7 +27,7 @@ extension DB.Entry {
                 .select { entry, _, translation in
                     DB.Entry.Match.Columns(
                         match: entry,
-                        translations: translation.id.jsonGroupArray(isDistinct: true)
+                        translations: translation.id.jsonGroupArray(distinct: true)
                     )
                 }
         }

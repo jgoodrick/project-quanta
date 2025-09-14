@@ -9,6 +9,7 @@ import SharingGRDB
 import SwiftUI
 
 public struct AppView: View {
+    @Dependency(\.defaultDatabase) private var database
     @Bindable var nav: Nav
 
     public init(nav: Nav) {
@@ -41,6 +42,17 @@ public struct AppView: View {
                     }
                 )
             )
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Seed") {
+                        withErrorReporting {
+                            try database.write { db in
+                                try db.seedSampleData()
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }

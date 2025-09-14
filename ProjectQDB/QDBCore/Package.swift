@@ -32,7 +32,7 @@ let package = Package(
                 .product(name: "SharingGRDB", package: "sharing-grdb"),
                 .product(name: "StructuredQueriesGRDB", package: "sharing-grdb"),
                 .product(name: "StructuredQueries", package: "swift-structured-queries"),
-                .product(name: "_StructuredQueriesSQLite", package: "swift-structured-queries"),
+                .product(name: "StructuredQueriesSQLite", package: "swift-structured-queries"),
             ]),
         .testTarget(
             name: "QDBCoreTests",

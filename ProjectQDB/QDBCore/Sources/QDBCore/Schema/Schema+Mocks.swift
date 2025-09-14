@@ -12,7 +12,7 @@ import StructuredQueriesGRDB
 
 #if DEBUG
 extension Database {
-    fileprivate func seedSampleData() throws {
+    func seedSampleData() throws {
         try seed {
             DB.Entry(id: .init(1), spelling: "hello", language: "en", recorded: Mock.now())
             DB.Entry(id: .init(2), spelling: "world", language: "en", recorded: Mock.now())
@@ -67,12 +67,6 @@ extension Database {
             DB.Entry.Joins.EntryDefinition(entry: .init(3), definition: .init(300000))
             DB.Entry.Joins.EntryDefinition(entry: .init(3), definition: .init(300001))
         }
-    }
-}
-
-extension DB {
-    static func createMockData(in db: Database) throws {
-        try db.seedSampleData()
     }
 }
 

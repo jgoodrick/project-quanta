@@ -16,6 +16,14 @@ public enum DB {
         var language: String
         var recorded: Date
     }
+
+    @Table @Selection
+    struct EntryText: StructuredQueriesSQLite.FTS5 {
+        let rowID: Int
+        let title: String
+        let notes: String
+        let tags: String
+    }
 }
 
 extension DB.Entry {
