@@ -6,7 +6,7 @@
 //
 
 import Dependencies
-import SharingGRDB
+import SQLiteData
 import SwiftUI
 
 struct NewEntryForm: View {

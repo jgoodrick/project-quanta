@@ -7,7 +7,7 @@
 
 import Dependencies
 import GRDB
-import SharingGRDB
+import SQLiteData
 import StructuredQueriesGRDB
 
 extension DB {

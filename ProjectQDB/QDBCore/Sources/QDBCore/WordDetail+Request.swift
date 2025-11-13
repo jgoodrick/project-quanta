@@ -5,7 +5,7 @@
 //  Created by Goodrick,Joseph on 7/3/25.
 //
 
-import SharingGRDB
+import SQLiteData
 
 extension WordDetail {
     struct Request: FetchKeyRequest {

@@ -8,10 +8,10 @@
 import Foundation
 import IssueReporting
 import OSLog
-import SharingGRDB
+import SQLiteData
 import SwiftUI
 
-private let logger = Logger(subsystem: "MyApp", category: "Database")
+private let logger = Logger(subsystem: "QDBCore", category: "Database")
 
 public func appDatabase() throws -> any DatabaseWriter {
     @Dependency(\.context) var context

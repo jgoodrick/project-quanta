@@ -6,7 +6,7 @@
 //
 
 import QDBCore
-import SharingGRDB
+import SQLiteData
 import SwiftUI
 
 @main

@@ -5,7 +5,7 @@
 //  Created by Goodrick,Joseph on 7/16/25.
 //
 
-import SharingGRDB
+import SQLiteData
 
 extension DB.Entry {
     @Selection

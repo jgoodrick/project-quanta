@@ -16,8 +16,8 @@ let package = Package(
             targets: ["QDBCore"]),
     ],
     dependencies: [
+        .package(url: "https://github.com/pointfreeco/sqlite-data", branch: "main"),
         .package(url: "https://github.com/pointfreeco/swift-case-paths", branch: "main"),
-        .package(url: "https://github.com/pointfreeco/sharing-grdb", branch: "main"),
         .package(url: "https://github.com/pointfreeco/swift-navigation", branch: "main"),
         .package(url: "https://github.com/pointfreeco/swift-snapshot-testing", branch: "main"),
         .package(url: "https://github.com/pointfreeco/swift-structured-queries", branch: "main"),
@@ -29,8 +29,7 @@ let package = Package(
             dependencies: [
                 .product(name: "CasePaths", package: "swift-case-paths"),
                 .product(name: "SwiftUINavigation", package: "swift-navigation"),
-                .product(name: "SharingGRDB", package: "sharing-grdb"),
-                .product(name: "StructuredQueriesGRDB", package: "sharing-grdb"),
+                .product(name: "SQLiteData", package: "sqlite-data"),
                 .product(name: "StructuredQueries", package: "swift-structured-queries"),
                 .product(name: "StructuredQueriesSQLite", package: "swift-structured-queries"),
             ]),

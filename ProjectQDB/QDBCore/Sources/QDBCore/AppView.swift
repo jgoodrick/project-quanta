@@ -5,7 +5,7 @@
 //  Created by Goodrick,Joseph on 5/26/25.
 //
 
-import SharingGRDB
+import SQLiteData
 import SwiftUI
 
 public struct AppView: View {
@@ -43,7 +43,7 @@ public struct AppView: View {
                 )
             )
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem {
                     Button("Seed") {
                         withErrorReporting {
                             try database.write { db in
