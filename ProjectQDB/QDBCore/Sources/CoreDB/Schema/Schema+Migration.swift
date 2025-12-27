@@ -1,34 +1,30 @@
 //
 //  Schema+Migration.swift
-//  QDBCore
+//  CoreDB
 //
 //  Created by Goodrick,Joseph on 5/26/25.
 //
 
 import Dependencies
-import GRDB
 import SQLiteData
-import StructuredQueriesGRDB
 
-extension DB {
-    public static func prepare() {
-        try! prepareDependencies {
-            $0.defaultDatabase = try QDBCore.appDatabase()
-        }
-    }
-
-    static func createInitialTables(db: Database) throws {
-        try Entry.migrate(db: db)
-        try Noun.migrate(db: db)
-        try Etymology.migrate(db: db)
-        try Verb.migrate(db: db)
-        try Semantic.migrate(db: db)
-        try Phonetic.migrate(db: db)
-        try Orthographic.migrate(db: db)
+public func prepareDatabase() {
+    try! prepareDependencies {
+        $0.defaultDatabase = try CoreDB.appDatabase()
     }
 }
 
-extension DB.Entry {
+func createInitialTables(db: Database) throws {
+    try Entry.migrate(db: db)
+    try Noun.migrate(db: db)
+    try Etymology.migrate(db: db)
+    try Verb.migrate(db: db)
+    try Semantic.migrate(db: db)
+    try Phonetic.migrate(db: db)
+    try Orthographic.migrate(db: db)
+}
+
+extension Entry {
     static func migrate(db: Database) throws {
         try migrateWithoutForeignKeys(db: db)
         try migrateWithForeignKeys(db: db)
@@ -104,11 +100,11 @@ extension DB.Entry {
     static func migrateWithForeignKeys(db: Database) throws {
         try db.execute(sql:
           """
-          CREATE TABLE \(DB.Entry.tableName) (
-            "\(DB.Entry.columns.id.name)" TEXT PRIMARY KEY NOT NULL ON CONFLICT REPLACE DEFAULT (uuid()),
-            "\(DB.Entry.columns.spelling.name)" INTEGER NOT NULL,
-            "\(DB.Entry.columns.language.name)" TEXT NOT NULL,
-            "\(DB.Entry.columns.recorded.name)" TEXT NOT NULL
+          CREATE TABLE \(Entry.tableName) (
+            "\(Entry.columns.id.name)" TEXT PRIMARY KEY NOT NULL ON CONFLICT REPLACE DEFAULT (uuid()),
+            "\(Entry.columns.spelling.name)" INTEGER NOT NULL,
+            "\(Entry.columns.language.name)" TEXT NOT NULL,
+            "\(Entry.columns.recorded.name)" TEXT NOT NULL
           )
           """
         )
@@ -119,7 +115,7 @@ extension DB.Entry {
             "\(Note.columns.entry.name)" INTEGER,
             "\(Note.columns.text.name)" TEXT NOT NULL,
             "\(Note.columns.recorded.name)" TEXT NOT NULL,
-            FOREIGN KEY("\(Note.columns.entry.name)") REFERENCES \(DB.Entry.tableName)("id") ON DELETE CASCADE
+            FOREIGN KEY("\(Note.columns.entry.name)") REFERENCES \(Entry.tableName)("id") ON DELETE CASCADE
           )
           """
         )
@@ -128,53 +124,53 @@ extension DB.Entry {
     }
 }
 
-extension DB.Entry.Joins {
+extension Entry.Joins {
     static func migrate(db: Database) throws {
         try db.createEntryJoinTable(
             EntryAdditionalSpelling.self,
-            DB.Entry.self,
+            Entry.self,
             of: \.entry,
             to: \.additionalSpelling,
             id: \.id
         )
         try db.createEntryJoinTable(
             EntryDefinition.self,
-            DB.Entry.Definition.self,
+            Entry.Definition.self,
             of: \.entry,
             to: \.definition,
             id: \.id
         )
         try db.createEntryJoinTable(
             EntryUsage.self,
-            DB.Entry.Usage.self,
+            Entry.Usage.self,
             of: \.entry,
             to: \.usage,
             id: \.id
         )
         try db.createEntryJoinTable(
             EntryKeyword.self,
-            DB.Entry.Keyword.self,
+            Entry.Keyword.self,
             of: \.entry,
             to: \.keyword,
             id: \.id
         )
         try db.createEntryJoinTable(
             EntryPronunciation.self,
-            DB.Entry.Pronunciation.self,
+            Entry.Pronunciation.self,
             of: \.entry,
             to: \.pronunciation,
             id: \.id
         )
         try db.createEntryJoinTable(
             EntryImage.self,
-            DB.Entry.Image.self,
+            Entry.Image.self,
             of: \.entry,
             to: \.image,
             id: \.id
         )
         try db.createEntryJoinTable(
             EntryImpression.self,
-            DB.Entry.Impression.self,
+            Entry.Impression.self,
             of: \.entry,
             to: \.impression,
             id: \.id
@@ -182,7 +178,7 @@ extension DB.Entry.Joins {
     }
 }
 
-extension DB.Noun {
+extension Noun {
     static func migrate(db: Database) throws {
         try db.createEntryEntryJoinTable(
             Number.Singular.self,
@@ -262,7 +258,7 @@ extension DB.Noun {
     }
 }
 
-extension DB.Etymology {
+extension Etymology {
     static func migrate(db: Database) throws {
         try db.createEntryEntryJoinTable(
             Derivation.self,
@@ -282,7 +278,7 @@ extension DB.Etymology {
     }
 }
 
-extension DB.Verb {
+extension Verb {
     static func migrate(db: Database) throws {
         try Person.migrate(db: db)
         try Gender.migrate(db: db)
@@ -294,7 +290,7 @@ extension DB.Verb {
     }
 }
 
-extension DB.Verb.Person {
+extension Verb.Person {
     static func migrate(db: Database) throws {
         try db.createEntryEntryJoinTable(
             First.self,
@@ -314,7 +310,7 @@ extension DB.Verb.Person {
     }
 }
 
-extension DB.Verb.Gender {
+extension Verb.Gender {
     static func migrate(db: Database) throws {
         try db.createEntryEntryJoinTable(
             Unknown.self,
@@ -339,7 +335,7 @@ extension DB.Verb.Gender {
     }
 }
 
-extension DB.Verb.Number {
+extension Verb.Number {
     static func migrate(db: Database) throws {
         try db.createEntryEntryJoinTable(
             Singular.self,
@@ -354,7 +350,7 @@ extension DB.Verb.Number {
     }
 }
 
-extension DB.Verb.Tense {
+extension Verb.Tense {
     static func migrate(db: Database) throws {
         try db.createEntryEntryJoinTable(
             Present.self,
@@ -374,7 +370,7 @@ extension DB.Verb.Tense {
     }
 }
 
-extension DB.Verb.Aspect {
+extension Verb.Aspect {
     static func migrate(db: Database) throws {
         try db.createEntryEntryJoinTable(
             Simple.self,
@@ -394,7 +390,7 @@ extension DB.Verb.Aspect {
     }
 }
 
-extension DB.Verb.Mood {
+extension Verb.Mood {
     static func migrate(db: Database) throws {
         try db.createEntryEntryJoinTable(
             Indicative.self,
@@ -414,7 +410,7 @@ extension DB.Verb.Mood {
     }
 }
 
-extension DB.Verb.Voice {
+extension Verb.Voice {
     static func migrate(db: Database) throws {
         try db.createEntryEntryJoinTable(
             Active.self,
@@ -429,7 +425,7 @@ extension DB.Verb.Voice {
     }
 }
 
-extension DB.Semantic {
+extension Semantic {
     static func migrate(db: Database) throws {
         try db.createEntryEntryJoinTable(
             Synonym.self,
@@ -484,7 +480,7 @@ extension DB.Semantic {
     }
 }
 
-extension DB.Phonetic {
+extension Phonetic {
     static func migrate(db: Database) throws {
         try db.createEntryEntryJoinTable(
             Homophone.self,
@@ -504,7 +500,7 @@ extension DB.Phonetic {
     }
 }
 
-extension DB.Orthographic {
+extension Orthographic {
     static func migrate(db: Database) throws {
         try db.createEntryEntryJoinTable(
             AlternativeSpelling.self,
@@ -522,14 +518,14 @@ extension DB.Orthographic {
 extension Database {
     func createEntryEntryJoinTable<T: StructuredQueries.Table>(
         _ table: T.Type,
-        of tableBaseKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, DB.Entry.ID>>,
-        to tableTargetKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, DB.Entry.ID>>
+        of tableBaseKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, Entry.ID>>,
+        to tableTargetKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, Entry.ID>>
     ) throws {
         try execute(sql:
             CreateJoinTable(
                 table,
-                DB.Entry.self,
-                DB.Entry.self,
+                Entry.self,
+                Entry.self,
                 of: tableBaseKeyPath,
                 on: \.id,
                 to: tableTargetKeyPath,
@@ -544,14 +540,14 @@ extension Database {
     func createEntryJoinTable<T: StructuredQueries.Table, V: StructuredQueries.Table & Identifiable>(
         _ table: T.Type,
         _ target: V.Type,
-        of tableBaseKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, DB.Entry.ID>>,
+        of tableBaseKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, Entry.ID>>,
         to tableTargetKeyPath: KeyPath<T.TableColumns, TableColumn<T.TableColumns.QueryValue, V.ID>>,
         id targetIDKeyPath: KeyPath<V.TableColumns, TableColumn<V.TableColumns.QueryValue, V.ID>>
     ) throws where V.ID: QueryBindable {
         try execute(sql:
             CreateJoinTable(
                 table,
-                DB.Entry.self,
+                Entry.self,
                 V.self,
                 of: tableBaseKeyPath,
                 on: \.id,

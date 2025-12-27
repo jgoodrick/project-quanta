@@ -7,7 +7,25 @@
 
 import SwiftUI
 
-struct ToolbarTextFieldInstaller: ViewModifier {
+package struct ToolbarTextFieldInstaller: ViewModifier {
+    package init(
+        placeholder: String,
+        languageIdentifier: String,
+        fieldStyle: ToolbarTextFieldInstaller.Field.Style,
+        text: Binding<String>,
+        focused: Binding<Bool>,
+        installed: Bool,
+        actions: ToolbarTextFieldInstaller.Actions
+    ) {
+        self.placeholder = placeholder
+        self.languageIdentifier = languageIdentifier
+        self.fieldStyle = fieldStyle
+        self._text = text
+        self._focused = focused
+        self.installed = installed
+        self.actions = actions
+    }
+    
 
     let placeholder: String
     let languageIdentifier: String
@@ -17,9 +35,17 @@ struct ToolbarTextFieldInstaller: ViewModifier {
     let installed: Bool
     let actions: Actions
 
-    struct Actions {
-        var onLanguageAvailability: (String, Bool) -> Void = { _, _ in }
-        let onSubmit: (String) async -> Void
+    package struct Actions {
+        package init(
+            onLanguageAvailability: @escaping (String, Bool) -> Void = { _, _ in },
+            onSubmit: @escaping (String) async -> Void
+        ) {
+            self.onLanguageAvailability = onLanguageAvailability
+            self.onSubmit = onSubmit
+        }
+        
+        package let onLanguageAvailability: (String, Bool) -> Void
+        package let onSubmit: (String) async -> Void
     }
 
     struct Effects {
@@ -51,7 +77,7 @@ struct ToolbarTextFieldInstaller: ViewModifier {
         )
     }
 
-    func body(content: Content) -> some View {
+    package func body(content: Content) -> some View {
         ZStack(alignment: .bottom) {
 
             content
@@ -103,7 +129,7 @@ struct ToolbarTextFieldInstaller: ViewModifier {
         )
     }
 
-    struct Field: View {
+    package struct Field: View {
         let placeholder: String
         let languageIdentifier: String
         var style: Style = .defaultValue
@@ -112,8 +138,8 @@ struct ToolbarTextFieldInstaller: ViewModifier {
         let onLanguageAvailability: (String, Bool) -> Void
         let onSubmit: () -> Void
 
-        struct Style: Sendable {
-            static let defaultValue: Self = .init()
+        package struct Style: Sendable {
+            package static let defaultValue: Self = .init()
             var font: Font = .title2
             var adjustsFontSizeToFitWidth: Bool = false
             #if os(iOS)
@@ -132,7 +158,7 @@ struct ToolbarTextFieldInstaller: ViewModifier {
 
         @FocusState private var focusState: Bool
 
-        var body: some View {
+        package var body: some View {
             underlying
                 .synchronize(focusState: $focusState, with: $focused)
         }

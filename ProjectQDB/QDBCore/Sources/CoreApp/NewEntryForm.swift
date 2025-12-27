@@ -5,14 +5,17 @@
 //  Created by Goodrick,Joseph on 6/29/25.
 //
 
+import CoreDB
 import Dependencies
 import SQLiteData
+import Sharing
 import SwiftUI
+import UIComponents
 
 struct NewEntryForm: View {
     @State private var word = ""
 
-    @FetchAll var matches: [DB.Entry.Match]
+    @FetchAll var matches: [CoreDB.Entry.Match]
 
     @State private var languageId: String = {
         @Shared(.languageId) var current
@@ -36,13 +39,13 @@ struct NewEntryForm: View {
         }(),
         firstNewTranslationLangaugeId: String = {
             @Dependency(\.defaultDatabase) var db
-            let available = (try? db.read { db in try DB.Entry.all.select(\.language).distinct().fetchAll(db) }) ?? []
+            let available = (try? db.read { db in try CoreDB.Entry.all.select(\.language).distinct().fetchAll(db) }) ?? []
             @Shared(.languageId) var languageId
             return available.first(where: { $0 != languageId }) ?? languageId
         }()
     ) {
         self._word = .init(initialValue: word)
-        self._matches = FetchAll(DB.Entry.Match.all(against: word, languageId: languageId))
+        self._matches = FetchAll(CoreDB.Entry.Match.all(against: word, languageId: languageId))
         self._newTranslations = .init(initialValue: [.init(languageId: firstNewTranslationLangaugeId)])
     }
 
@@ -55,8 +58,12 @@ struct NewEntryForm: View {
                         .textFieldStyle(.roundedBorder)
                         .layoutPriority(1)
 
-                    LanguagePicker(languageId: $languageId)
-                        .frame(minWidth: 100)
+                    LanguagePicker(
+                        languageId: $languageId,
+                        availableLanguageNames: [:],
+                        locale: locale
+                    )
+                    .frame(minWidth: 100)
                 }
                 .labelsHidden()
             } header: {
@@ -65,11 +72,11 @@ struct NewEntryForm: View {
 
             // existing translations
 
-            if let existingTranslations = matches.first?.translations, !existingTranslations.isEmpty {
-                ForEach(existingTranslations, id: \.self) { translationEntryId in
-                    try? ExistingTranslation(id: translationEntryId)
-                }
-            }
+//            if let existingMatch = matches.first, let existingTranslations = existingMatch.translations, !existingTranslations.isEmpty {
+//                ForEach(existingTranslations, id: \.self) { translationEntryId in
+//                    try? ExistingTranslation(id: translationEntryId)
+//                }
+//            }
 
             // New translations
 
@@ -91,15 +98,15 @@ struct NewEntryForm: View {
     func save() {
         withErrorReporting {
             let matches: Int = try database.read { db in
-                try DB.Entry
+                try CoreDB.Entry
                     .where { $0.spelling.eq(word) }
                     .select { $0.count() }
                     .fetchOne(db) ?? 0
             }
             guard matches == 0 else { return }
             try database.write { db in
-                try DB.Entry.upsert {
-                    DB.Entry.Draft(
+                try CoreDB.Entry.upsert {
+                    CoreDB.Entry.Draft(
                         spelling: word,
                         language: languageId,
                         recorded: .now
@@ -111,18 +118,18 @@ struct NewEntryForm: View {
     }
 
     private func updateMatchesQuery() async throws {
-        try await $matches.load(DB.Entry.Match.all(against: word, languageId: languageId))
+        try await $matches.load(CoreDB.Entry.Match.all(against: word, languageId: languageId))
     }
 
     struct ExistingTranslation: View {
-        let entry: DB.Entry
+        let entry: CoreDB.Entry
         @State var text: String
 
         @Dependency(\.locale) private var locale
 
-        init(id: DB.Entry.ID) throws {
+        init(id: CoreDB.Entry.ID) throws {
             @Dependency(\.defaultDatabase) var db
-            guard let entry = try db.read({ db in try DB.Entry.find(id).fetchOne(db) }) else { throw NoMatchFound.entry }
+            guard let entry = try db.read({ db in try CoreDB.Entry.find(id).fetchOne(db) }) else { throw NoMatchFound.entry }
             self.entry = entry
             self._text = .init(initialValue: entry.spelling)
         }
@@ -143,7 +150,7 @@ struct TranslationDraft: View {
     @Observable
     class Model: Identifiable {
         let id: UUID
-        var draft: DB.Entry.Draft
+        var draft: CoreDB.Entry.Draft
 
         @ObservationIgnored
         @Dependency(\.locale) private var locale
@@ -151,7 +158,7 @@ struct TranslationDraft: View {
         init(id: UUID? = nil, languageId: String) {
             @Dependency(\.uuid) var uuid
             self.id = id ?? uuid()
-            self.draft = DB.Entry.Draft(
+            self.draft = CoreDB.Entry.Draft(
                 spelling: "",
                 language: languageId,
                 recorded: .now
@@ -174,14 +181,18 @@ struct TranslationDraft: View {
                 .textFieldStyle(.roundedBorder)
                 .layoutPriority(1)
 
-            LanguagePicker(languageId: $model.draft.language)
-                .frame(minWidth: 100)
+            LanguagePicker(
+                languageId: $model.draft.language,
+                availableLanguageNames: [:],
+                locale: .current
+            )
+            .frame(minWidth: 100)
         }
         .labelsHidden()
     }
 }
 
-#Preview { let _ = DB.prepare()
+#Preview { let _ = CoreDB.prepareDatabase()
     NavigationStack {
         NewEntryForm(word: "quite")
             .navigationTitle("New Word")

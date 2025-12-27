@@ -6,10 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		E94A22D32E773A6E007D4288 /* QDBCore in Frameworks */ = {isa = PBXBuildFile; productRef = E94A22D22E773A6E007D4288 /* QDBCore */; };
-/* End PBXBuildFile section */
-
 /* Begin PBXContainerItemProxy section */
 		E9ED4E082D62699200E38C49 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -43,7 +39,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E94A22D32E773A6E007D4288 /* QDBCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -103,7 +98,6 @@
 			);
 			name = ProjectQDB;
 			packageProductDependencies = (
-				E94A22D22E773A6E007D4288 /* QDBCore */,
 			);
 			productName = ProjectQDB;
 			productReference = E9ED4DF62D62699100E38C49 /* ProjectQDB.app */;
@@ -499,13 +493,6 @@
 			relativePath = ProjectQDB/QDBCore;
 		};
 /* End XCLocalSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		E94A22D22E773A6E007D4288 /* QDBCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			productName = QDBCore;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E9ED4DEE2D62699100E38C49 /* Project object */;
 }

@@ -49,7 +49,7 @@ public func appDatabase() throws -> any DatabaseWriter {
     #endif
 
     migrator.registerMigration("Create initial tables") { db in
-        try DB.createInitialTables(db: db)
+        try createInitialTables(db: db)
     }
 
     try migrator.migrate(database)
@@ -59,7 +59,7 @@ public func appDatabase() throws -> any DatabaseWriter {
             try db.seedSampleData()
         }
 
-//        try DB.Entry.createTemporaryTrigger(after: .insert { new in
+//        try Entry.createTemporaryTrigger(after: .insert { new in
 //            ReminderText.insert {
 //                ReminderText.Columns(
 //                    rowid: new.rowid,

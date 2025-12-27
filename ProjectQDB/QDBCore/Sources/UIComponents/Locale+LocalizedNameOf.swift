@@ -7,7 +7,7 @@
 
 import Foundation
 
-extension Locale {
+package extension Locale {
     func languageName(of identifier: String, native: Bool, capitalized: Bool) -> String? {
         if native {
             let nativeLocale = Locale(identifier: identifier)

@@ -5,21 +5,32 @@
 //  Created by Goodrick,Joseph on 7/4/25.
 //
 
-import SQLiteData
 import SwiftUI
 
-struct LanguagePicker: View {
+package struct LanguagePicker: View {
     var iconSystemName: String = "flag"
     var title: String = "Language"
     @Binding var languageId: String
+    let availableLanguageNames: [String: String]
+    let locale: Locale
 
-    @FetchAll(DB.Entry.all.select(\.language).distinct()) var availableLanguageNames: [String]
-
-    @Dependency(\.locale) private var locale
-
-    var body: some View {
+    package init(
+        iconSystemName: String = "flag",
+        title: String = "Language",
+        languageId: Binding<String>,
+        availableLanguageNames: [String : String],
+        locale: Locale
+    ) {
+        self.iconSystemName = iconSystemName
+        self.title = title
+        self._languageId = languageId
+        self.availableLanguageNames = availableLanguageNames
+        self.locale = locale
+    }
+    
+    package var body: some View {
         Picker(selection: $languageId) {
-            ForEach(availableLanguageNames, id: \.self) { language in
+            ForEach(availableLanguageNames.sorted(by: { $0.value < $1.value }), id: \.key) { (key, language) in
                 Text(name(of: language, capitalized: true))
                     .tag(language)
             }

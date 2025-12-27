@@ -7,10 +7,14 @@
 
 import SwiftUI
 
-struct OrderPicker: View {
+package struct OrderPicker: View {
     @Binding var order: SortOrder
 
-    var body: some View {
+    package init(order: Binding<SortOrder>) {
+        self._order = order
+    }
+
+    package var body: some View {
         Picker(selection: $order) {
             ForEach([SortOrder.forward, .reverse], id: \.self) { sortOrder in
                 Text(sortOrder.displayTitle)
